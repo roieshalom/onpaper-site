@@ -2,14 +2,19 @@
 <html lang="en">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="theme-color" content="#fbfbfa">
+<meta name="theme-color" content="#f0e9d8">
 <title>OnPaper</title>
-<meta name="description" content="Paste your CV and a job description. Get the 2–3 real gaps between them, each with one concrete fix.">
+<meta name="description" content="Paste your CV and a job description. Get the real gaps between them, each with one concrete fix. Gaps, not scores. Fixes, not filler.">
 <link rel="icon" href="favicon.ico" sizes="any">
 <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
 <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <link rel="manifest" href="site.webmanifest">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Libre+Caslon+Display&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+
 <!-- PostHog: pageviews + autocapture, session replay OFF. Anonymous (never identified). -->
 <script>
   !function(t,e){var o,n,p,r;e.__SV||(window.posthog=e,e._i=[],e.init=function(i,s,a){function g(t,e){var o=e.split(".");2==o.length&&(t=t[o[0]],e=o[1]),t[e]=function(){t.push([e].concat(Array.prototype.slice.call(arguments,0)))}}(p=t.createElement("script")).type="text/javascript",p.crossOrigin="anonymous",p.async=!0,p.src=s.api_host.replace(".i.posthog.com","-assets.i.posthog.com")+"/static/array.js",(r=t.getElementsByTagName("script")[0]).parentNode.insertBefore(p,r);var u=e;for(void 0!==a?u=e[a]=[]:a="posthog",u.people=u.people||[],u.toString=function(t){var e="posthog";return"posthog"!==a&&(e+="."+a),t||(e+=" (stub)"),e},u.people.toString=function(){return u.toString(1)+".people (stub)"},o="init capture register register_once register_for_session unregister unregister_for_session getFeatureFlag getFeatureFlagPayload isFeatureEnabled reloadFeatureFlags updateEarlyAccessFeatureEnrollment getEarlyAccessFeatures on onFeatureFlags onSessionId getSurveys getActiveMatchingSurveys renderSurvey canRenderSurvey getNextSurveyStep identify setPersonProperties group resetGroups setPersonPropertiesForFlags resetPersonPropertiesForFlags setGroupPropertiesForFlags resetGroupPropertiesForFlags reset get_distinct_id getGroups get_session_id get_session_replay_url alias set_config startSessionRecording stopSessionRecording sessionRecordingStarted captureException loadToolbar get_property getSessionProperty createPersonProfile opt_in_capturing opt_out_capturing has_opted_in_capturing has_opted_out_capturing clear_opt_in_out_capturing debug getPageViewId captureTraceFeedback captureTraceMetric".split(" "),n=0;n<o.length;n++)g(u,o[n]);e._i.push([i,s,a])},e.__SV=1)}(document,window.posthog||[]);
@@ -24,188 +29,382 @@
 
 <style>
   /* ================================================================
-     OnPaper — standalone. Tokens carried over from the job-triage
-     portal so the tool looks identical; portal-only chrome dropped.
+     OnPaper — "proofreader's desk". Design tokens from the handoff.
      ================================================================ */
   :root {
-    /* palette */
-    --bg:          #fbfbfa;
-    --surface:     #ffffff;
-    --ink:         #1a1a18;
-    --ink-soft:    #565650;
-    --ink-faint:   #8a8a82;
-    --line:        #e7e6e1;
-    --accent:      #2c2c28;
-    --accent-ink:  #ffffff;
+    --paper-bg:   #f0e9d8;   /* aged cream page */
+    --paper:      #fdfaf1;   /* cards / inputs / bar */
+    --paper-lt:   #fffdf6;   /* lighter input paper */
+    --ink:        #211d17;   /* primary text + primary button */
+    --ink-2:      #3a352c;
+    --ink-3:      #5c5545;
+    --ink-4:      #6b6353;
+    --mono-muted: #8a8069;
+    --faint:      #9a9078;
+    --faint-2:    #b3a891;
+    --faint-3:    #bcb3a2;
+    --red:        #c04a2e;   /* editorial ink — the single accent */
+    --red-dark:   #9e3a22;
+    --red-focus:  #c9552f;
+    --line:       #ddd0b6;   /* dividers */
+    --line-in:    #d8cbb0;   /* input / bar borders */
+    --card-line:  #e3d7bd;
+    --card-line2: #e6dcc4;
+    --dash:       #e0d3b8;
+    --rule:       #ecc4b7;   /* red margin rule */
+    --tag-border: #e2a996;
+    --err-bg:     #fae9e2;
+    --err-border: #eecabd;
+    --best-bg:    #fbf2ec;
 
-    /* rating band tints */
-    --band-3: #f7f6f4;
+    --serif-d: 'Libre Caslon Display', Georgia, 'Times New Roman', serif;
+    --serif-b: 'Newsreader', Georgia, 'Times New Roman', serif;
+    --mono:    'IBM Plex Mono', ui-monospace, 'SF Mono', Menlo, monospace;
 
-    /* type */
-    --font-display: ui-serif, Georgia, "Times New Roman", serif;
-    --font-body:    ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-    --font-mono:    ui-monospace, "SF Mono", Menlo, monospace;
-
-    /* shape + space */
-    --radius: 10px;
-    --gap: 20px;
-    --maxw: 760px;
+    --ok: #4a7a4a;
   }
-
-  html { height: 100%; background: var(--bg); }
-  body { margin: 0; min-height: 100vh; background: var(--bg); }
 
   * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  html { background: var(--paper-bg); }
+  body { background: var(--paper-bg); }
   [hidden] { display: none !important; }
 
-  #app {
-    max-width: var(--maxw);
-    margin: 0 auto;
-    padding: 26px 24px 96px;
-    position: relative;
-    font-family: var(--font-body);
-    color: var(--ink);
-    background: var(--bg);
-    -webkit-font-smoothing: antialiased;
+  a { color: var(--red); }
+  a:hover { color: var(--red-dark); }
+  textarea::placeholder, input::placeholder { color: var(--faint-2); }
+  textarea:focus, input:focus { outline: none; }
+  .op-textarea:focus { border-color: var(--red-focus); box-shadow: 0 0 0 3px rgba(192,74,46,0.10); }
+  ::selection { background: #f4cdc0; }
+  @keyframes op-spin { to { transform: rotate(360deg); } }
+  @keyframes op-rise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+  /* ---- app shell ---- */
+  .op-shell {
+    position: relative; height: 100vh; height: 100dvh;
+    display: flex; flex-direction: column;
+    background: var(--paper-bg);
+    font-family: var(--serif-b); color: var(--ink);
+    overflow: hidden;
+  }
+  .op-noise {
+    position: fixed; inset: 0; pointer-events: none; z-index: 0;
+    opacity: 0.05; mix-blend-mode: multiply;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
   }
 
-  /* ---- OnPaper wordmark (replaces the portal masthead) ---- */
-  .op-mast { text-align: center; margin: 4px 0 18px; }
-  .op-wordmark {
-    font-family: var(--font-display);
-    font-size: 30px; font-weight: 600; letter-spacing: -0.01em;
-    color: var(--ink); margin: 0;
+  /* ---- header ---- */
+  .op-header { flex-shrink: 0; position: relative; z-index: 2; background: var(--paper-bg); border-bottom: 1px solid var(--line); }
+  .op-header-in { max-width: 1000px; margin: 0 auto; padding: 26px 32px; display: flex; align-items: baseline; justify-content: space-between; gap: 16px; }
+  .op-wordmark { font-family: var(--serif-d); font-size: 26px; letter-spacing: -0.01em; }
+  .op-wordmark .op-red, .op-red { color: var(--red); }
+  .op-meta { font-family: var(--mono); font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--mono-muted); }
+
+  /* ---- scroll region ---- */
+  .op-scroll { flex: 1; overflow-y: auto; position: relative; z-index: 1; }
+
+  /* ---- hero ---- */
+  .op-hero { max-width: 1000px; margin: 0 auto; padding: 64px 32px 8px; text-align: center; }
+  .op-h1 { font-family: var(--serif-d); font-weight: 400; font-size: clamp(30px, 5.2vw, 62px); line-height: 1.05; letter-spacing: -0.015em; margin: 0 auto; white-space: nowrap; }
+  .op-wavy { text-decoration: underline wavy var(--red); text-decoration-thickness: 2px; text-underline-offset: 8px; }
+  .op-sub { max-width: 560px; margin: 26px auto 0; font-size: 19px; line-height: 1.6; color: var(--ink-3); text-wrap: pretty; }
+
+  /* ---- input section ---- */
+  .op-io-sec { max-width: 840px; margin: 0 auto; padding: 48px 32px 24px; }
+  .op-io { display: flex; flex-wrap: wrap; gap: 30px; justify-content: center; }
+  .op-col { flex: 1 1 330px; max-width: 360px; display: flex; flex-direction: column; gap: 11px; }
+  .op-labelrow { height: 16px; }
+  .op-label { font-family: var(--mono); font-size: 11px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--mono-muted); display: flex; justify-content: space-between; }
+  .op-label[hidden] { display: none; }
+  .op-count { color: var(--faint-3); }
+  .op-textarea {
+    width: 100%; height: 508px; resize: none;
+    padding: 22px 24px 22px 58px;
+    border: 1px solid var(--line-in); border-radius: 3px;
+    background: var(--paper);
+    background-image: linear-gradient(90deg, transparent 43px, var(--rule) 43px, var(--rule) 44px, transparent 44px);
+    font-family: var(--mono); font-size: 13px; line-height: 1.7; color: var(--ink);
+    box-shadow: 0 1px 0 #fff inset, 2px 3px 0 rgba(120,100,60,0.06);
+    transition: border-color .18s, box-shadow .18s;
   }
 
-  /* ---- Fit tool (job-fit gap finder) ---- */
-  .fit { max-width: var(--maxw); margin: 0 auto; padding-top: 4px; }
-  .fit-intro { color: var(--ink-soft); font-size: 15px; line-height: 1.5; margin: 0 0 12px; }
-  .fit-usage { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; margin: 0 0 var(--gap); }
-  .fit-remaining { font-size: 13px; font-weight: 600; color: var(--ink-soft); }
-  .fit-remaining.is-empty { color: #b23b3b; }
-  .fit-coupon { display: inline-flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-  .fit-coupon-input { width: 150px; padding: 7px 10px; font-size: 13px; }
-  .fit-coupon-msg { font-size: 13px; color: var(--ink-faint); }
-  .fit-coupon-msg.error { color: #b23b3b; }
-  .fit-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 360px)); justify-content: center; gap: var(--gap); }
-  .fit-field { display: flex; flex-direction: column; gap: 6px; }
-  .fit-label { font-size: 12px; letter-spacing: .04em; text-transform: uppercase; color: var(--ink-faint); }
-  .fit-input-wrap { position: relative; aspect-ratio: 1 / 1; }
-  .fit-input-wrap .fit-input { height: 100%; padding-right: 34px; } /* square field; keep text clear of the × */
-  .fit-x {
-    position: absolute; top: 8px; right: 8px;
-    border: none; background: var(--surface); cursor: pointer; color: var(--ink-faint);
-    font-size: 18px; line-height: 1; padding: 2px 7px; border-radius: 6px;
-  }
-  .fit-x:hover { color: var(--ink); background: var(--line); }
-  .fit-x[hidden] { display: none; }
-  .fit-input {
-    font-family: var(--font-body); font-size: 14px; line-height: 1.5; color: var(--ink);
-    background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius);
-    padding: 10px 12px; width: 100%; resize: none;
-  }
-  .fit-input:focus { outline: none; border-color: var(--accent); }
-  .fit-actions { display: flex; flex-direction: column; align-items: center; gap: 8px; margin: var(--gap) 0; }
-  .fit-btn {
-    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
-    font-family: var(--font-body); font-size: 14px; font-weight: 600; cursor: pointer;
-    color: var(--accent-ink); background: var(--accent); border: 1px solid var(--accent);
-    border-radius: var(--radius); padding: 9px 18px;
-  }
-  .fit-btn:hover { opacity: .9; }
-  .fit-btn:disabled { opacity: .5; cursor: default; }
-  .fit-spinner {
-    display: none; width: 13px; height: 13px; border-radius: 50%;
-    border: 2px solid rgba(255,255,255,.35); border-top-color: var(--accent-ink);
-    animation: fitspin .7s linear infinite;
-  }
-  .fit-btn.is-loading { opacity: 1; }            /* stay bright while working */
-  .fit-btn.is-loading .fit-spinner { display: inline-block; }
-  @keyframes fitspin { to { transform: rotate(360deg); } }
-  .fit-btn-sm { padding: 8px 14px; }
-  .fit-status { font-size: 13px; color: var(--ink-faint); }
-  .fit-status.error { color: #b23b3b; }
-  /* the report reads as an output document, not an editable field */
-  .fit-result {
-    color: var(--ink); background: var(--band-3); border: 1px solid var(--line);
-    border-left: 4px solid var(--accent); border-radius: var(--radius);
-    padding: 20px 22px; margin-bottom: var(--gap);
-  }
-  .report-head { border-bottom: 1px solid var(--line); padding-bottom: 12px; margin-bottom: 14px; }
-  .report-eyebrow { font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-faint); }
-  .report-role { font-family: var(--font-display); font-size: 20px; line-height: 1.25; color: var(--ink); margin-top: 4px; }
-  .report-match { font-size: 14px; font-weight: 700; margin-top: 8px; }
-  .report-match--vlow, .report-match--low { color: #b23b3b; }
-  .report-match--med  { color: #b5810f; }
-  .report-match--good, .report-match--vgood { color: #2f7d32; }
-  .report-deal { margin-bottom: 14px; font-size: 14px; line-height: 1.5; }
-  .report-deal-label { font-size: 11px; letter-spacing: .06em; text-transform: uppercase; font-weight: 700; color: #b23b3b; margin-right: 8px; }
-  .report-deal-text { color: var(--ink); }
-  .report-deal--none .report-deal-label { color: var(--ink-faint); }
-  .report-deal--none .report-deal-text { color: var(--ink-soft); }
-  .report-body { white-space: pre-wrap; font-family: var(--font-body); font-size: 15px; line-height: 1.6; }
-  .report-meta { font-size: 12px; color: var(--ink-faint); margin-top: 8px; }
-  .report-actions { display: flex; gap: 10px; margin-top: 16px; }
-  .report-btn {
-    font-family: var(--font-body); font-size: 13px; cursor: pointer; color: var(--ink);
-    background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 6px 12px;
-  }
-  .report-btn:hover { border-color: var(--accent); }
+  .op-tools { margin-top: 26px; display: flex; flex-direction: column; align-items: center; gap: 14px; }
+  .op-error { font-family: var(--mono); font-size: 12px; color: var(--red); background: var(--err-bg); border: 1px solid var(--err-border); padding: 9px 15px; border-radius: 4px; text-align: center; }
+  .op-sample { font-family: var(--mono); font-size: 12px; letter-spacing: 0.04em; color: var(--mono-muted); border-bottom: 1px dashed #c9bda2; padding-bottom: 1px; text-decoration: none; }
+  .op-sample:hover { color: var(--ink-3); }
 
-  @media (max-width: 640px) { .fit-grid { grid-template-columns: minmax(0, 360px); } }
+  /* ---- how it works ---- */
+  .op-how { max-width: 840px; margin: 56px auto 0; padding: 0 32px 60px; }
+  .op-how-div { height: 1px; background: var(--line); margin-bottom: 44px; }
+  .op-steps { display: flex; flex-wrap: wrap; gap: 36px; justify-content: space-between; }
+  .op-step { flex: 1 1 200px; }
+  .op-stepnum { font-family: var(--serif-d); font-size: 34px; color: var(--red); line-height: 1; }
+  .op-steph { font-family: var(--serif-b); font-weight: 500; font-size: 20px; margin: 14px 0 8px; }
+  .op-stepp { font-size: 15px; line-height: 1.6; color: var(--ink-4); margin: 0; }
+
+  /* ---- footer ---- */
+  .op-footer { max-width: 1000px; margin: 0 auto; padding: 26px 32px 40px; border-top: 1px solid var(--line); display: flex; flex-wrap: wrap; gap: 10px; justify-content: space-between; align-items: baseline; }
+  .op-foot-mark { font-family: var(--serif-d); font-size: 17px; }
+  .op-foot-tag { font-family: var(--mono); font-size: 11px; letter-spacing: 0.1em; color: var(--faint); }
+
+  /* ---- docked action bar ---- */
+  .op-bar { flex-shrink: 0; position: relative; z-index: 5; background: var(--paper); border-top: 1px solid var(--line-in); box-shadow: 0 -8px 26px rgba(60,45,25,0.07); }
+  .op-bar-in { position: relative; max-width: 840px; margin: 0 auto; padding: 15px 24px; display: flex; flex-direction: column; align-items: center; gap: 9px; }
+  .op-btn {
+    display: inline-flex; align-items: center; gap: 10px;
+    font-family: var(--mono); font-size: 14px; letter-spacing: 0.04em; font-weight: 500;
+    padding: 14px 32px; border-radius: 3px; border: none;
+    background: var(--ink); color: var(--paper); cursor: pointer;
+    box-shadow: 3px 4px 0 rgba(33,29,23,0.18);
+    transition: opacity .2s, box-shadow .2s, background .2s, transform .1s;
+  }
+  .op-btn:active { transform: translateY(1px); }
+  .op-btn:disabled { background: #b7ac93; cursor: not-allowed; opacity: 0.6; box-shadow: none; }
+  .op-btn.is-loading { opacity: 1; }
+  .op-btn-ghostdisabled {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-family: var(--mono); font-size: 14px; letter-spacing: 0.04em; font-weight: 500;
+    padding: 14px 24px; border-radius: 3px; border: 1px solid var(--line-in);
+    background: transparent; color: var(--faint-2); cursor: not-allowed;
+  }
+  .op-spin { display: inline-block; width: 14px; height: 14px; border: 2px solid rgba(253,250,241,0.35); border-top-color: var(--paper); border-radius: 50%; animation: op-spin 0.7s linear infinite; }
+  .op-getmore { font-family: var(--mono); font-size: 12px; padding: 0; border: none; background: transparent; color: var(--red); cursor: pointer; text-decoration: underline; text-underline-offset: 3px; text-decoration-color: #e2a996; }
+  .op-runline { font-family: var(--mono); font-size: 11px; letter-spacing: 0.02em; color: var(--faint); }
+  .op-runline .op-getmore { font-size: 11px; }
+  .op-barmsg { font-family: var(--mono); font-size: 11px; }
+
+  /* ---- results view ---- */
+  .op-results { max-width: 660px; margin: 0 auto; padding: 56px 32px 64px; animation: op-rise 0.45s ease both; }
+  .op-back { font-family: var(--mono); font-size: 12px; letter-spacing: 0.04em; color: #8a5330; display: inline-block; margin-bottom: 32px; text-decoration: none; }
+  .op-back:hover { color: var(--red); }
+  .op-samplebadge { display: inline-block; font-family: var(--mono); font-size: 10px; letter-spacing: 0.16em; color: var(--paper); background: var(--faint); padding: 3px 9px; border-radius: 2px; margin-bottom: 14px; }
+  .op-kicker { font-family: var(--mono); font-size: 12px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--red); margin-bottom: 10px; }
+  .op-rtitle { font-family: var(--serif-d); font-weight: 400; font-size: 40px; margin: 0 0 10px; letter-spacing: -0.01em; line-height: 1.1; }
+  .op-rmeta { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; margin: 0 0 16px; }
+  .op-match { font-family: var(--mono); font-size: 12px; letter-spacing: 0.1em; text-transform: uppercase; font-weight: 500; }
+  .op-match .op-match-val { font-weight: 600; }
+  .op-match--vlow, .op-match--low { color: var(--red); }
+  .op-match--med { color: #b5810f; }
+  .op-match--good, .op-match--vgood { color: var(--ok); }
+  .op-rstamp { font-family: var(--mono); font-size: 11px; color: var(--faint); }
+  .op-deal { font-size: 14px; line-height: 1.5; margin: 0 0 24px; }
+  .op-deal-label { font-family: var(--mono); font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; font-weight: 500; color: var(--red); margin-right: 8px; }
+  .op-deal--none .op-deal-label { color: var(--mono-muted); }
+  .op-deal-text { color: var(--ink); }
+  .op-deal--none .op-deal-text { color: var(--ink-3); }
+  .op-intro { font-size: 16px; color: var(--ink-4); margin: 0 0 38px; line-height: 1.55; text-wrap: pretty; }
+
+  .op-gap { position: relative; background: var(--paper); border: 1px solid var(--card-line); border-radius: 3px; padding: 28px 30px 30px; margin-bottom: 20px; box-shadow: 3px 4px 0 rgba(120,100,60,0.06); }
+  .op-gap-tags { display: flex; align-items: center; gap: 8px; margin-bottom: 16px; }
+  .op-gap-num { font-family: var(--mono); font-size: 11px; letter-spacing: 0.16em; color: var(--paper); background: var(--red); display: inline-block; padding: 3px 9px; border-radius: 2px; }
+  .op-gap-kind { font-family: var(--mono); font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; padding: 3px 8px; border-radius: 2px; border: 1px solid var(--tag-border); }
+  .op-gap-kind--hard { color: var(--red); border-color: var(--tag-border); }
+  .op-gap-kind--closable { color: var(--mono-muted); border-color: var(--line-in); }
+  .op-gap-title { font-family: var(--serif-b); font-weight: 500; font-size: 23px; margin: 0 0 11px; line-height: 1.3; }
+  .op-gap-detail { font-size: 16px; line-height: 1.62; color: var(--ink-3); margin: 0 0 20px; text-wrap: pretty; }
+  .op-fix { display: flex; gap: 14px; align-items: flex-start; border-top: 1px dashed var(--dash); padding-top: 16px; }
+  .op-fix-caret { font-family: var(--serif-d); font-size: 24px; color: var(--red); line-height: 0.9; margin-top: -2px; }
+  .op-fix-kicker { font-family: var(--mono); font-size: 10px; letter-spacing: 0.14em; color: var(--red); margin-bottom: 5px; }
+  .op-fix-text { font-size: 15px; line-height: 1.6; color: var(--ink-2); margin: 0; text-wrap: pretty; }
+
+  .op-report-raw { white-space: pre-wrap; font-family: var(--serif-b); font-size: 15px; line-height: 1.65; color: var(--ink-2); background: var(--paper); border: 1px solid var(--card-line); border-left: 3px solid var(--red); border-radius: 3px; padding: 22px 24px; }
+
+  .op-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 24px; align-items: center; }
+  .op-rbtn { font-family: var(--mono); font-size: 13px; letter-spacing: 0.04em; cursor: pointer; color: var(--ink-3); background: transparent; border: 1px solid #cdbf9f; border-radius: 3px; padding: 12px 22px; }
+  .op-rbtn:hover { border-color: var(--red); color: var(--ink); }
+
+  /* ---- pay modal ---- */
+  .op-modal-back { position: fixed; inset: 0; z-index: 40; background: rgba(40,30,15,0.42); display: flex; align-items: center; justify-content: center; padding: 24px; }
+  .op-modal { width: 100%; max-width: 420px; background: var(--paper); border: 1px solid var(--line-in); border-radius: 12px; box-shadow: 0 24px 60px rgba(40,30,15,0.34); overflow: hidden; max-height: 92vh; overflow-y: auto; }
+  .op-modal-head { display: flex; align-items: flex-start; justify-content: space-between; padding: 22px 24px 16px; border-bottom: 1px solid var(--card-line2); }
+  .op-modal-title { font-family: var(--serif-d); font-size: 22px; color: var(--ink); line-height: 1.15; }
+  .op-modal-sub { font-family: var(--mono); font-size: 11px; letter-spacing: 0.02em; color: var(--faint); margin-top: 5px; }
+  .op-modal-x { font-family: var(--mono); font-size: 18px; line-height: 1; padding: 4px 6px; border: none; background: transparent; color: var(--faint-2); cursor: pointer; }
+  .op-packs { padding: 18px 24px 6px; display: flex; flex-direction: column; gap: 10px; }
+  .op-pack { width: 100%; display: flex; align-items: center; justify-content: space-between; padding: 15px 18px; border: 1px solid var(--card-line2); background: var(--paper-lt); border-radius: 8px; text-align: left; opacity: 0.72; cursor: default; }
+  .op-pack--best { border-color: var(--tag-border); background: var(--best-bg); }
+  .op-pack-left { display: flex; flex-direction: column; gap: 3px; }
+  .op-pack-label { font-family: var(--mono); font-size: 15px; color: var(--ink); }
+  .op-pack-per { font-family: var(--mono); font-size: 11px; color: var(--faint); }
+  .op-pack-right { display: flex; align-items: center; gap: 10px; }
+  .op-pack-soon { font-family: var(--mono); font-size: 9px; letter-spacing: 0.12em; color: var(--mono-muted); border: 1px solid var(--line-in); border-radius: 20px; padding: 3px 8px; }
+  .op-pack-price { font-family: var(--serif-d); font-size: 20px; color: var(--red); }
+  .op-coupon-sec { padding: 14px 24px 22px; }
+  .op-coupon-in { border-top: 1px dashed var(--card-line); padding-top: 16px; }
+  .op-coupon-kick { font-family: var(--mono); font-size: 10px; letter-spacing: 0.14em; color: var(--mono-muted); padding-bottom: 9px; }
+  .op-coupon-row { display: flex; align-items: center; gap: 8px; }
+  .op-coupon-input { flex: 1; min-width: 0; padding: 10px 12px; border: 1px solid var(--line-in); border-radius: 6px; background: var(--paper-lt); font-family: var(--mono); font-size: 13px; color: var(--ink); }
+  .op-coupon-apply { font-family: var(--mono); font-size: 13px; padding: 10px 16px; border: 1px solid #cdbf9f; background: transparent; border-radius: 6px; color: var(--ink-3); cursor: pointer; }
+  .op-coupon-apply:hover { border-color: var(--red); }
+  .op-coupon-apply:disabled { opacity: 0.5; cursor: default; }
+  .op-coupon-msg { font-family: var(--mono); font-size: 11px; margin-top: 9px; }
+
+  /* ---- responsive ---- */
   @media (max-width: 560px) {
-    #app { padding: 22px 18px 80px; }
-    .op-wordmark { font-size: 26px; }
-    /* 16px keeps iOS from zooming in on focus */
-    .fit-input, .fit-coupon-input { font-size: 16px; }
+    .op-header-in, .op-hero, .op-io-sec, .op-how, .op-footer, .op-results { padding-left: 20px; padding-right: 20px; }
+    .op-h1 { white-space: normal; }
+    .op-textarea { height: min(508px, 52vh); }
+    .op-rtitle { font-size: 32px; }
+    .op-bar-in { padding: 13px 20px; }
   }
 </style>
 
-<div id="app">
-  <header class="op-mast">
-    <h1 class="op-wordmark">OnPaper</h1>
+<div class="op-shell">
+  <div class="op-noise"></div>
+
+  <!-- header -->
+  <header class="op-header">
+    <div class="op-header-in">
+      <span class="op-wordmark">On<span class="op-red">Paper</span></span>
+      <span class="op-meta">CV <span class="op-red">&#9829;</span> JD &middot; gap finder</span>
+    </div>
   </header>
 
-  <!-- ===== Job-fit gap finder ===== -->
-  <div id="view-fit">
-    <div class="fit">
-      <p class="fit-intro">Paste your CV and a job description. Get the 2–3 real gaps between them, each with one concrete fix. No score, no filler — only gaps the job actually asks for and the CV doesn’t show.</p>
+  <!-- scroll region -->
+  <div class="op-scroll">
 
-      <div class="fit-usage">
-        <span id="fitRemaining" class="fit-remaining"></span>
-        <span class="fit-coupon">
-          <input id="fitCoupon" class="fit-input fit-coupon-input ph-no-capture" type="text" placeholder="Beta coupon" autocomplete="off" spellcheck="false" />
-          <button id="fitCouponBtn" class="fit-btn fit-btn-sm" type="button">Redeem</button>
-          <span id="fitCouponMsg" class="fit-coupon-msg" role="status" aria-live="polite"></span>
-        </span>
-      </div>
+    <!-- ============ INPUT VIEW ============ -->
+    <div id="viewInput">
+      <section class="op-hero">
+        <h1 class="op-h1">See your CV like <span class="op-wavy">Talent Acquisition</span></h1>
+        <p class="op-sub">Paste CV and job description <span class="op-red">&rsaquo;</span> Get gaps and how to fix them</p>
+      </section>
 
-      <div class="fit-grid">
-        <div class="fit-field">
-          <span class="fit-label">Your CV</span>
-          <div class="fit-input-wrap">
-            <textarea id="fitCv" class="fit-input ph-no-capture" rows="12" placeholder="Paste your CV as plain text…" spellcheck="false"></textarea>
-            <button type="button" class="fit-x" data-clear="fitCv" aria-label="Clear your CV" title="Clear" hidden>×</button>
+      <section class="op-io-sec">
+        <div class="op-io">
+          <div class="op-col">
+            <div class="op-labelrow">
+              <label class="op-label" id="cvLabel" for="fitCv" hidden><span>Your CV</span><span class="op-count" id="cvCount"></span></label>
+            </div>
+            <textarea id="fitCv" class="op-textarea ph-no-capture" placeholder="Paste your CV here&hellip;" spellcheck="false"></textarea>
+          </div>
+          <div class="op-col">
+            <div class="op-labelrow">
+              <label class="op-label" id="jdLabel" for="fitJd" hidden><span>Job description</span><span class="op-count" id="jdCount"></span></label>
+            </div>
+            <textarea id="fitJd" class="op-textarea ph-no-capture" placeholder="Paste the job description here&hellip;" spellcheck="false"></textarea>
           </div>
         </div>
-        <div class="fit-field">
-          <span class="fit-label">Job description</span>
-          <div class="fit-input-wrap">
-            <textarea id="fitJd" class="fit-input ph-no-capture" rows="12" placeholder="Paste the job description as plain text…" spellcheck="false"></textarea>
-            <button type="button" class="fit-x" data-clear="fitJd" aria-label="Clear the job description" title="Clear" hidden>×</button>
+
+        <div class="op-tools">
+          <div class="op-error" id="fitError" hidden></div>
+          <!-- Sample-result preview hidden for now. Restore by un-commenting; the
+               handler + SAMPLE data below are kept intact and simply unreferenced.
+          <a href="#" class="op-sample" id="fitSample">preview a sample result &rarr;</a>
+          -->
+        </div>
+      </section>
+
+      <section class="op-how">
+        <div class="op-how-div"></div>
+        <div class="op-steps">
+          <div class="op-step">
+            <div class="op-stepnum">01</div>
+            <h3 class="op-steph">Paste both</h3>
+            <p class="op-stepp">Your CV on the left, the job description on the right. Plain text, nothing to format.</p>
+          </div>
+          <div class="op-step">
+            <div class="op-stepnum">02</div>
+            <h3 class="op-steph">Find the gaps</h3>
+            <p class="op-stepp">OnPaper reads both and marks up only the differences that matter to this role.</p>
+          </div>
+          <div class="op-step">
+            <div class="op-stepnum">03</div>
+            <h3 class="op-steph">Fix each one</h3>
+            <p class="op-stepp">Every gap comes with a single concrete correction you can make before you apply.</p>
           </div>
         </div>
-      </div>
+      </section>
+    </div>
 
-      <div class="fit-actions">
-        <button id="fitRun" class="fit-btn" type="button">
-          <span class="fit-spinner" aria-hidden="true"></span>
-          <span class="fit-btn-label">Find gaps</span>
+    <!-- ============ RESULTS VIEW ============ -->
+    <div id="viewResults" hidden>
+      <div class="op-results">
+        <a href="#" class="op-back" id="fitBack">&larr; back to inputs</a>
+        <span class="op-samplebadge" id="sampleBadge" hidden>Sample</span>
+        <div class="op-kicker">Marked up</div>
+        <h2 class="op-rtitle" id="resultTitle"></h2>
+        <div class="op-rmeta">
+          <span class="op-match" id="resultMatch" hidden>Match &middot; <span class="op-match-val" id="resultMatchVal"></span></span>
+          <span class="op-rstamp" id="resultStamp"></span>
+        </div>
+        <p class="op-deal" id="resultDeal" hidden><span class="op-deal-label">Dealbreakers</span><span class="op-deal-text" id="resultDealText"></span></p>
+        <p class="op-intro">What the role asks for that your CV doesn&rsquo;t yet show &mdash; with one concrete fix each.</p>
+
+        <div id="gapList"></div>
+
+        <div class="op-actions">
+          <button type="button" class="op-rbtn" id="fitAgain">edit and run again</button>
+          <button type="button" class="op-rbtn" id="fitCopy">Copy</button>
+          <button type="button" class="op-rbtn" id="fitDownload">Download</button>
+        </div>
+      </div>
+    </div>
+
+    <footer class="op-footer">
+      <span class="op-foot-mark">On<span class="op-red">Paper</span></span>
+      <span class="op-foot-tag">Gaps, not scores. Fixes, not filler.</span>
+    </footer>
+  </div>
+
+  <!-- docked action bar (input view only) -->
+  <div class="op-bar" id="actionBar">
+    <div class="op-bar-in">
+      <!-- has runs (or unknown balance) -->
+      <div id="barRun" style="display:flex;flex-direction:column;align-items:center;gap:9px">
+        <button type="button" class="op-btn" id="fitRun">
+          <span class="op-spin" id="fitSpin" aria-hidden="true" hidden></span>
+          <span id="fitRunLabel">Find gaps</span>
         </button>
-        <span id="fitStatus" class="fit-status" role="status" aria-live="polite"></span>
+        <div class="op-runline" id="runLine">
+          <span id="runRemaining"></span><button type="button" class="op-getmore" id="getMore1">get more runs</button>
+        </div>
       </div>
+      <!-- out of runs -->
+      <div id="barOut" hidden style="display:flex;flex-direction:column;align-items:center;gap:9px">
+        <button type="button" class="op-btn-ghostdisabled" disabled>Find gaps</button>
+        <button type="button" class="op-getmore" id="getMore2">Out of runs &mdash; get more</button>
+      </div>
+      <span class="op-barmsg" id="barMsg" hidden></span>
+    </div>
+  </div>
+</div>
 
-      <div id="fitResult" class="fit-result ph-no-capture" hidden></div>
+<!-- pay modal -->
+<div class="op-modal-back" id="payBack" hidden>
+  <div class="op-modal" id="payModal" role="dialog" aria-modal="true" aria-label="Get more runs">
+    <div class="op-modal-head">
+      <div>
+        <div class="op-modal-title">Get more runs</div>
+        <div class="op-modal-sub">One run = one CV &times; job comparison</div>
+      </div>
+      <button type="button" class="op-modal-x" id="payClose" aria-label="Close">&times;</button>
+    </div>
+
+    <div class="op-packs">
+      <div class="op-pack">
+        <span class="op-pack-left"><span class="op-pack-label">3 runs</span><span class="op-pack-per">&euro;1.33 / run</span></span>
+        <span class="op-pack-right"><span class="op-pack-soon">Coming soon</span><span class="op-pack-price">&euro;4</span></span>
+      </div>
+      <div class="op-pack">
+        <span class="op-pack-left"><span class="op-pack-label">10 runs</span><span class="op-pack-per">&euro;1.20 / run</span></span>
+        <span class="op-pack-right"><span class="op-pack-soon">Coming soon</span><span class="op-pack-price">&euro;12</span></span>
+      </div>
+      <div class="op-pack op-pack--best">
+        <span class="op-pack-left"><span class="op-pack-label">25 runs</span><span class="op-pack-per">&euro;1.00 / run</span></span>
+        <span class="op-pack-right"><span class="op-pack-soon">Coming soon</span><span class="op-pack-price">&euro;25</span></span>
+      </div>
+    </div>
+
+    <div class="op-coupon-sec">
+      <div class="op-coupon-in">
+        <div class="op-coupon-kick">HAVE A CODE?</div>
+        <div class="op-coupon-row">
+          <input id="fitCoupon" class="op-coupon-input ph-no-capture" placeholder="Enter code" autocomplete="off" spellcheck="false" />
+          <button type="button" class="op-coupon-apply" id="fitCouponBtn">Apply</button>
+        </div>
+        <div class="op-coupon-msg" id="fitCouponMsg" role="status" aria-live="polite"></div>
+      </div>
     </div>
   </div>
 </div>
@@ -233,19 +432,24 @@
   try { uid = localStorage.getItem(LS_UID) || ""; if (!uid) { uid = uuid(); localStorage.setItem(LS_UID, uid); } }
   catch (e) { uid = uuid(); }
 
+  var $ = function (id) { return document.getElementById(id); };
   var els = {
-    cv:       document.getElementById("fitCv"),
-    jd:       document.getElementById("fitJd"),
-    run:      document.getElementById("fitRun"),
-    status:   document.getElementById("fitStatus"),
-    result:   document.getElementById("fitResult"),
-    remaining:document.getElementById("fitRemaining"),
-    coupon:   document.getElementById("fitCoupon"),
-    couponBtn:document.getElementById("fitCouponBtn"),
-    couponMsg:document.getElementById("fitCouponMsg")
+    cv: $("fitCv"), jd: $("fitJd"),
+    cvLabel: $("cvLabel"), jdLabel: $("jdLabel"), cvCount: $("cvCount"), jdCount: $("jdCount"),
+    run: $("fitRun"), runLabel: $("fitRunLabel"), spin: $("fitSpin"),
+    error: $("fitError"), sample: $("fitSample"),
+    viewInput: $("viewInput"), viewResults: $("viewResults"), actionBar: $("actionBar"),
+    barRun: $("barRun"), barOut: $("barOut"), runLine: $("runLine"), runRemaining: $("runRemaining"), barMsg: $("barMsg"),
+    back: $("fitBack"), again: $("fitAgain"), copy: $("fitCopy"), download: $("fitDownload"),
+    sampleBadge: $("sampleBadge"),
+    resultTitle: $("resultTitle"), resultMatch: $("resultMatch"), resultMatchVal: $("resultMatchVal"),
+    resultStamp: $("resultStamp"), resultDeal: $("resultDeal"), resultDealText: $("resultDealText"),
+    gapList: $("gapList"),
+    payBack: $("payBack"), payModal: $("payModal"), payClose: $("payClose"),
+    getMore1: $("getMore1"), getMore2: $("getMore2"),
+    coupon: $("fitCoupon"), couponBtn: $("fitCouponBtn"), couponMsg: $("fitCouponMsg")
   };
-  if (!els.run) return; // view not present
-  var runLabel = els.run.querySelector(".fit-btn-label");
+  if (!els.run) return;
 
   function get(k) { try { return localStorage.getItem(k) || ""; } catch (e) { return ""; } }
   function set(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
@@ -260,68 +464,111 @@
     return "api_error";
   }
   var analysisRuns = 0;
+  var lastText = "";   // last raw report text (for Copy / Download)
 
-  // ---- restore CV/JD, wire per-field persistence + the × clear buttons ----
-  var fields = [
-    { ta: els.cv, ls: LS_CV, x: document.querySelector('.fit-x[data-clear="fitCv"]') },
-    { ta: els.jd, ls: LS_JD, x: document.querySelector('.fit-x[data-clear="fitJd"]') }
-  ];
-  fields.forEach(function (f) {
-    f.ta.value = get(f.ls);
-    function syncX() { if (f.x) f.x.hidden = f.ta.value.length === 0; }
-    syncX();
-    f.ta.addEventListener("input", function () { set(f.ls, f.ta.value); syncX(); reenable(); });
-    if (f.x) f.x.addEventListener("click", function () {
-      f.ta.value = ""; set(f.ls, "");
-      syncX(); reenable();
-      f.ta.focus();
-    });
-  });
-
-  function setStatus(msg, isError) {
-    els.status.textContent = msg || "";
-    els.status.classList.toggle("error", !!isError);
+  // ---- restore CV/JD, wire persistence + char-count labels ----
+  function syncCount(ta, label, count) {
+    var n = ta.value.trim().length;
+    label.hidden = n === 0;
+    count.textContent = n ? (n + " chars") : "";
   }
+  els.cv.value = get(LS_CV);
+  els.jd.value = get(LS_JD);
+  syncCount(els.cv, els.cvLabel, els.cvCount);
+  syncCount(els.jd, els.jdLabel, els.jdCount);
+  els.cv.addEventListener("input", function () { set(LS_CV, els.cv.value); syncCount(els.cv, els.cvLabel, els.cvCount); onEdit(); });
+  els.jd.addEventListener("input", function () { set(LS_JD, els.jd.value); syncCount(els.jd, els.jdLabel, els.jdCount); onEdit(); });
+
+  function setError(msg) { els.error.textContent = msg || ""; els.error.hidden = !msg; }
 
   var loading = false;
   function setLoading(on) {
     loading = on;
     els.run.classList.toggle("is-loading", on);
-    els.run.disabled = on;                 // disabled while working…
-    runLabel.textContent = on ? "Finding gaps…" : "Find gaps";
+    els.run.disabled = on;
+    els.spin.hidden = !on;
+    updateRunLabel();
   }
 
   // Remaining analyses (server-authoritative; null = unknown until first action).
   var remaining = null;
+  function updateRunLabel() {
+    if (loading) { els.runLabel.textContent = "Finding gaps…"; return; }
+    els.runLabel.textContent = (remaining === 1) ? "Find gaps · last run" : "Find gaps";
+  }
+  function renderBalance() {
+    updateRunLabel();
+    // resting line: show remaining (when known) + always-available "get more runs" so a
+    // coupon can be redeemed even with runs left. (Small addition beyond the mock — flagged.)
+    if (remaining === 0) {
+      els.barRun.hidden = true;
+      els.barOut.hidden = false;
+    } else {
+      els.barRun.hidden = false;
+      els.barOut.hidden = true;
+      if (typeof remaining === "number") {
+        els.runRemaining.textContent = remaining + (remaining === 1 ? " run left · " : " runs left · ");
+      } else {
+        els.runRemaining.textContent = "";
+      }
+    }
+  }
   function updateRemaining(n) {
     if (typeof n !== "number" || isNaN(n)) return;
     remaining = n;
-    if (els.remaining) {
-      els.remaining.textContent = n + (n === 1 ? " analysis left" : " analyses left");
-      els.remaining.classList.toggle("is-empty", n <= 0);
-    }
-    if (n <= 0) els.run.disabled = true; // no uses → block until a coupon is redeemed
+    renderBalance();
+    if (n <= 0) els.run.disabled = true;
   }
-  // Editing a field re-enables the button — but never mid-run, and never when empty.
-  function reenable() { if (!loading && remaining !== 0) els.run.disabled = false; }
+  function findDisabled() {
+    return loading || !els.cv.value.trim() || !els.jd.value.trim() || remaining === 0;
+  }
+  function refreshRunDisabled() { els.run.disabled = findDisabled(); }
+  function onEdit() {
+    setError("");
+    if (!loading && remaining !== 0) els.run.disabled = findDisabled();
+  }
 
-  // ---- report rendering ----
+  // ---- report parsing ----
   function parseReport(text) {
-    var role = "", company = "", match = "", deal = "", body = [];
-    (text || "").split(/\r?\n/).forEach(function (l) {
+    var role = "", company = "", match = "", deal = "", rest = [];
+    var lines = (text || "").split(/\r?\n/);
+    var headerDone = false;
+    lines.forEach(function (l) {
       var m;
-      if ((m = l.match(/^\s*ROLE:\s*(.*)$/i)))              { role = m[1].trim(); }
-      else if ((m = l.match(/^\s*COMPANY:\s*(.*)$/i)))       { company = m[1].trim(); }
-      else if ((m = l.match(/^\s*MATCH:\s*(.*)$/i)))         { match = m[1].trim(); }
-      else if ((m = l.match(/^\s*DEALBREAKERS?:\s*(.*)$/i))) { deal = m[1].trim(); }
-      else { body.push(l); }
+      if (!headerDone && (m = l.match(/^\s*ROLE:\s*(.*)$/i)))              { role = m[1].trim(); }
+      else if (!headerDone && (m = l.match(/^\s*COMPANY:\s*(.*)$/i)))       { company = m[1].trim(); }
+      else if (!headerDone && (m = l.match(/^\s*MATCH:\s*(.*)$/i)))         { match = m[1].trim(); }
+      else if (!headerDone && (m = l.match(/^\s*DEALBREAKERS?:\s*(.*)$/i))) { deal = m[1].trim(); }
+      else { if (l.trim() !== "" || rest.length) headerDone = true; rest.push(l); }
     });
-    while (body.length && body[0].trim() === "") body.shift();
-    return { role: role, company: company, match: match, deal: deal, body: body.join("\n").trim() };
+    while (rest.length && rest[0].trim() === "") rest.shift();
+    var body = rest.join("\n").trim();
+    return { role: role, company: company, match: match, deal: deal, body: body };
   }
-  function subjectLine(role, company) {
-    if (role && company) return role + " — " + company;
-    return role || company || "";
+  // Split the body into gap cards. Returns [] if it doesn't look like GAP N: blocks.
+  function parseGaps(body) {
+    var lines = (body || "").split(/\r?\n/);
+    var gaps = [], cur = null, section = null;
+    function push() { if (cur) gaps.push(cur); }
+    for (var i = 0; i < lines.length; i++) {
+      var l = lines[i], m;
+      if ((m = l.match(/^\s*GAP\s+\d+\s*:\s*(.*)$/i))) {
+        push();
+        var title = m[1].trim(), kind = "";
+        var tag = title.match(/\[\s*(hard|closable)\s*\]\s*$/i);
+        if (tag) { kind = tag[1].toLowerCase(); title = title.replace(/\[\s*(hard|closable)\s*\]\s*$/i, "").trim(); }
+        cur = { num: String(gaps.length + 1).padStart(2, "0"), title: title, kind: kind, detail: "", fix: "" };
+        section = "detail";
+      } else if (cur && (m = l.match(/^\s*Evidence\s*:\s*(.*)$/i))) {
+        section = "detail"; cur.detail = m[1].trim();
+      } else if (cur && (m = l.match(/^\s*Fix\s*:\s*(.*)$/i))) {
+        section = "fix"; cur.fix = m[1].trim();
+      } else if (cur && section && l.trim() !== "") {
+        cur[section] = (cur[section] ? cur[section] + " " : "") + l.trim();
+      }
+    }
+    push();
+    return gaps;
   }
   function matchKey(match) {
     var m = (match || "").toLowerCase();
@@ -332,69 +579,93 @@
     if (m.indexOf("good") === 0) return "good";
     return "";
   }
-  function el(tag, cls, txt) {
-    var e = document.createElement(tag);
-    if (cls) e.className = cls;
-    if (txt != null) e.textContent = txt;
-    return e;
-  }
-  function renderReport(out) {
-    var r = parseReport(out);
+  function el(tag, cls, txt) { var e = document.createElement(tag); if (cls) e.className = cls; if (txt != null) e.textContent = txt; return e; }
+
+  // ---- render results ----
+  function showResults(text, isSample) {
+    lastText = text || "";
+    var r = parseReport(text);
+    var gaps = parseGaps(r.body);
     var now = new Date();
-    var stamp = now.toLocaleString(undefined,
-      { day: "numeric", month: "short", year: "numeric", hour: "numeric", minute: "2-digit" });
-    var subject = subjectLine(r.role, r.company);
+    var stamp = now.toLocaleString(undefined, { day: "numeric", month: "short", year: "numeric", hour: "numeric", minute: "2-digit" });
 
-    var dealNone = !r.deal || /^none\b/i.test(r.deal);
+    els.sampleBadge.hidden = !isSample;
 
-    // Plain-text version used by Copy / Download.
-    var plain = "OnPaper — Match report\n" +
+    // title: role — company if present, else gap count
+    var subject = (r.role && r.company) ? (r.role + " — " + r.company) : (r.role || r.company || "");
+    if (subject) els.resultTitle.textContent = subject;
+    else els.resultTitle.textContent = (gaps.length || (r.body ? 1 : 0)) + (gaps.length === 1 ? " gap found" : " gaps found");
+
+    // match grade
+    if (r.match) {
+      els.resultMatch.hidden = false;
+      els.resultMatch.className = "op-match op-match--" + matchKey(r.match);
+      els.resultMatchVal.textContent = r.match;
+    } else { els.resultMatch.hidden = true; }
+
+    els.resultStamp.textContent = "Generated " + stamp;
+
+    // dealbreakers
+    if (r.deal) {
+      els.resultDeal.hidden = false;
+      var none = /^none\b/i.test(r.deal);
+      els.resultDeal.className = "op-deal" + (none ? " op-deal--none" : "");
+      els.resultDealText.textContent = r.deal;
+    } else { els.resultDeal.hidden = true; }
+
+    // gap cards (or raw fallback)
+    els.gapList.innerHTML = "";
+    if (gaps.length) {
+      gaps.forEach(function (g) {
+        var card = el("div", "op-gap");
+        var tags = el("div", "op-gap-tags");
+        tags.appendChild(el("span", "op-gap-num", "GAP " + g.num));
+        if (g.kind) tags.appendChild(el("span", "op-gap-kind op-gap-kind--" + g.kind, g.kind === "hard" ? "Hard" : "Closable"));
+        card.appendChild(tags);
+        card.appendChild(el("h3", "op-gap-title", g.title || "Gap"));
+        if (g.detail) card.appendChild(el("p", "op-gap-detail", g.detail));
+        if (g.fix) {
+          var fix = el("div", "op-fix");
+          fix.appendChild(el("span", "op-fix-caret", "∧"));
+          var fixBody = el("div");
+          fixBody.appendChild(el("div", "op-fix-kicker", "INSERT · ONE FIX"));
+          fixBody.appendChild(el("p", "op-fix-text", g.fix));
+          fix.appendChild(fixBody);
+          card.appendChild(fix);
+        }
+        els.gapList.appendChild(card);
+      });
+    } else if (r.body) {
+      // format varied — preserve the full report as readable text
+      els.gapList.appendChild(el("div", "op-report-raw", r.body));
+    } else {
+      els.gapList.appendChild(el("div", "op-report-raw", "(No gaps returned.)"));
+    }
+
+    els.viewInput.hidden = true;
+    els.actionBar.hidden = true;
+    els.viewResults.hidden = false;
+    document.querySelector(".op-scroll").scrollTop = 0;
+  }
+
+  function plainText() {
+    var r = parseReport(lastText);
+    var subject = (r.role && r.company) ? (r.role + " — " + r.company) : (r.role || r.company || "");
+    var stamp = new Date().toLocaleString(undefined, { day: "numeric", month: "short", year: "numeric", hour: "numeric", minute: "2-digit" });
+    return "OnPaper — Match report\n" +
       (subject ? subject + "\n" : "") +
       (r.match ? "Match: " + r.match + "\n" : "") +
       (r.deal ? "Dealbreakers: " + r.deal + "\n" : "") +
       "Generated " + stamp + "\n\n" +
       (r.body || "(No gaps returned.)");
+  }
 
-    els.result.innerHTML = "";
-    var head = el("div", "report-head");
-    head.appendChild(el("div", "report-eyebrow", "OnPaper · Match report"));
-    if (subject) head.appendChild(el("div", "report-role", subject));
-    if (r.match) head.appendChild(el("div", "report-match report-match--" + matchKey(r.match), "Match: " + r.match));
-    head.appendChild(el("div", "report-meta", "Generated " + stamp));
-    els.result.appendChild(head);
-
-    if (r.deal) {
-      var db = el("div", "report-deal" + (dealNone ? " report-deal--none" : ""));
-      db.appendChild(el("span", "report-deal-label", "Dealbreakers"));
-      db.appendChild(el("span", "report-deal-text", r.deal));
-      els.result.appendChild(db);
-    }
-
-    els.result.appendChild(el("div", "report-body", r.body || "(No gaps returned.)"));
-
-    var actions = el("div", "report-actions");
-    var copyBtn = el("button", "report-btn", "Copy");
-    copyBtn.type = "button";
-    copyBtn.addEventListener("click", function () {
-      navigator.clipboard.writeText(plain).then(function () {
-        copyBtn.textContent = "Copied";
-        setTimeout(function () { copyBtn.textContent = "Copy"; }, 1500);
-      }, function () { copyBtn.textContent = "Copy failed"; });
-    });
-    var dlBtn = el("button", "report-btn", "Download");
-    dlBtn.type = "button";
-    dlBtn.addEventListener("click", function () {
-      var blob = new Blob([plain], { type: "text/plain;charset=utf-8" });
-      var url = URL.createObjectURL(blob);
-      var a = document.createElement("a");
-      a.href = url;
-      a.download = "onpaper-match-report-" + now.toISOString().slice(0, 10) + ".txt";
-      document.body.appendChild(a); a.click(); a.remove();
-      URL.revokeObjectURL(url);
-    });
-    actions.appendChild(copyBtn);
-    actions.appendChild(dlBtn);
-    els.result.appendChild(actions);
+  function backToInput() {
+    els.viewResults.hidden = true;
+    els.viewInput.hidden = false;
+    els.actionBar.hidden = false;
+    renderBalance();
+    document.querySelector(".op-scroll").scrollTop = 0;
   }
 
   // ---- the call: POST to the OnPaper backend (holds the key + the prompt) ----
@@ -404,7 +675,6 @@
       headers: { "content-type": "application/json" },
       body: JSON.stringify({ cv: cv, jd: jd, token: uid })
     });
-
     var data = {};
     try { data = await res.json(); } catch (e) {}
     if (!res.ok) {
@@ -419,23 +689,18 @@
   els.run.addEventListener("click", async function () {
     var cv = els.cv.value.trim();
     var jd = els.jd.value.trim();
-    if (!cv || !jd) { setStatus("Paste both a CV and a job description.", true); return; }
+    if (!cv || !jd) { setError("Paste both a CV and a job description."); return; }
 
     analysisRuns++;
     var t0 = Date.now();
     track(analysisRuns > 1 ? "analysis_rerun" : "analysis_started", { cv_chars: cv.length, jd_chars: jd.length });
 
     setLoading(true);
-    setStatus("");
-    els.result.hidden = true;
+    setError("");
 
     try {
       var data = await callClaude(cv, jd);
       var out = data.text;
-      renderReport(out || "");
-      els.result.hidden = false;
-      setStatus("");
-      updateRemaining(data.remaining);
       var pr = parseReport(out || "");
       track("analysis_completed", {
         match: pr.match,
@@ -443,31 +708,79 @@
         has_dealbreakers: !!pr.deal && !/^none/i.test(pr.deal),
         duration_ms: Date.now() - t0
       });
-      // Success: label reverts but the button stays disabled until a field changes.
       setLoading(false);
-      els.run.disabled = true;
+      updateRemaining(data.remaining);
+      showResults(out || "", false);
     } catch (err) {
-      // Error: revert and allow an immediate retry.
       track("analysis_failed", { error_type: classifyErr(err), duration_ms: Date.now() - t0 });
       setLoading(false);
-      els.run.disabled = false;
       if (typeof err.remaining === "number") updateRemaining(err.remaining);
-      setStatus(err.message, true);
+      refreshRunDisabled();
+      setError(err.message);
     }
   });
 
-  // ---- coupon redemption ----
+  // ---- sample preview (no credit spent) ----
+  var SAMPLE = [
+    "ROLE: Senior Product Designer",
+    "COMPANY: Flink",
+    "MATCH: Good",
+    "DEALBREAKERS: None flagged.",
+    "",
+    "GAP 1: Quick-commerce scale isn't on the page [Closable]",
+    "  Evidence: The role centers on scaling non-food offerings and driving revenue inside a quick-commerce team. Your CV shows enterprise and SaaS design leadership, but nothing that reads as high-volume consumer marketplace or logistics.",
+    "  Fix: Add one line to your top role quantifying consumer scale — e.g. “Shipped navigation for a marketplace serving 2M+ weekly orders,” or reframe an existing project around growth and reach.",
+    "GAP 2: Navigation ownership is implied, not stated [Closable]",
+    "  Evidence: They specifically want someone to own the Navigation domain. Your CV lists design-systems and cross-functional work, but never names navigation or information architecture as a surface you owned.",
+    "  Fix: Retitle or tag one project “Navigation & IA” and describe the outcome: what got easier to find, and the metric that moved — task success, time-to-find, drop-off.",
+    "GAP 3: Impact is qualitative where the role wants numbers [Closable]",
+    "  Evidence: The JD frames the work around driving revenue growth and reaching new segments. Your CV emphasises turning complexity into clarity — strong, but it never ties design to a business figure.",
+    "  Fix: Attach one revenue or conversion number to a past initiative: “redesign lifted checkout conversion 12%” beats “transformed complexity into clarity.”"
+  ].join("\n");
+  // Sample preview is hidden from the UI for now (link commented out in the markup).
+  // SAMPLE + showResults(..., true) are kept intact; re-wire this when the link returns.
+  if (els.sample) els.sample.addEventListener("click", function (e) {
+    e.preventDefault();
+    track("sample_previewed", {});
+    showResults(SAMPLE, true);
+  });
+
+  // ---- results actions ----
+  els.back.addEventListener("click", function (e) { e.preventDefault(); backToInput(); });
+  els.again.addEventListener("click", function () { backToInput(); });
+  els.copy.addEventListener("click", function () {
+    var plain = plainText();
+    navigator.clipboard.writeText(plain).then(function () {
+      els.copy.textContent = "Copied"; setTimeout(function () { els.copy.textContent = "Copy"; }, 1500);
+    }, function () { els.copy.textContent = "Copy failed"; });
+  });
+  els.download.addEventListener("click", function () {
+    var blob = new Blob([plainText()], { type: "text/plain;charset=utf-8" });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement("a");
+    a.href = url; a.download = "onpaper-match-report-" + new Date().toISOString().slice(0, 10) + ".txt";
+    document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+  });
+
+  // ---- pay modal (packs "coming soon"; coupon is live) ----
+  function openPay() { els.payBack.hidden = false; track("get_more_opened", {}); setTimeout(function () { els.coupon.focus(); }, 30); }
+  function closePay() { els.payBack.hidden = true; }
+  els.getMore1.addEventListener("click", openPay);
+  els.getMore2.addEventListener("click", openPay);
+  els.payClose.addEventListener("click", closePay);
+  els.payBack.addEventListener("click", function (e) { if (e.target === els.payBack) closePay(); });
+  document.addEventListener("keydown", function (e) { if (e.key === "Escape" && !els.payBack.hidden) closePay(); });
+
+  // ---- coupon redemption (real backend) ----
   function couponMsg(msg, isError) {
-    if (!els.couponMsg) return;
     els.couponMsg.textContent = msg || "";
-    els.couponMsg.classList.toggle("error", !!isError);
+    els.couponMsg.style.color = isError ? "var(--red)" : "var(--ok)";
   }
-  if (els.couponBtn) els.couponBtn.addEventListener("click", async function () {
+  els.couponBtn.addEventListener("click", async function () {
     var code = (els.coupon.value || "").trim();
     if (!code) { couponMsg("Enter a coupon.", true); return; }
-
     els.couponBtn.disabled = true;
-    couponMsg("Redeeming…");
+    couponMsg("Redeeming…", false);
     try {
       var res = await fetch(REDEEM_URL, {
         method: "POST",
@@ -477,9 +790,10 @@
       var data = {};
       try { data = await res.json(); } catch (e) {}
       if (!res.ok) throw new Error(data.error || ("Redeem failed (" + res.status + ")"));
-      couponMsg(data.already ? "Coupon already applied." : "Added " + data.granted + " analyses.");
+      couponMsg(data.already ? "Coupon already applied." : "Added " + data.granted + " runs.", false);
       els.coupon.value = "";
       updateRemaining(data.remaining);
+      refreshRunDisabled();
       track("coupon_redeemed", { already: !!data.already, granted: data.granted || 0 });
     } catch (err) {
       couponMsg(err.message, true);
@@ -487,8 +801,11 @@
       els.couponBtn.disabled = false;
     }
   });
+  els.coupon.addEventListener("keydown", function (e) { if (e.key === "Enter") els.couponBtn.click(); });
 
-  // analytics: OnPaper opened (standalone site — always a load entry)
+  // init
+  renderBalance();
+  refreshRunDisabled();
   track("onpaper_opened", { entry: "load" });
 })();
 </script>
