@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#fbfbfa">
+<title>OnPaper</title>
+<meta name="description" content="Paste your CV and a job description. Get the 2–3 real gaps between them, each with one concrete fix.">
+<link rel="icon" href="favicon.ico" sizes="any">
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+<link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="manifest" href="site.webmanifest">
+<!-- PostHog: pageviews + autocapture, session replay OFF. Anonymous (never identified). -->
+<script>
+  !function(t,e){var o,n,p,r;e.__SV||(window.posthog=e,e._i=[],e.init=function(i,s,a){function g(t,e){var o=e.split(".");2==o.length&&(t=t[o[0]],e=o[1]),t[e]=function(){t.push([e].concat(Array.prototype.slice.call(arguments,0)))}}(p=t.createElement("script")).type="text/javascript",p.crossOrigin="anonymous",p.async=!0,p.src=s.api_host.replace(".i.posthog.com","-assets.i.posthog.com")+"/static/array.js",(r=t.getElementsByTagName("script")[0]).parentNode.insertBefore(p,r);var u=e;for(void 0!==a?u=e[a]=[]:a="posthog",u.people=u.people||[],u.toString=function(t){var e="posthog";return"posthog"!==a&&(e+="."+a),t||(e+=" (stub)"),e},u.people.toString=function(){return u.toString(1)+".people (stub)"},o="init capture register register_once register_for_session unregister unregister_for_session getFeatureFlag getFeatureFlagPayload isFeatureEnabled reloadFeatureFlags updateEarlyAccessFeatureEnrollment getEarlyAccessFeatures on onFeatureFlags onSessionId getSurveys getActiveMatchingSurveys renderSurvey canRenderSurvey getNextSurveyStep identify setPersonProperties group resetGroups setPersonPropertiesForFlags resetPersonPropertiesForFlags setGroupPropertiesForFlags resetGroupPropertiesForFlags reset get_distinct_id getGroups get_session_id get_session_replay_url alias set_config startSessionRecording stopSessionRecording sessionRecordingStarted captureException loadToolbar get_property getSessionProperty createPersonProfile opt_in_capturing opt_out_capturing has_opted_in_capturing has_opted_out_capturing clear_opt_in_out_capturing debug getPageViewId captureTraceFeedback captureTraceMetric".split(" "),n=0;n<o.length;n++)g(u,o[n]);e._i.push([i,s,a])},e.__SV=1)}(document,window.posthog||[]);
+  posthog.init('phc_AtdHeL5respAzZDyFPjf9HULAHx9ECoDJqLqJAvRAFWt', {
+    api_host: 'https://eu.i.posthog.com',
+    person_profiles: 'identified_only',
+    capture_pageview: true,
+    autocapture: true,
+    disable_session_recording: true
+  });
+</script>
+
+<style>
+  /* ================================================================
+     OnPaper — standalone. Tokens carried over from the job-triage
+     portal so the tool looks identical; portal-only chrome dropped.
+     ================================================================ */
+  :root {
+    /* palette */
+    --bg:          #fbfbfa;
+    --surface:     #ffffff;
+    --ink:         #1a1a18;
+    --ink-soft:    #565650;
+    --ink-faint:   #8a8a82;
+    --line:        #e7e6e1;
+    --accent:      #2c2c28;
+    --accent-ink:  #ffffff;
+
+    /* rating band tints */
+    --band-3: #f7f6f4;
+
+    /* type */
+    --font-display: ui-serif, Georgia, "Times New Roman", serif;
+    --font-body:    ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    --font-mono:    ui-monospace, "SF Mono", Menlo, monospace;
+
+    /* shape + space */
+    --radius: 10px;
+    --gap: 20px;
+    --maxw: 760px;
+  }
+
+  html { height: 100%; background: var(--bg); }
+  body { margin: 0; min-height: 100vh; background: var(--bg); }
+
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+
+  #app {
+    max-width: var(--maxw);
+    margin: 0 auto;
+    padding: 26px 24px 96px;
+    position: relative;
+    font-family: var(--font-body);
+    color: var(--ink);
+    background: var(--bg);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* ---- OnPaper wordmark (replaces the portal masthead) ---- */
+  .op-mast { text-align: center; margin: 4px 0 18px; }
+  .op-wordmark {
+    font-family: var(--font-display);
+    font-size: 30px; font-weight: 600; letter-spacing: -0.01em;
+    color: var(--ink); margin: 0;
+  }
+
+  /* ---- Fit tool (job-fit gap finder) ---- */
+  .fit { max-width: var(--maxw); margin: 0 auto; padding-top: 4px; }
+  .fit-intro { color: var(--ink-soft); font-size: 15px; line-height: 1.5; margin: 0 0 12px; }
+  .fit-usage { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 14px; margin: 0 0 var(--gap); }
+  .fit-remaining { font-size: 13px; font-weight: 600; color: var(--ink-soft); }
+  .fit-remaining.is-empty { color: #b23b3b; }
+  .fit-coupon { display: inline-flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .fit-coupon-input { width: 150px; padding: 7px 10px; font-size: 13px; }
+  .fit-coupon-msg { font-size: 13px; color: var(--ink-faint); }
+  .fit-coupon-msg.error { color: #b23b3b; }
+  .fit-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 360px)); justify-content: center; gap: var(--gap); }
+  .fit-field { display: flex; flex-direction: column; gap: 6px; }
+  .fit-label { font-size: 12px; letter-spacing: .04em; text-transform: uppercase; color: var(--ink-faint); }
+  .fit-input-wrap { position: relative; aspect-ratio: 1 / 1; }
+  .fit-input-wrap .fit-input { height: 100%; padding-right: 34px; } /* square field; keep text clear of the × */
+  .fit-x {
+    position: absolute; top: 8px; right: 8px;
+    border: none; background: var(--surface); cursor: pointer; color: var(--ink-faint);
+    font-size: 18px; line-height: 1; padding: 2px 7px; border-radius: 6px;
+  }
+  .fit-x:hover { color: var(--ink); background: var(--line); }
+  .fit-x[hidden] { display: none; }
+  .fit-input {
+    font-family: var(--font-body); font-size: 14px; line-height: 1.5; color: var(--ink);
+    background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius);
+    padding: 10px 12px; width: 100%; resize: none;
+  }
+  .fit-input:focus { outline: none; border-color: var(--accent); }
+  .fit-actions { display: flex; flex-direction: column; align-items: center; gap: 8px; margin: var(--gap) 0; }
+  .fit-btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+    font-family: var(--font-body); font-size: 14px; font-weight: 600; cursor: pointer;
+    color: var(--accent-ink); background: var(--accent); border: 1px solid var(--accent);
+    border-radius: var(--radius); padding: 9px 18px;
+  }
+  .fit-btn:hover { opacity: .9; }
+  .fit-btn:disabled { opacity: .5; cursor: default; }
+  .fit-spinner {
+    display: none; width: 13px; height: 13px; border-radius: 50%;
+    border: 2px solid rgba(255,255,255,.35); border-top-color: var(--accent-ink);
+    animation: fitspin .7s linear infinite;
+  }
+  .fit-btn.is-loading { opacity: 1; }            /* stay bright while working */
+  .fit-btn.is-loading .fit-spinner { display: inline-block; }
+  @keyframes fitspin { to { transform: rotate(360deg); } }
+  .fit-btn-sm { padding: 8px 14px; }
+  .fit-status { font-size: 13px; color: var(--ink-faint); }
+  .fit-status.error { color: #b23b3b; }
+  /* the report reads as an output document, not an editable field */
+  .fit-result {
+    color: var(--ink); background: var(--band-3); border: 1px solid var(--line);
+    border-left: 4px solid var(--accent); border-radius: var(--radius);
+    padding: 20px 22px; margin-bottom: var(--gap);
+  }
+  .report-head { border-bottom: 1px solid var(--line); padding-bottom: 12px; margin-bottom: 14px; }
+  .report-eyebrow { font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-faint); }
+  .report-role { font-family: var(--font-display); font-size: 20px; line-height: 1.25; color: var(--ink); margin-top: 4px; }
+  .report-match { font-size: 14px; font-weight: 700; margin-top: 8px; }
+  .report-match--vlow, .report-match--low { color: #b23b3b; }
+  .report-match--med  { color: #b5810f; }
+  .report-match--good, .report-match--vgood { color: #2f7d32; }
+  .report-deal { margin-bottom: 14px; font-size: 14px; line-height: 1.5; }
+  .report-deal-label { font-size: 11px; letter-spacing: .06em; text-transform: uppercase; font-weight: 700; color: #b23b3b; margin-right: 8px; }
+  .report-deal-text { color: var(--ink); }
+  .report-deal--none .report-deal-label { color: var(--ink-faint); }
+  .report-deal--none .report-deal-text { color: var(--ink-soft); }
+  .report-body { white-space: pre-wrap; font-family: var(--font-body); font-size: 15px; line-height: 1.6; }
+  .report-meta { font-size: 12px; color: var(--ink-faint); margin-top: 8px; }
+  .report-actions { display: flex; gap: 10px; margin-top: 16px; }
+  .report-btn {
+    font-family: var(--font-body); font-size: 13px; cursor: pointer; color: var(--ink);
+    background: var(--surface); border: 1px solid var(--line); border-radius: 8px; padding: 6px 12px;
+  }
+  .report-btn:hover { border-color: var(--accent); }
+
+  @media (max-width: 640px) { .fit-grid { grid-template-columns: minmax(0, 360px); } }
+  @media (max-width: 560px) {
+    #app { padding: 22px 18px 80px; }
+    .op-wordmark { font-size: 26px; }
+    /* 16px keeps iOS from zooming in on focus */
+    .fit-input, .fit-coupon-input { font-size: 16px; }
+  }
+</style>
+
+<div id="app">
+  <header class="op-mast">
+    <h1 class="op-wordmark">OnPaper</h1>
+  </header>
+
+  <!-- ===== Job-fit gap finder ===== -->
+  <div id="view-fit">
+    <div class="fit">
+      <p class="fit-intro">Paste your CV and a job description. Get the 2–3 real gaps between them, each with one concrete fix. No score, no filler — only gaps the job actually asks for and the CV doesn’t show.</p>
+
+      <div class="fit-usage">
+        <span id="fitRemaining" class="fit-remaining"></span>
+        <span class="fit-coupon">
+          <input id="fitCoupon" class="fit-input fit-coupon-input ph-no-capture" type="text" placeholder="Beta coupon" autocomplete="off" spellcheck="false" />
+          <button id="fitCouponBtn" class="fit-btn fit-btn-sm" type="button">Redeem</button>
+          <span id="fitCouponMsg" class="fit-coupon-msg" role="status" aria-live="polite"></span>
+        </span>
+      </div>
+
+      <div class="fit-grid">
+        <div class="fit-field">
+          <span class="fit-label">Your CV</span>
+          <div class="fit-input-wrap">
+            <textarea id="fitCv" class="fit-input ph-no-capture" rows="12" placeholder="Paste your CV as plain text…" spellcheck="false"></textarea>
+            <button type="button" class="fit-x" data-clear="fitCv" aria-label="Clear your CV" title="Clear" hidden>×</button>
+          </div>
+        </div>
+        <div class="fit-field">
+          <span class="fit-label">Job description</span>
+          <div class="fit-input-wrap">
+            <textarea id="fitJd" class="fit-input ph-no-capture" rows="12" placeholder="Paste the job description as plain text…" spellcheck="false"></textarea>
+            <button type="button" class="fit-x" data-clear="fitJd" aria-label="Clear the job description" title="Clear" hidden>×</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="fit-actions">
+        <button id="fitRun" class="fit-btn" type="button">
+          <span class="fit-spinner" aria-hidden="true"></span>
+          <span class="fit-btn-label">Find gaps</span>
+        </button>
+        <span id="fitStatus" class="fit-status" role="status" aria-live="polite"></span>
+      </div>
+
+      <div id="fitResult" class="fit-result ph-no-capture" hidden></div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  // The deployed Vercel function (private onpaper-api repo) that holds the key + prompt.
+  var API_BASE   = "https://onpaper-api.vercel.app/api";
+  var API_URL    = API_BASE + "/analyze";
+  var REDEEM_URL = API_BASE + "/redeem";
+
+  var LS_CV  = "triage_fit_cv";    // your CV, remembered so you don't retype
+  var LS_JD  = "triage_fit_jd";    // last JD you pasted
+  var LS_UID = "onpaper_uid";      // anonymous browser token (usage balance lives server-side)
+
+  // Anonymous token: identifies this browser's usage balance. Never shown to the user.
+  function uuid() {
+    if (window.crypto && crypto.randomUUID) return crypto.randomUUID();
+    return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, function (c) {
+      var r = (Math.random() * 16) | 0, v = c === "x" ? r : (r & 0x3) | 0x8;
+      return v.toString(16);
+    });
+  }
+  var uid = "";
+  try { uid = localStorage.getItem(LS_UID) || ""; if (!uid) { uid = uuid(); localStorage.setItem(LS_UID, uid); } }
+  catch (e) { uid = uuid(); }
+
+  var els = {
+    cv:       document.getElementById("fitCv"),
+    jd:       document.getElementById("fitJd"),
+    run:      document.getElementById("fitRun"),
+    status:   document.getElementById("fitStatus"),
+    result:   document.getElementById("fitResult"),
+    remaining:document.getElementById("fitRemaining"),
+    coupon:   document.getElementById("fitCoupon"),
+    couponBtn:document.getElementById("fitCouponBtn"),
+    couponMsg:document.getElementById("fitCouponMsg")
+  };
+  if (!els.run) return; // view not present
+  var runLabel = els.run.querySelector(".fit-btn-label");
+
+  function get(k) { try { return localStorage.getItem(k) || ""; } catch (e) { return ""; } }
+  function set(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
+
+  // analytics: fire a PostHog event with non-sensitive metadata only (no CV/JD/passcode/PII).
+  function track(name, props) { try { if (window.posthog && posthog.capture) posthog.capture(name, props || {}); } catch (e) {} }
+  function classifyErr(err) {
+    var m = (err && err.message || "").toLowerCase();
+    if (m === "no-key") return "no_passcode";
+    if (m.indexOf("passcode") > -1 || m.indexOf("401") > -1) return "bad_passcode";
+    if (m.indexOf("failed to fetch") > -1 || m.indexOf("network") > -1) return "network";
+    return "api_error";
+  }
+  var analysisRuns = 0;
+
+  // ---- restore CV/JD, wire per-field persistence + the × clear buttons ----
+  var fields = [
+    { ta: els.cv, ls: LS_CV, x: document.querySelector('.fit-x[data-clear="fitCv"]') },
+    { ta: els.jd, ls: LS_JD, x: document.querySelector('.fit-x[data-clear="fitJd"]') }
+  ];
+  fields.forEach(function (f) {
+    f.ta.value = get(f.ls);
+    function syncX() { if (f.x) f.x.hidden = f.ta.value.length === 0; }
+    syncX();
+    f.ta.addEventListener("input", function () { set(f.ls, f.ta.value); syncX(); reenable(); });
+    if (f.x) f.x.addEventListener("click", function () {
+      f.ta.value = ""; set(f.ls, "");
+      syncX(); reenable();
+      f.ta.focus();
+    });
+  });
+
+  function setStatus(msg, isError) {
+    els.status.textContent = msg || "";
+    els.status.classList.toggle("error", !!isError);
+  }
+
+  var loading = false;
+  function setLoading(on) {
+    loading = on;
+    els.run.classList.toggle("is-loading", on);
+    els.run.disabled = on;                 // disabled while working…
+    runLabel.textContent = on ? "Finding gaps…" : "Find gaps";
+  }
+
+  // Remaining analyses (server-authoritative; null = unknown until first action).
+  var remaining = null;
+  function updateRemaining(n) {
+    if (typeof n !== "number" || isNaN(n)) return;
+    remaining = n;
+    if (els.remaining) {
+      els.remaining.textContent = n + (n === 1 ? " analysis left" : " analyses left");
+      els.remaining.classList.toggle("is-empty", n <= 0);
+    }
+    if (n <= 0) els.run.disabled = true; // no uses → block until a coupon is redeemed
+  }
+  // Editing a field re-enables the button — but never mid-run, and never when empty.
+  function reenable() { if (!loading && remaining !== 0) els.run.disabled = false; }
+
+  // ---- report rendering ----
+  function parseReport(text) {
+    var role = "", company = "", match = "", deal = "", body = [];
+    (text || "").split(/\r?\n/).forEach(function (l) {
+      var m;
+      if ((m = l.match(/^\s*ROLE:\s*(.*)$/i)))              { role = m[1].trim(); }
+      else if ((m = l.match(/^\s*COMPANY:\s*(.*)$/i)))       { company = m[1].trim(); }
+      else if ((m = l.match(/^\s*MATCH:\s*(.*)$/i)))         { match = m[1].trim(); }
+      else if ((m = l.match(/^\s*DEALBREAKERS?:\s*(.*)$/i))) { deal = m[1].trim(); }
+      else { body.push(l); }
+    });
+    while (body.length && body[0].trim() === "") body.shift();
+    return { role: role, company: company, match: match, deal: deal, body: body.join("\n").trim() };
+  }
+  function subjectLine(role, company) {
+    if (role && company) return role + " — " + company;
+    return role || company || "";
+  }
+  function matchKey(match) {
+    var m = (match || "").toLowerCase();
+    if (m.indexOf("very low") === 0) return "vlow";
+    if (m.indexOf("very good") === 0) return "vgood";
+    if (m.indexOf("low") === 0) return "low";
+    if (m.indexOf("medium") === 0) return "med";
+    if (m.indexOf("good") === 0) return "good";
+    return "";
+  }
+  function el(tag, cls, txt) {
+    var e = document.createElement(tag);
+    if (cls) e.className = cls;
+    if (txt != null) e.textContent = txt;
+    return e;
+  }
+  function renderReport(out) {
+    var r = parseReport(out);
+    var now = new Date();
+    var stamp = now.toLocaleString(undefined,
+      { day: "numeric", month: "short", year: "numeric", hour: "numeric", minute: "2-digit" });
+    var subject = subjectLine(r.role, r.company);
+
+    var dealNone = !r.deal || /^none\b/i.test(r.deal);
+
+    // Plain-text version used by Copy / Download.
+    var plain = "OnPaper — Match report\n" +
+      (subject ? subject + "\n" : "") +
+      (r.match ? "Match: " + r.match + "\n" : "") +
+      (r.deal ? "Dealbreakers: " + r.deal + "\n" : "") +
+      "Generated " + stamp + "\n\n" +
+      (r.body || "(No gaps returned.)");
+
+    els.result.innerHTML = "";
+    var head = el("div", "report-head");
+    head.appendChild(el("div", "report-eyebrow", "OnPaper · Match report"));
+    if (subject) head.appendChild(el("div", "report-role", subject));
+    if (r.match) head.appendChild(el("div", "report-match report-match--" + matchKey(r.match), "Match: " + r.match));
+    head.appendChild(el("div", "report-meta", "Generated " + stamp));
+    els.result.appendChild(head);
+
+    if (r.deal) {
+      var db = el("div", "report-deal" + (dealNone ? " report-deal--none" : ""));
+      db.appendChild(el("span", "report-deal-label", "Dealbreakers"));
+      db.appendChild(el("span", "report-deal-text", r.deal));
+      els.result.appendChild(db);
+    }
+
+    els.result.appendChild(el("div", "report-body", r.body || "(No gaps returned.)"));
+
+    var actions = el("div", "report-actions");
+    var copyBtn = el("button", "report-btn", "Copy");
+    copyBtn.type = "button";
+    copyBtn.addEventListener("click", function () {
+      navigator.clipboard.writeText(plain).then(function () {
+        copyBtn.textContent = "Copied";
+        setTimeout(function () { copyBtn.textContent = "Copy"; }, 1500);
+      }, function () { copyBtn.textContent = "Copy failed"; });
+    });
+    var dlBtn = el("button", "report-btn", "Download");
+    dlBtn.type = "button";
+    dlBtn.addEventListener("click", function () {
+      var blob = new Blob([plain], { type: "text/plain;charset=utf-8" });
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement("a");
+      a.href = url;
+      a.download = "onpaper-match-report-" + now.toISOString().slice(0, 10) + ".txt";
+      document.body.appendChild(a); a.click(); a.remove();
+      URL.revokeObjectURL(url);
+    });
+    actions.appendChild(copyBtn);
+    actions.appendChild(dlBtn);
+    els.result.appendChild(actions);
+  }
+
+  // ---- the call: POST to the OnPaper backend (holds the key + the prompt) ----
+  async function callClaude(cv, jd) {
+    var res = await fetch(API_URL, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ cv: cv, jd: jd, token: uid })
+    });
+
+    var data = {};
+    try { data = await res.json(); } catch (e) {}
+    if (!res.ok) {
+      var err = new Error(data.error || ("Request failed (" + res.status + ")"));
+      if (typeof data.remaining === "number") err.remaining = data.remaining;
+      throw err;
+    }
+    return { text: (data.text || "").trim(), remaining: data.remaining };
+  }
+
+  // ---- run ----
+  els.run.addEventListener("click", async function () {
+    var cv = els.cv.value.trim();
+    var jd = els.jd.value.trim();
+    if (!cv || !jd) { setStatus("Paste both a CV and a job description.", true); return; }
+
+    analysisRuns++;
+    var t0 = Date.now();
+    track(analysisRuns > 1 ? "analysis_rerun" : "analysis_started", { cv_chars: cv.length, jd_chars: jd.length });
+
+    setLoading(true);
+    setStatus("");
+    els.result.hidden = true;
+
+    try {
+      var data = await callClaude(cv, jd);
+      var out = data.text;
+      renderReport(out || "");
+      els.result.hidden = false;
+      setStatus("");
+      updateRemaining(data.remaining);
+      var pr = parseReport(out || "");
+      track("analysis_completed", {
+        match: pr.match,
+        gaps_count: (pr.body.match(/(^|\n)\s*GAP\s+\d/gi) || []).length,
+        has_dealbreakers: !!pr.deal && !/^none/i.test(pr.deal),
+        duration_ms: Date.now() - t0
+      });
+      // Success: label reverts but the button stays disabled until a field changes.
+      setLoading(false);
+      els.run.disabled = true;
+    } catch (err) {
+      // Error: revert and allow an immediate retry.
+      track("analysis_failed", { error_type: classifyErr(err), duration_ms: Date.now() - t0 });
+      setLoading(false);
+      els.run.disabled = false;
+      if (typeof err.remaining === "number") updateRemaining(err.remaining);
+      setStatus(err.message, true);
+    }
+  });
+
+  // ---- coupon redemption ----
+  function couponMsg(msg, isError) {
+    if (!els.couponMsg) return;
+    els.couponMsg.textContent = msg || "";
+    els.couponMsg.classList.toggle("error", !!isError);
+  }
+  if (els.couponBtn) els.couponBtn.addEventListener("click", async function () {
+    var code = (els.coupon.value || "").trim();
+    if (!code) { couponMsg("Enter a coupon.", true); return; }
+
+    els.couponBtn.disabled = true;
+    couponMsg("Redeeming…");
+    try {
+      var res = await fetch(REDEEM_URL, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ token: uid, code: code })
+      });
+      var data = {};
+      try { data = await res.json(); } catch (e) {}
+      if (!res.ok) throw new Error(data.error || ("Redeem failed (" + res.status + ")"));
+      couponMsg(data.already ? "Coupon already applied." : "Added " + data.granted + " analyses.");
+      els.coupon.value = "";
+      updateRemaining(data.remaining);
+      track("coupon_redeemed", { already: !!data.already, granted: data.granted || 0 });
+    } catch (err) {
+      couponMsg(err.message, true);
+    } finally {
+      els.couponBtn.disabled = false;
+    }
+  });
+
+  // analytics: OnPaper opened (standalone site — always a load entry)
+  track("onpaper_opened", { entry: "load" });
+})();
+</script>
