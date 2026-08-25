@@ -292,6 +292,12 @@
   .op-menu-a[hidden] { display: none; }
   .op-menu-a p { margin: 0 0 12px; }
   .op-menu-a p:last-child { margin-bottom: 0; }
+  /* Always-open section (About): same look as a menu question, but static. */
+  .op-menu-h {
+    font-family: var(--mono); font-size: 13px; letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--ink); padding: 22px 0 6px;
+  }
+  .op-menu-lead { font-family: var(--serif-b); font-weight: 600; color: var(--ink-2); }
 
   /* ---- input field + clear button ---- */
   .op-field { position: relative; }
@@ -523,30 +529,53 @@
   </div>
 </div>
 
-<!-- slide-in menu (How it works / Why pay / About) -->
+<!-- slide-in menu (About always open; How it works / Privacy / Why it costs, foldable) -->
 <div class="op-menu-back" id="menuBack" hidden>
   <div class="op-menu-panel" id="menuPanel" role="dialog" aria-modal="true" aria-label="Menu">
     <button type="button" class="op-menu-close" id="menuClose" aria-label="Close menu">&times;</button>
+
     <div class="op-menu-item">
-      <button type="button" class="op-menu-q" aria-expanded="false"><span>How does it work?</span><span class="op-menu-plus">+</span></button>
-      <div class="op-menu-a" hidden>
-        <p><span class="op-red">Paste both</span> &mdash; your CV on the left, the job description on the right. Plain text, nothing to format.</p>
-        <p><span class="op-red">Check fit</span> &mdash; OnPaper reads both and finds the gaps that matter for this specific role.</p>
-        <p><span class="op-red">Fix each one</span> &mdash; every gap comes with one concrete change you can make before you apply.</p>
+      <div class="op-menu-h">About</div>
+      <div class="op-menu-a">
+        <p>OnPaper helps you answer one simple question: <span class="op-red">Does my CV fit this job description?</span></p>
+        <p>Too many good candidates get filtered out the moment they hit &ldquo;send&rdquo;. Not because they can&rsquo;t do the job, but because their CV didn&rsquo;t clearly reflect who they really are. OnPaper is here to help you get past that first gate and reach your first interview. From there, it&rsquo;s on you to show up and present yourself at your best.</p>
+        <p>OnPaper is about representing your true self better. Bringing out what&rsquo;s already there, not inventing what isn&rsquo;t. Don&rsquo;t claim experience or achievements you don&rsquo;t have. OnPaper compares your CV with a specific job description and shows you where you&rsquo;re a strong fit, where you might be missing something, and what deserves your attention &mdash; based on what the role is actually asking for, not generic CV advice.</p>
+        <p>OnPaper gives you recommendations, not guarantees. They&rsquo;re suggestions, not certainties, and following them won&rsquo;t guarantee an interview. You know your story better than any tool will, so treat OnPaper as a second opinion to think with. Every change to your CV is your call.</p>
+        <p>Good luck!</p>
       </div>
     </div>
+
     <div class="op-menu-item">
-      <button type="button" class="op-menu-q" aria-expanded="false"><span>Why do I need to pay?</span><span class="op-menu-plus">+</span></button>
+      <button type="button" class="op-menu-q" aria-expanded="false"><span>How it works</span><span class="op-menu-plus">+</span></button>
       <div class="op-menu-a" hidden>
-        <p>Every fit check sends your CV and the job description through a large AI model, and that costs money on every run.</p>
-        <p>Your first runs are free. When you run low, a few euros keeps it going &mdash; no account, no subscription. One run = one CV &times; job comparison.</p>
+        <p><span class="op-red">Paste the text</span> of your CV and the job description. You don&rsquo;t need to format it or make it pretty &mdash; copy-paste works.</p>
+        <p><span class="op-red">Get your Fit Check.</span> OnPaper analyzes the relationship between your experience and what the role is looking for. You&rsquo;ll get:</p>
+        <p><span class="op-menu-lead">Overall fit</span> &mdash; how closely your background matches the role.<br>
+        <span class="op-menu-lead">Gaps &amp; concerns</span> &mdash; requirements that may be missing or unclear.<br>
+        <span class="op-menu-lead">What to consider</span> &mdash; useful things to think about before applying.</p>
+        <p><span class="op-red">Decide what to do.</span> Make the changes you agree with, and apply!</p>
       </div>
     </div>
+
     <div class="op-menu-item">
-      <button type="button" class="op-menu-q" aria-expanded="false"><span>About</span><span class="op-menu-plus">+</span></button>
+      <button type="button" class="op-menu-q" aria-expanded="false"><span>Privacy</span><span class="op-menu-plus">+</span></button>
       <div class="op-menu-a" hidden>
-        <p>OnPaper shows the real gaps between your CV and a specific job &mdash; and one concrete fix for each. Gaps, not scores. Fixes, not filler.</p>
-        <p>Made by Roie Shalom.</p>
+        <p>Your job search is personal.</p>
+        <p><span class="op-menu-lead">We don&rsquo;t keep your CV or the job description.</span> They&rsquo;re used once, in the moment, to generate your fit check, and then they&rsquo;re gone. We don&rsquo;t save them, and we can&rsquo;t pull them up later.</p>
+        <p><span class="op-menu-lead">No account, no sign-up, no email, no name.</span> You never hand us your identity. Your browser holds a small random ID so we can remember how many runs you have left, and it isn&rsquo;t linked to who you are.</p>
+        <p><span class="op-menu-lead">How the run actually works.</span> To run the comparison, we send your CV and the job text to Anthropic, the company behind the Claude AI that does the analysis. We don&rsquo;t store either one ourselves.</p>
+        <p><span class="op-menu-lead">We measure anonymously how the site is used</span> &mdash; for example, which pages get opened and roughly how long a check takes, using privacy-friendly analytics on European servers. It never includes your CV, the job text, or your results, it doesn&rsquo;t use cookies, and it never identifies you.</p>
+        <p><span class="op-red">In short:</span> your CV stays yours. We help you hold it up against a job, and then we let it go.</p>
+      </div>
+    </div>
+
+    <div class="op-menu-item">
+      <button type="button" class="op-menu-q" aria-expanded="false"><span>Why it costs anything</span><span class="op-menu-plus">+</span></button>
+      <div class="op-menu-a" hidden>
+        <p>OnPaper is a personal project &mdash; something I built to learn, and because getting filtered out before anyone reads you is a problem I know first-hand.</p>
+        <p>It isn&rsquo;t a business, and I&rsquo;m not trying to make money from it. Every run uses real AI to do the analysis, and that costs a little each time. The price just covers that, nothing more.</p>
+        <p>I&rsquo;ve kept runs cheap on purpose. The goal is to be useful and to stay honest, not to sell you a subscription.</p>
+        <p><span class="op-red">In short:</span> you pay for the AI, not for me.</p>
       </div>
     </div>
   </div>
