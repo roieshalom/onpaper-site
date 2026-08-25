@@ -692,11 +692,18 @@
   function setError(msg) { els.error.textContent = msg || ""; els.error.hidden = !msg; }
 
   var loading = false;
+  // While a run is in flight, ask the browser to show its native "Leave site?"
+  // prompt on refresh/close — a nudge so an accidental refresh doesn't lose the
+  // in-progress report. (The server is the real guard: it won't charge if the
+  // client disconnects mid-run.) This only prompts; it can't block leaving.
+  function warnUnload(e) { e.preventDefault(); e.returnValue = ""; return ""; }
   function setLoading(on) {
     loading = on;
     els.run.classList.toggle("is-loading", on);
     els.run.disabled = on;
     els.spin.hidden = !on;
+    if (on) window.addEventListener("beforeunload", warnUnload);
+    else window.removeEventListener("beforeunload", warnUnload);
     updateRunLabel();
   }
 
