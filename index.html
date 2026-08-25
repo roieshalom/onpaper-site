@@ -95,7 +95,7 @@
 
   /* ---- header ---- */
   .op-header { flex-shrink: 0; position: relative; z-index: 2; background: var(--paper-bg); border-bottom: 1px solid var(--line); }
-  .op-header-in { max-width: 1000px; margin: 0 auto; padding: 26px 32px; display: flex; align-items: baseline; justify-content: space-between; gap: 16px; }
+  .op-header-in { max-width: 1000px; margin: 0 auto; padding: 22px 32px; display: flex; align-items: center; justify-content: space-between; gap: 16px; }
   .op-wordmark { font-family: var(--serif-d); font-size: 26px; letter-spacing: -0.01em; }
   .op-wordmark .op-red, .op-red { color: var(--red); }
   .op-meta { font-family: var(--mono); font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--mono-muted); }
@@ -105,7 +105,7 @@
 
   /* ---- hero ---- */
   .op-hero { max-width: 1000px; margin: 0 auto; padding: 64px 32px 8px; text-align: center; }
-  .op-h1 { font-family: var(--serif-d); font-weight: 400; font-size: clamp(30px, 5.2vw, 62px); line-height: 1.05; letter-spacing: -0.015em; margin: 0 auto; white-space: nowrap; }
+  .op-h1 { font-family: var(--serif-d); font-weight: 400; font-size: clamp(30px, 5.2vw, 62px); line-height: 1.05; letter-spacing: -0.015em; margin: 0 auto; max-width: 12ch; text-wrap: balance; }
   .op-wavy { text-decoration: underline wavy var(--red); text-decoration-thickness: 2px; text-underline-offset: 8px; }
   .op-sub { max-width: 560px; margin: 26px auto 0; font-size: 19px; line-height: 1.6; color: var(--ink-3); text-wrap: pretty; }
 
@@ -167,6 +167,16 @@
     padding: 14px 24px; border-radius: 3px; border: 1px solid var(--line-in);
     background: transparent; color: var(--faint-2); cursor: not-allowed;
   }
+  /* secondary "ghost" button — outlined counterpart to .op-btn, matched in size */
+  .op-ghost-btn {
+    display: inline-flex; align-items: center; gap: 10px;
+    font-family: var(--mono); font-size: 14px; letter-spacing: 0.04em; font-weight: 500;
+    padding: 14px 32px; border-radius: 3px; border: 1px solid #cdbf9f;
+    background: transparent; color: var(--ink-3); cursor: pointer;
+    transition: color .15s, border-color .15s, transform .1s;
+  }
+  .op-ghost-btn:hover { border-color: var(--red); color: var(--ink); }
+  .op-ghost-btn:active { transform: translateY(1px); }
   .op-spin { display: inline-block; width: 14px; height: 14px; border: 2px solid rgba(253,250,241,0.35); border-top-color: var(--paper); border-radius: 50%; animation: op-spin 0.7s linear infinite; }
   .op-getmore { font-family: var(--mono); font-size: 12px; padding: 0; border: none; background: transparent; color: var(--red); cursor: pointer; text-decoration: underline; text-underline-offset: 3px; text-decoration-color: #e2a996; }
   .op-runline { font-family: var(--mono); font-size: 11px; letter-spacing: 0.02em; color: var(--faint); }
@@ -175,8 +185,6 @@
 
   /* ---- results view ---- */
   .op-results { max-width: 660px; margin: 0 auto; padding: 56px 32px 64px; animation: op-rise 0.45s ease both; }
-  .op-back { font-family: var(--mono); font-size: 12px; letter-spacing: 0.04em; color: #8a5330; display: inline-block; margin-bottom: 32px; text-decoration: none; }
-  .op-back:hover { color: var(--red); }
   .op-samplebadge { display: inline-block; font-family: var(--mono); font-size: 10px; letter-spacing: 0.16em; color: var(--paper); background: var(--faint); padding: 3px 9px; border-radius: 2px; margin-bottom: 14px; }
   .op-kicker { font-family: var(--mono); font-size: 12px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--red); margin-bottom: 10px; }
   .op-rtitle { font-family: var(--serif-d); font-weight: 400; font-size: 40px; margin: 0 0 10px; letter-spacing: -0.01em; line-height: 1.1; }
@@ -239,6 +247,96 @@
   .op-coupon-apply:disabled { opacity: 0.5; cursor: default; }
   .op-coupon-msg { font-family: var(--mono); font-size: 11px; margin-top: 9px; }
 
+  /* ================================================================
+     Additions from the ONP wireframe (flows A–F). Editorial skin kept.
+     ================================================================ */
+
+  /* ---- header brand + nav (wordmark + subtitle, CV x JD + menu) ---- */
+  .op-brand { display: flex; flex-direction: column; gap: 3px; }
+  .op-brand-sub { font-family: var(--mono); font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--mono-muted); }
+  .op-nav { display: flex; align-items: center; gap: 18px; }
+  .op-menu-btn {
+    display: inline-flex; flex-direction: column; justify-content: center; gap: 6px;
+    width: 34px; height: 24px; padding: 0; border: none; background: transparent; cursor: pointer;
+  }
+  .op-menu-btn span { display: block; height: 2px; width: 28px; background: var(--ink); border-radius: 2px; transition: transform .22s, opacity .22s; }
+  .op-menu-btn[aria-expanded="true"] span:first-child { transform: translateY(4px) rotate(45deg); }
+  .op-menu-btn[aria-expanded="true"] span:last-child { transform: translateY(-4px) rotate(-45deg); }
+
+  /* ---- slide-in menu drawer ---- */
+  .op-menu-back { position: fixed; inset: 0; z-index: 45; background: rgba(40,30,15,0.42); display: flex; justify-content: flex-end; }
+  .op-menu-panel {
+    position: relative;
+    width: min(440px, 90vw); height: 100%; background: var(--paper);
+    border-left: 1px solid var(--line-in); box-shadow: -18px 0 50px rgba(60,45,25,0.16);
+    padding: 84px 34px 34px; overflow-y: auto;
+    animation: op-menu-slide .28s ease both;
+  }
+  @keyframes op-menu-slide { from { transform: translateX(30px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+  .op-menu-close {
+    position: absolute; top: 22px; right: 26px; width: 34px; height: 34px;
+    font-family: var(--mono); font-size: 22px; line-height: 1; color: var(--faint-2);
+    background: transparent; border: none; cursor: pointer;
+  }
+  .op-menu-close:hover { color: var(--red); }
+  .op-menu-item { border-bottom: 1px solid var(--line); }
+  .op-menu-q {
+    width: 100%; text-align: left; display: flex; justify-content: space-between; align-items: center; gap: 14px;
+    font-family: var(--mono); font-size: 13px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink);
+    background: transparent; border: none; padding: 22px 0; cursor: pointer;
+  }
+  .op-menu-q .op-menu-plus { font-family: var(--serif-d); font-size: 22px; color: var(--red); line-height: 1; }
+  .op-menu-a { font-family: var(--serif-b); font-size: 15px; line-height: 1.62; color: var(--ink-3); padding: 0 0 22px; }
+  .op-menu-a[hidden] { display: none; }
+  .op-menu-a p { margin: 0 0 12px; }
+  .op-menu-a p:last-child { margin-bottom: 0; }
+
+  /* ---- input field + clear button ---- */
+  .op-field { position: relative; }
+  .op-clear {
+    position: absolute; top: 12px; right: 12px; width: 27px; height: 27px;
+    display: inline-flex; align-items: center; justify-content: center;
+    font-family: var(--mono); font-size: 17px; line-height: 1; color: var(--faint);
+    background: var(--paper-lt); border: 1px solid var(--line-in); border-radius: 3px; cursor: pointer;
+    transition: color .15s, border-color .15s;
+  }
+  .op-clear:hover { color: var(--red); border-color: var(--red-focus); }
+  .op-clear[hidden] { display: none; }
+
+  /* ---- results: icon actions + toast ---- */
+  .op-rtools { display: flex; justify-content: flex-end; gap: 10px; margin-bottom: 14px; }
+  .op-icon-btn {
+    width: 40px; height: 40px; display: inline-flex; align-items: center; justify-content: center;
+    border: 1px solid #cdbf9f; border-radius: 3px; background: transparent; color: var(--ink-3); cursor: pointer;
+    transition: color .15s, border-color .15s;
+  }
+  .op-icon-btn:hover { border-color: var(--red); color: var(--ink); }
+  .op-icon-btn svg { width: 19px; height: 19px; display: block; }
+  .op-toast {
+    position: fixed; left: 50%; bottom: 96px; transform: translateX(-50%);
+    font-family: var(--mono); font-size: 12px; color: var(--ink);
+    background: var(--paper); border: 1px solid var(--line-in); padding: 10px 18px; border-radius: 4px;
+    box-shadow: 0 6px 20px rgba(60,45,25,0.16); z-index: 30; animation: op-rise .25s ease both;
+  }
+
+  /* ---- confirm / failure modals (D + E) ---- */
+  .op-confirm-back { position: fixed; inset: 0; z-index: 46; background: rgba(40,30,15,0.42); display: flex; align-items: center; justify-content: center; padding: 24px; }
+  .op-confirm {
+    width: 100%; max-width: 460px; background: var(--paper); border: 1px solid var(--line-in);
+    border-radius: 12px; box-shadow: 0 24px 60px rgba(40,30,15,0.34); padding: 34px 32px 30px; animation: op-rise .25s ease both;
+  }
+  .op-confirm-title { font-family: var(--serif-d); font-weight: 400; font-size: 26px; line-height: 1.2; color: var(--ink); margin: 0 0 24px; text-wrap: pretty; }
+  .op-confirm-actions { display: flex; flex-wrap: wrap; gap: 12px; }
+
+  /* ---- "coming soon" diagonal stamp over the packs ---- */
+  .op-packs-wrap { position: relative; }
+  .op-soon-stamp { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; pointer-events: none; }
+  .op-soon-stamp span {
+    font-family: var(--serif-d); font-size: 30px; color: var(--ink-2);
+    transform: rotate(-11deg); opacity: 0.9; letter-spacing: 0.01em;
+    text-shadow: 0 1px 0 var(--paper);
+  }
+
   /* ---- responsive ---- */
   @media (max-width: 560px) {
     .op-header-in, .op-hero, .op-io-sec, .op-how, .op-footer, .op-results { padding-left: 20px; padding-right: 20px; }
@@ -255,8 +353,16 @@
   <!-- header -->
   <header class="op-header">
     <div class="op-header-in">
-      <span class="op-wordmark">On<span class="op-red">Paper</span></span>
-      <span class="op-meta">CV <span class="op-red">&#9829;</span> JD &middot; gap finder</span>
+      <div class="op-brand">
+        <span class="op-wordmark">On<span class="op-red">Paper</span></span>
+        <span class="op-brand-sub">Match your Resume</span>
+      </div>
+      <div class="op-nav">
+        <span class="op-meta">CV <span class="op-red">&times;</span> JD</span>
+        <button type="button" class="op-menu-btn" id="menuBtn" aria-label="Menu" aria-expanded="false" aria-controls="menuPanel">
+          <span></span><span></span>
+        </button>
+      </div>
     </div>
   </header>
 
@@ -266,8 +372,8 @@
     <!-- ============ INPUT VIEW ============ -->
     <div id="viewInput">
       <section class="op-hero">
-        <h1 class="op-h1">See your CV like <span class="op-wavy">Talent Acquisition</span></h1>
-        <p class="op-sub">Paste CV and job description <span class="op-red">&rsaquo;</span> Get gaps and how to fix them</p>
+        <h1 class="op-h1">Match your Resume to the <span class="op-wavy">Job Description</span></h1>
+        <p class="op-sub">Paste your CV and a job description <span class="op-red">&rsaquo;</span> check the fit and close the gaps</p>
       </section>
 
       <section class="op-io-sec">
@@ -276,13 +382,19 @@
             <div class="op-labelrow">
               <label class="op-label" id="cvLabel" for="fitCv" hidden><span>Your CV</span><span class="op-count" id="cvCount"></span></label>
             </div>
-            <textarea id="fitCv" class="op-textarea ph-no-capture" placeholder="Paste your CV here&hellip;" spellcheck="false"></textarea>
+            <div class="op-field">
+              <textarea id="fitCv" class="op-textarea ph-no-capture" placeholder="Paste CV here" spellcheck="false"></textarea>
+              <button type="button" class="op-clear" id="cvClear" aria-label="Clear CV" hidden>&times;</button>
+            </div>
           </div>
           <div class="op-col">
             <div class="op-labelrow">
               <label class="op-label" id="jdLabel" for="fitJd" hidden><span>Job description</span><span class="op-count" id="jdCount"></span></label>
             </div>
-            <textarea id="fitJd" class="op-textarea ph-no-capture" placeholder="Paste the job description here&hellip;" spellcheck="false"></textarea>
+            <div class="op-field">
+              <textarea id="fitJd" class="op-textarea ph-no-capture" placeholder="Paste Job Description here" spellcheck="false"></textarea>
+              <button type="button" class="op-clear" id="jdClear" aria-label="Clear job description" hidden>&times;</button>
+            </div>
           </div>
         </div>
 
@@ -320,9 +432,16 @@
     <!-- ============ RESULTS VIEW ============ -->
     <div id="viewResults" hidden>
       <div class="op-results">
-        <a href="#" class="op-back" id="fitBack">&larr; back to inputs</a>
+        <div class="op-rtools">
+          <button type="button" class="op-icon-btn" id="fitDownload" aria-label="Download fit check" title="Download">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M7 11l5 5 5-5"/><path d="M4 20h16"/></svg>
+          </button>
+          <button type="button" class="op-icon-btn" id="fitCopy" aria-label="Copy fit check" title="Copy">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M6 15H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v1"/></svg>
+          </button>
+        </div>
         <span class="op-samplebadge" id="sampleBadge" hidden>Sample</span>
-        <div class="op-kicker">Marked up</div>
+        <div class="op-kicker">Gap report</div>
         <h2 class="op-rtitle" id="resultTitle"></h2>
         <div class="op-rmeta">
           <span class="op-match" id="resultMatch" hidden>Match &middot; <span class="op-match-val" id="resultMatchVal"></span></span>
@@ -332,12 +451,6 @@
         <p class="op-intro">What the role asks for that your CV doesn&rsquo;t yet show &mdash; with one concrete fix each.</p>
 
         <div id="gapList"></div>
-
-        <div class="op-actions">
-          <button type="button" class="op-rbtn" id="fitAgain">edit and run again</button>
-          <button type="button" class="op-rbtn" id="fitCopy">Copy</button>
-          <button type="button" class="op-rbtn" id="fitDownload">Download</button>
-        </div>
       </div>
     </div>
 
@@ -354,16 +467,20 @@
       <div id="barRun" style="display:flex;flex-direction:column;align-items:center;gap:9px">
         <button type="button" class="op-btn" id="fitRun">
           <span class="op-spin" id="fitSpin" aria-hidden="true" hidden></span>
-          <span id="fitRunLabel">Find gaps</span>
+          <span id="fitRunLabel">Check fit</span>
         </button>
         <div class="op-runline" id="runLine">
           <span id="runRemaining"></span><button type="button" class="op-getmore" id="getMore1">get more runs</button>
         </div>
       </div>
-      <!-- out of runs -->
+      <!-- out of runs: primary button becomes the "get more runs" action -->
       <div id="barOut" hidden style="display:flex;flex-direction:column;align-items:center;gap:9px">
-        <button type="button" class="op-btn-ghostdisabled" disabled>Find gaps</button>
-        <button type="button" class="op-getmore" id="getMore2">Out of runs &mdash; get more</button>
+        <button type="button" class="op-btn" id="getMore2">Get more runs</button>
+        <div class="op-runline"><span>0 runs left &middot; </span><button type="button" class="op-getmore" id="getMore3">have a code?</button></div>
+      </div>
+      <!-- results view: start another fit check -->
+      <div id="barResults" hidden style="display:flex;flex-direction:column;align-items:center;gap:9px">
+        <button type="button" class="op-btn" id="fitNew">New fit check</button>
       </div>
       <span class="op-barmsg" id="barMsg" hidden></span>
     </div>
@@ -381,30 +498,105 @@
       <button type="button" class="op-modal-x" id="payClose" aria-label="Close">&times;</button>
     </div>
 
-    <div class="op-packs">
-      <div class="op-pack">
-        <span class="op-pack-left"><span class="op-pack-label">3 runs</span><span class="op-pack-per">&euro;1.33 / run</span></span>
-        <span class="op-pack-right"><span class="op-pack-soon">Coming soon</span><span class="op-pack-price">&euro;4</span></span>
+    <div class="op-packs-wrap">
+      <div class="op-packs">
+        <div class="op-pack">
+          <span class="op-pack-left"><span class="op-pack-label">Buy 5 runs</span><span class="op-pack-per">&euro;x.xx / run</span></span>
+          <span class="op-pack-right"><span class="op-pack-price">&euro;x</span></span>
+        </div>
+        <div class="op-pack">
+          <span class="op-pack-left"><span class="op-pack-label">Buy 10 runs</span><span class="op-pack-per">&euro;x.xx / run</span></span>
+          <span class="op-pack-right"><span class="op-pack-price">&euro;xx</span></span>
+        </div>
+        <div class="op-pack op-pack--best">
+          <span class="op-pack-left"><span class="op-pack-label">Buy 50 runs</span><span class="op-pack-per">&euro;x.xx / run</span></span>
+          <span class="op-pack-right"><span class="op-pack-price">&euro;xx</span></span>
+        </div>
       </div>
-      <div class="op-pack">
-        <span class="op-pack-left"><span class="op-pack-label">10 runs</span><span class="op-pack-per">&euro;1.20 / run</span></span>
-        <span class="op-pack-right"><span class="op-pack-soon">Coming soon</span><span class="op-pack-price">&euro;12</span></span>
-      </div>
-      <div class="op-pack op-pack--best">
-        <span class="op-pack-left"><span class="op-pack-label">25 runs</span><span class="op-pack-per">&euro;1.00 / run</span></span>
-        <span class="op-pack-right"><span class="op-pack-soon">Coming soon</span><span class="op-pack-price">&euro;25</span></span>
-      </div>
+      <div class="op-soon-stamp"><span>Coming Soon</span></div>
     </div>
 
     <div class="op-coupon-sec">
       <div class="op-coupon-in">
-        <div class="op-coupon-kick">HAVE A CODE?</div>
+        <div class="op-coupon-kick">USE COUPON</div>
         <div class="op-coupon-row">
-          <input id="fitCoupon" class="op-coupon-input ph-no-capture" placeholder="Enter code" autocomplete="off" spellcheck="false" />
-          <button type="button" class="op-coupon-apply" id="fitCouponBtn">Apply</button>
+          <input id="fitCoupon" class="op-coupon-input ph-no-capture" placeholder="Paste coupon here" autocomplete="off" spellcheck="false" />
+          <button type="button" class="op-coupon-apply" id="fitCouponBtn">redeem</button>
         </div>
         <div class="op-coupon-msg" id="fitCouponMsg" role="status" aria-live="polite"></div>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- slide-in menu (How it works / Why pay / About) -->
+<div class="op-menu-back" id="menuBack" hidden>
+  <div class="op-menu-panel" id="menuPanel" role="dialog" aria-modal="true" aria-label="Menu">
+    <button type="button" class="op-menu-close" id="menuClose" aria-label="Close menu">&times;</button>
+    <div class="op-menu-item">
+      <button type="button" class="op-menu-q" aria-expanded="false"><span>How does it work?</span><span class="op-menu-plus">+</span></button>
+      <div class="op-menu-a" hidden>
+        <p><span class="op-red">Paste both</span> &mdash; your CV on the left, the job description on the right. Plain text, nothing to format.</p>
+        <p><span class="op-red">Check fit</span> &mdash; OnPaper reads both and finds the gaps that matter for this specific role.</p>
+        <p><span class="op-red">Fix each one</span> &mdash; every gap comes with one concrete change you can make before you apply.</p>
+      </div>
+    </div>
+    <div class="op-menu-item">
+      <button type="button" class="op-menu-q" aria-expanded="false"><span>Why do I need to pay?</span><span class="op-menu-plus">+</span></button>
+      <div class="op-menu-a" hidden>
+        <p>Every fit check sends your CV and the job description through a large AI model, and that costs money on every run.</p>
+        <p>Your first runs are free. When you run low, a few euros keeps it going &mdash; no account, no subscription. One run = one CV &times; job comparison.</p>
+      </div>
+    </div>
+    <div class="op-menu-item">
+      <button type="button" class="op-menu-q" aria-expanded="false"><span>About</span><span class="op-menu-plus">+</span></button>
+      <div class="op-menu-a" hidden>
+        <p>OnPaper shows the real gaps between your CV and a specific job &mdash; and one concrete fix for each. Gaps, not scores. Fixes, not filler.</p>
+        <p>Made by Roie Shalom.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- D: "text seems very short" confirm -->
+<div class="op-confirm-back" id="shortBack" hidden>
+  <div class="op-confirm" role="dialog" aria-modal="true" aria-label="Confirm short text">
+    <p class="op-confirm-title">Text seems very short. Are you sure this is what you meant to submit?</p>
+    <div class="op-confirm-actions">
+      <button type="button" class="op-ghost-btn" id="shortBackBtn">back</button>
+      <button type="button" class="op-btn" id="shortYesBtn">Yes</button>
+    </div>
+  </div>
+</div>
+
+<!-- D: "doesn't look like a complete CV" confirm -->
+<div class="op-confirm-back" id="cvBack" hidden>
+  <div class="op-confirm" role="dialog" aria-modal="true" aria-label="Confirm CV">
+    <p class="op-confirm-title">This doesn&rsquo;t look like a complete CV.</p>
+    <div class="op-confirm-actions">
+      <button type="button" class="op-ghost-btn" id="cvBackBtn">back</button>
+      <button type="button" class="op-btn" id="cvRunBtn">Run anyway</button>
+    </div>
+  </div>
+</div>
+
+<!-- E: analysis failure -->
+<div class="op-confirm-back" id="failBack" hidden>
+  <div class="op-confirm" role="dialog" aria-modal="true" aria-label="Something went wrong">
+    <p class="op-confirm-title" id="failTitle">Something went wrong on our side. Your run wasn&rsquo;t used.</p>
+    <div class="op-confirm-actions">
+      <button type="button" class="op-btn" id="failTryBtn">Try again</button>
+    </div>
+  </div>
+</div>
+
+<!-- Identical re-submission confirm: same CV + JD as the last successful run -->
+<div class="op-confirm-back" id="rerunBack" hidden>
+  <div class="op-confirm" role="dialog" aria-modal="true" aria-label="Run the same fit check again">
+    <p class="op-confirm-title">Same CV and job description as your last fit check. Running it again will use 1 run.</p>
+    <div class="op-confirm-actions">
+      <button type="button" class="op-ghost-btn" id="rerunBackBtn">back</button>
+      <button type="button" class="op-btn" id="rerunRunBtn">Run again</button>
     </div>
   </div>
 </div>
@@ -413,8 +605,9 @@
 (function () {
   // The deployed Vercel function (private onpaper-api repo) that holds the key + prompt.
   var API_BASE   = "https://onpaper-api.vercel.app/api";
-  var API_URL    = API_BASE + "/analyze";
-  var REDEEM_URL = API_BASE + "/redeem";
+  var API_URL     = API_BASE + "/analyze";
+  var REDEEM_URL  = API_BASE + "/redeem";
+  var BALANCE_URL = API_BASE + "/balance";
 
   var LS_CV  = "triage_fit_cv";    // your CV, remembered so you don't retype
   var LS_JD  = "triage_fit_jd";    // last JD you pasted
@@ -439,15 +632,22 @@
     run: $("fitRun"), runLabel: $("fitRunLabel"), spin: $("fitSpin"),
     error: $("fitError"), sample: $("fitSample"),
     viewInput: $("viewInput"), viewResults: $("viewResults"), actionBar: $("actionBar"),
-    barRun: $("barRun"), barOut: $("barOut"), runLine: $("runLine"), runRemaining: $("runRemaining"), barMsg: $("barMsg"),
-    back: $("fitBack"), again: $("fitAgain"), copy: $("fitCopy"), download: $("fitDownload"),
+    barRun: $("barRun"), barOut: $("barOut"), barResults: $("barResults"),
+    runLine: $("runLine"), runRemaining: $("runRemaining"), barMsg: $("barMsg"),
+    fitNew: $("fitNew"), copy: $("fitCopy"), download: $("fitDownload"),
+    cvClear: $("cvClear"), jdClear: $("jdClear"),
     sampleBadge: $("sampleBadge"),
     resultTitle: $("resultTitle"), resultMatch: $("resultMatch"), resultMatchVal: $("resultMatchVal"),
     resultStamp: $("resultStamp"), resultDeal: $("resultDeal"), resultDealText: $("resultDealText"),
     gapList: $("gapList"),
     payBack: $("payBack"), payModal: $("payModal"), payClose: $("payClose"),
-    getMore1: $("getMore1"), getMore2: $("getMore2"),
-    coupon: $("fitCoupon"), couponBtn: $("fitCouponBtn"), couponMsg: $("fitCouponMsg")
+    getMore1: $("getMore1"), getMore2: $("getMore2"), getMore3: $("getMore3"),
+    coupon: $("fitCoupon"), couponBtn: $("fitCouponBtn"), couponMsg: $("fitCouponMsg"),
+    menuBtn: $("menuBtn"), menuBack: $("menuBack"), menuClose: $("menuClose"),
+    shortBack: $("shortBack"), shortBackBtn: $("shortBackBtn"), shortYesBtn: $("shortYesBtn"),
+    cvBack: $("cvBack"), cvBackBtn: $("cvBackBtn"), cvRunBtn: $("cvRunBtn"),
+    failBack: $("failBack"), failTryBtn: $("failTryBtn"),
+    rerunBack: $("rerunBack"), rerunBackBtn: $("rerunBackBtn"), rerunRunBtn: $("rerunRunBtn")
   };
   if (!els.run) return;
 
@@ -465,19 +665,29 @@
   }
   var analysisRuns = 0;
   var lastText = "";   // last raw report text (for Copy / Download)
+  // Identical-resubmission guard: remember the CV + JD of the immediately previous
+  // successful run so re-running the exact same inputs asks for a one-time confirm
+  // (it still costs 1 run). Cleared implicitly once either input is edited.
+  var lastRunCv = "", lastRunJd = "", haveLastRun = false, rerunConfirmed = false;
 
   // ---- restore CV/JD, wire persistence + char-count labels ----
-  function syncCount(ta, label, count) {
+  function syncCount(ta, label, count, clear) {
     var n = ta.value.trim().length;
     label.hidden = n === 0;
     count.textContent = n ? (n + " chars") : "";
+    if (clear) clear.hidden = ta.value.length === 0;
   }
   els.cv.value = get(LS_CV);
   els.jd.value = get(LS_JD);
-  syncCount(els.cv, els.cvLabel, els.cvCount);
-  syncCount(els.jd, els.jdLabel, els.jdCount);
-  els.cv.addEventListener("input", function () { set(LS_CV, els.cv.value); syncCount(els.cv, els.cvLabel, els.cvCount); onEdit(); });
-  els.jd.addEventListener("input", function () { set(LS_JD, els.jd.value); syncCount(els.jd, els.jdLabel, els.jdCount); onEdit(); });
+  syncCount(els.cv, els.cvLabel, els.cvCount, els.cvClear);
+  syncCount(els.jd, els.jdLabel, els.jdCount, els.jdClear);
+  els.cv.addEventListener("input", function () { set(LS_CV, els.cv.value); syncCount(els.cv, els.cvLabel, els.cvCount, els.cvClear); onEdit(); });
+  els.jd.addEventListener("input", function () { set(LS_JD, els.jd.value); syncCount(els.jd, els.jdLabel, els.jdCount, els.jdClear); onEdit(); });
+  function clearField(ta, ls, label, count, clear) {
+    ta.value = ""; set(ls, ""); syncCount(ta, label, count, clear); onEdit(); ta.focus();
+  }
+  els.cvClear.addEventListener("click", function () { clearField(els.cv, LS_CV, els.cvLabel, els.cvCount, els.cvClear); });
+  els.jdClear.addEventListener("click", function () { clearField(els.jd, LS_JD, els.jdLabel, els.jdCount, els.jdClear); });
 
   function setError(msg) { els.error.textContent = msg || ""; els.error.hidden = !msg; }
 
@@ -493,8 +703,8 @@
   // Remaining analyses (server-authoritative; null = unknown until first action).
   var remaining = null;
   function updateRunLabel() {
-    if (loading) { els.runLabel.textContent = "Finding gaps…"; return; }
-    els.runLabel.textContent = (remaining === 1) ? "Find gaps · last run" : "Find gaps";
+    if (loading) { els.runLabel.textContent = "Thinking…"; return; }
+    els.runLabel.textContent = (remaining === 1) ? "Check fit · last run" : "Check fit";
   }
   function renderBalance() {
     updateRunLabel();
@@ -525,6 +735,7 @@
   function refreshRunDisabled() { els.run.disabled = findDisabled(); }
   function onEdit() {
     setError("");
+    rerunConfirmed = false;   // editing either input means the next run isn't a blind re-run
     if (!loading && remaining !== 0) els.run.disabled = findDisabled();
   }
 
@@ -628,7 +839,7 @@
           var fix = el("div", "op-fix");
           fix.appendChild(el("span", "op-fix-caret", "∧"));
           var fixBody = el("div");
-          fixBody.appendChild(el("div", "op-fix-kicker", "INSERT · ONE FIX"));
+          fixBody.appendChild(el("div", "op-fix-kicker", "Recommended"));
           fixBody.appendChild(el("p", "op-fix-text", g.fix));
           fix.appendChild(fixBody);
           card.appendChild(fix);
@@ -643,8 +854,9 @@
     }
 
     els.viewInput.hidden = true;
-    els.actionBar.hidden = true;
     els.viewResults.hidden = false;
+    els.actionBar.hidden = false;
+    els.barRun.hidden = true; els.barOut.hidden = true; els.barResults.hidden = false;
     document.querySelector(".op-scroll").scrollTop = 0;
   }
 
@@ -664,7 +876,9 @@
     els.viewResults.hidden = true;
     els.viewInput.hidden = false;
     els.actionBar.hidden = false;
+    els.barResults.hidden = true;
     renderBalance();
+    refreshRunDisabled();
     document.querySelector(".op-scroll").scrollTop = 0;
   }
 
@@ -685,12 +899,35 @@
     return { text: (data.text || "").trim(), remaining: data.remaining };
   }
 
-  // ---- run ----
-  els.run.addEventListener("click", async function () {
-    var cv = els.cv.value.trim();
-    var jd = els.jd.value.trim();
-    if (!cv || !jd) { setError("Paste both a CV and a job description."); return; }
+  // ---- run: pre-flight checks (flow D) then the actual call ----
+  // NOTE: threshold is provisional — user to set the real minimum-characters limit later.
+  var MIN_CHARS = 300;
+  // Heuristic for "this doesn't look like a complete CV" (flow D, tier 3). Lenient by design.
+  function looksLikeCV(t) {
+    if (t.length < 200) return false;
+    var hits = 0;
+    if (/\b(19|20)\d{2}\b/.test(t)) hits++;                       // a year
+    if (/[\w.+-]+@[\w-]+\.[\w.-]+/.test(t)) hits++;               // an email
+    if (/\b(experience|education|skills|work|project|manager|engineer|designer|developer|university|bachelor|master|intern|responsib)\b/i.test(t)) hits++;
+    return hits >= 2;
+  }
 
+  // Entry point from the button. skipShort = user already confirmed the short-text warning.
+  function attemptRun(skipShort) {
+    var cv = els.cv.value.trim(), jd = els.jd.value.trim();
+    if (!cv || !jd) { setError("Paste both a CV and a job description."); return; }
+    setError("");
+    // Same CV + JD as the immediately previous successful run: confirm once (it uses 1 run).
+    // These inputs already passed the pre-flight checks last time, so skip straight to confirm.
+    if (haveLastRun && !rerunConfirmed && cv === lastRunCv && jd === lastRunJd) { openConfirm(els.rerunBack); return; }
+    if (!skipShort && (cv.length < MIN_CHARS || jd.length < MIN_CHARS)) { openConfirm(els.shortBack); return; }
+    if (!looksLikeCV(cv)) { openConfirm(els.cvBack); return; }
+    doRun();
+  }
+
+  async function doRun() {
+    var cv = els.cv.value.trim(), jd = els.jd.value.trim();
+    if (!cv || !jd) return;
     analysisRuns++;
     var t0 = Date.now();
     track(analysisRuns > 1 ? "analysis_rerun" : "analysis_started", { cv_chars: cv.length, jd_chars: jd.length });
@@ -710,15 +947,20 @@
       });
       setLoading(false);
       updateRemaining(data.remaining);
+      lastRunCv = cv; lastRunJd = jd; haveLastRun = true;   // remember for identical-resubmission guard
       showResults(out || "", false);
     } catch (err) {
       track("analysis_failed", { error_type: classifyErr(err), duration_ms: Date.now() - t0 });
       setLoading(false);
+      // The backend only spends a run on a successful response, so a thrown error means
+      // the run wasn't consumed. Show the failure modal (flow E).
       if (typeof err.remaining === "number") updateRemaining(err.remaining);
       refreshRunDisabled();
-      setError(err.message);
+      openConfirm(els.failBack);
     }
-  });
+  }
+
+  els.run.addEventListener("click", function () { attemptRun(false); });
 
   // ---- sample preview (no credit spent) ----
   var SAMPLE = [
@@ -745,14 +987,63 @@
     showResults(SAMPLE, true);
   });
 
+  // ---- toast ----
+  var toastTimer = null;
+  function toast(msg) {
+    var t = document.createElement("div");
+    t.className = "op-toast"; t.textContent = msg;
+    document.body.appendChild(t);
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { t.remove(); }, 1800);
+  }
+
+  // ---- generic confirm/overlay helpers (menu + D/E modals) ----
+  function openConfirm(back) { back.hidden = false; }
+  function closeConfirm(back) { back.hidden = true; }
+  function anyConfirmOpen() {
+    return [els.shortBack, els.cvBack, els.failBack, els.rerunBack].filter(function (b) { return !b.hidden; });
+  }
+  // click-outside to dismiss (fail + short + cv + rerun all allow backdrop dismiss)
+  [els.shortBack, els.cvBack, els.failBack, els.rerunBack].forEach(function (b) {
+    b.addEventListener("click", function (e) { if (e.target === b) closeConfirm(b); });
+  });
+
+  // flow D — short-text confirm
+  els.shortBackBtn.addEventListener("click", function () { closeConfirm(els.shortBack); });
+  els.shortYesBtn.addEventListener("click", function () { closeConfirm(els.shortBack); attemptRun(true); });
+  // flow D — not-a-CV confirm
+  els.cvBackBtn.addEventListener("click", function () { closeConfirm(els.cvBack); });
+  els.cvRunBtn.addEventListener("click", function () { closeConfirm(els.cvBack); doRun(); });
+  // flow E — analysis failure
+  els.failTryBtn.addEventListener("click", function () { closeConfirm(els.failBack); doRun(); });
+  // identical re-submission — confirm once, then run (still uses 1 run)
+  els.rerunBackBtn.addEventListener("click", function () { closeConfirm(els.rerunBack); });
+  els.rerunRunBtn.addEventListener("click", function () { closeConfirm(els.rerunBack); rerunConfirmed = true; doRun(); });
+
+  // ---- slide-in menu ----
+  function openMenu() { els.menuBack.hidden = false; els.menuBtn.setAttribute("aria-expanded", "true"); track("menu_opened", {}); }
+  function closeMenu() { els.menuBack.hidden = true; els.menuBtn.setAttribute("aria-expanded", "false"); }
+  els.menuBtn.addEventListener("click", function () { els.menuBack.hidden ? openMenu() : closeMenu(); });
+  els.menuClose.addEventListener("click", closeMenu);
+  els.menuBack.addEventListener("click", function (e) { if (e.target === els.menuBack) closeMenu(); });
+  Array.prototype.forEach.call(document.querySelectorAll("#menuPanel .op-menu-q"), function (q) {
+    q.addEventListener("click", function () {
+      var open = q.getAttribute("aria-expanded") === "true";
+      q.setAttribute("aria-expanded", String(!open));
+      var ans = q.nextElementSibling;
+      if (ans) ans.hidden = open;
+      var plus = q.querySelector(".op-menu-plus");
+      if (plus) plus.textContent = open ? "+" : "–";
+    });
+  });
+
   // ---- results actions ----
-  els.back.addEventListener("click", function (e) { e.preventDefault(); backToInput(); });
-  els.again.addEventListener("click", function () { backToInput(); });
+  // "New fit check" is the sole way back to the input view (generic Back removed).
+  els.fitNew.addEventListener("click", function () { backToInput(); });
   els.copy.addEventListener("click", function () {
-    var plain = plainText();
-    navigator.clipboard.writeText(plain).then(function () {
-      els.copy.textContent = "Copied"; setTimeout(function () { els.copy.textContent = "Copy"; }, 1500);
-    }, function () { els.copy.textContent = "Copy failed"; });
+    navigator.clipboard.writeText(plainText()).then(function () {
+      toast("Report copied to clipboard");
+    }, function () { toast("Copy failed"); });
   });
   els.download.addEventListener("click", function () {
     var blob = new Blob([plainText()], { type: "text/plain;charset=utf-8" });
@@ -767,9 +1058,16 @@
   function closePay() { els.payBack.hidden = true; }
   els.getMore1.addEventListener("click", openPay);
   els.getMore2.addEventListener("click", openPay);
+  els.getMore3.addEventListener("click", openPay);
   els.payClose.addEventListener("click", closePay);
   els.payBack.addEventListener("click", function (e) { if (e.target === els.payBack) closePay(); });
-  document.addEventListener("keydown", function (e) { if (e.key === "Escape" && !els.payBack.hidden) closePay(); });
+  document.addEventListener("keydown", function (e) {
+    if (e.key !== "Escape") return;
+    if (!els.payBack.hidden) { closePay(); return; }
+    if (!els.menuBack.hidden) { closeMenu(); return; }
+    var open = anyConfirmOpen();
+    if (open.length) closeConfirm(open[open.length - 1]);
+  });
 
   // ---- coupon redemption (real backend) ----
   function couponMsg(msg, isError) {
@@ -803,9 +1101,32 @@
   });
   els.coupon.addEventListener("keydown", function (e) { if (e.key === "Enter") els.couponBtn.click(); });
 
+  // ---- balance check on load: learn the server-side balance so the bar shows
+  // the right state (Find gaps vs. Get more runs) before the first run. Sends
+  // only the anonymous token. Best-effort: on any failure we keep the current
+  // fallback (unknown balance → Find gaps) rather than blocking the user.
+  async function fetchBalance() {
+    try {
+      var res = await fetch(BALANCE_URL, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ token: uid })
+      });
+      if (!res.ok) return;
+      var data = await res.json();
+      if (typeof data.remaining === "number") {
+        updateRemaining(data.remaining); // sets remaining, re-renders, shows the right bar
+        refreshRunDisabled();
+      }
+    } catch (e) {
+      // Network/CORS failure — keep fallback behavior, don't block the user.
+    }
+  }
+
   // init
   renderBalance();
   refreshRunDisabled();
+  fetchBalance();
   track("onpaper_opened", { entry: "load" });
 })();
 </script>
