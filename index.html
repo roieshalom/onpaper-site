@@ -560,8 +560,8 @@
     <div class="op-menu-item">
       <button type="button" class="op-menu-q" aria-expanded="false"><span>Privacy</span><span class="op-menu-plus">+</span></button>
       <div class="op-menu-a" hidden>
-        <p>Your job search is personal.</p>
-        <p><span class="op-menu-lead">We don&rsquo;t keep your CV or the job description.</span> They&rsquo;re used once, in the moment, to generate your fit check, and then they&rsquo;re gone. We don&rsquo;t save them, and we can&rsquo;t pull them up later.</p>
+        <p><strong>Your job search is personal.</strong></p>
+        <p><span class="op-menu-lead">We don&rsquo;t keep anything you paste.</span> They&rsquo;re used once, in the moment, to generate your fit check, and then they&rsquo;re gone. We don&rsquo;t save them, and we can&rsquo;t pull them up later.</p>
         <p><span class="op-menu-lead">No account, no sign-up, no email, no name.</span> You never hand us your identity. Your browser holds a small random ID so we can remember how many runs you have left, and it isn&rsquo;t linked to who you are.</p>
         <p><span class="op-menu-lead">How the run actually works.</span> To run the comparison, we send your CV and the job text to Anthropic, the company behind the Claude AI that does the analysis. We don&rsquo;t store either one ourselves.</p>
         <p><span class="op-menu-lead">We measure anonymously how the site is used</span> &mdash; for example, which pages get opened and roughly how long a check takes, using privacy-friendly analytics on European servers. It never includes your CV, the job text, or your results, it doesn&rsquo;t use cookies, and it never identifies you.</p>
@@ -932,6 +932,9 @@
   // ---- run: pre-flight checks (flow D) then the actual call ----
   // NOTE: threshold is provisional — user to set the real minimum-characters limit later.
   var MIN_CHARS = 300;
+  // Hard bounds — must match the backend (onpaper-api/api/analyze.js). Enforced before
+  // sending so oversize/short input gets a clear message instead of a generic failure.
+  var HARD_MIN = 500, HARD_MAX = 12000;
   // Heuristic for "this doesn't look like a complete CV" (flow D, tier 3). Lenient by design.
   function looksLikeCV(t) {
     if (t.length < 200) return false;
@@ -947,6 +950,19 @@
     var cv = els.cv.value.trim(), jd = els.jd.value.trim();
     if (!cv || !jd) { setError("Paste both a CV and a job description."); return; }
     setError("");
+    // Hard length bounds (match the backend) — caught here so the user gets a clear reason.
+    if (cv.length > HARD_MAX || jd.length > HARD_MAX) {
+      var over = [];
+      if (cv.length > HARD_MAX) over.push("CV");
+      if (jd.length > HARD_MAX) over.push("job description");
+      setError("Your " + over.join(" and ") + " " + (over.length > 1 ? "are" : "is") + " too long. Keep each under " +
+        HARD_MAX.toLocaleString() + " characters (CV " + cv.length.toLocaleString() + ", job " + jd.length.toLocaleString() + ") and try again.");
+      return;
+    }
+    if (cv.length < HARD_MIN || jd.length < HARD_MIN) {
+      setError("Please paste a bit more — each box needs at least " + HARD_MIN + " characters.");
+      return;
+    }
     // Same CV + JD as the immediately previous successful run: confirm once (it uses 1 run).
     // These inputs already passed the pre-flight checks last time, so skip straight to confirm.
     if (haveLastRun && !rerunConfirmed && cv === lastRunCv && jd === lastRunJd) { openConfirm(els.rerunBack); return; }
@@ -986,6 +1002,16 @@
       // the run wasn't consumed. Show the failure modal (flow E).
       if (typeof err.remaining === "number") updateRemaining(err.remaining);
       refreshRunDisabled();
+      // Show the real reason when the backend gave one; keep the reassuring default for
+      // network/unknown errors. A run is only ever spent on success, so it's untouched here.
+      var msg = (err && err.message) || "";
+      var isNetwork = /failed to fetch|networkerror|load failed|request failed/i.test(msg);
+      var failTitle = document.getElementById("failTitle");
+      if (failTitle) {
+        failTitle.textContent = (msg && !isNetwork)
+          ? (msg + (/run/i.test(msg) ? "" : " Your run wasn’t used."))
+          : "Something went wrong on our side. Your run wasn’t used.";
+      }
       openConfirm(els.failBack);
     }
   }
