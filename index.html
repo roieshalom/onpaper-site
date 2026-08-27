@@ -85,6 +85,19 @@
   ::selection { background: rgba(143,180,217,0.30); }
   @keyframes op-spin { to { transform: rotate(360deg); } }
   @keyframes op-rise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes rainbow-heart {
+    0% { color: #ed2c0a; }
+    14.28% { color: #ff8c00; }
+    28.56% { color: #ffd700; }
+    42.84% { color: #00b050; }
+    57.12% { color: #0078d4; }
+    71.4% { color: #4b0082; }
+    85.68% { color: #9400d3; }
+    100% { color: #ed2c0a; }
+  }
+  #headerHeart {
+    animation: rainbow-heart 8s linear infinite;
+  }
 
   /* ---- app shell ---- */
   .op-shell {
@@ -474,7 +487,7 @@
         <img src="logo.svg" alt="OnPaper" class="op-logo op-wordmark" width="116" height="30" />
       </div>
       <div class="op-nav">
-        <span class="op-meta">CV <span class="op-red">&hearts;</span> JD</span>
+        <span class="op-meta">CV <span class="op-red" id="headerHeart">&hearts;</span> JD</span>
         <button type="button" class="op-menu-btn" id="menuBtn" aria-label="Menu" aria-expanded="false" aria-controls="menuPanel">
           <span></span><span></span>
         </button>
