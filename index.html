@@ -107,6 +107,8 @@
   .op-header-in { max-width: 1000px; margin: 0 auto; padding: 22px 32px; display: flex; align-items: center; justify-content: space-between; gap: 16px; }
   .op-wordmark { font-family: var(--serif-d); font-size: 26px; letter-spacing: -0.01em; }
   .op-wordmark .op-red, .op-red { color: var(--red); }
+  .op-logo { display: block; height: 30px; width: auto; }
+  .op-foot-mark .op-logo { height: 20px; }
   .op-meta { font-family: var(--mono); font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--mono-muted); }
 
   /* ---- scroll region ---- */
@@ -261,7 +263,7 @@
      ================================================================ */
 
   /* ---- header brand + nav (wordmark + subtitle, CV x JD + menu) ---- */
-  .op-brand { display: flex; flex-direction: column; gap: 3px; }
+  .op-brand { display: flex; flex-direction: column; gap: 3px; align-items: center; justify-content: center; }
   .op-brand-sub { font-family: var(--mono); font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--mono-muted); }
   .op-nav { display: flex; align-items: center; gap: 18px; }
   .op-menu-btn {
@@ -469,8 +471,7 @@
   <header class="op-header">
     <div class="op-header-in">
       <div class="op-brand">
-        <span class="op-wordmark">On<span class="op-red">Paper</span></span>
-        <span class="op-brand-sub">Match your Resume</span>
+        <img src="logo.svg" alt="OnPaper" class="op-logo op-wordmark" width="116" height="30" />
       </div>
       <div class="op-nav">
         <span class="op-meta">CV <span class="op-red">&hearts;</span> JD</span>
@@ -596,7 +597,7 @@
     </div>
 
     <footer class="op-footer">
-      <span class="op-foot-mark">On<span class="op-red">Paper</span></span>
+      <span class="op-foot-mark"><img src="logo.svg" alt="OnPaper" class="op-logo" width="78" height="20" /></span>
       <span class="op-foot-tag">Gaps, not scores.</span>
     </footer>
   </div>
@@ -1100,6 +1101,17 @@
     if (!s) return "";
     return isProbablyUrl(s) ? "url" : "text";
   }
+  // Does pasted text actually read like a job posting, or is it random letters /
+  // a stray paste (by mistake, or someone poking at the field)? Real prose reliably
+  // carries common English function words; gibberish and keyboard-mashing won't.
+  // Used to give a clearer message than "too short" when the input makes no sense.
+  function jdLooksLikeText(t) {
+    var s = (t || "").toLowerCase();
+    var words = s.match(/[a-z]{2,}/g) || [];
+    if (words.length < 4) return false;                    // needs a few real words
+    var common = s.match(/\b(the|and|to|of|in|for|with|is|are|will|you|we|our|as|on|at|or|an|be|this|that|from|by|role|team|work|experience|skills|job|company|manager|engineer|design)\b/g) || [];
+    return common.length >= 2;                              // some real sentence structure
+  }
   // Restore whatever was last in the field — a link or pasted JD text both persist.
   var savedJd = get(LS_JD);
   els.jdUrl.value = savedJd;
@@ -1395,6 +1407,13 @@
     var jd = kind === "url" ? normalizeUrl(els.jdUrl.value) : els.jdUrl.value.trim();
     if (!cv) { setError("Upload your CV to run a fit check."); return; }
     if (!kind) { setError("Paste a link to the job posting, or the full job description text."); return; }
+    // Pasted JD text is sent straight to the analysis. First make sure it actually
+    // reads like a posting — random letters / stray pastes get a specific message
+    // instead of the "too short" one, which wrongly implies a longer version exists.
+    if (kind === "text" && !jdLooksLikeText(jd)) {
+      setError("That doesn't read like a job description. Paste the full posting text, or a link to it.");
+      return;
+    }
     // Pasted JD text is sent straight to the analysis, so enforce the same lower
     // bound the backend uses. (A link is fetched + bounded server-side instead.)
     if (kind === "text" && jd.length < HARD_MIN) {
