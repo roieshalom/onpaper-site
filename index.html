@@ -2,9 +2,9 @@
 <html lang="en">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="theme-color" content="#111A28">
+<meta name="theme-color" content="#F0F4F7">
 <title>OnPaper</title>
-<meta name="description" content="Paste your CV and a job description. Get the real gaps between them, each with one concrete fix. Gaps, not scores. Fixes, not filler.">
+<meta name="description" content="Upload your CV and paste a job link. Get the real gaps between them, each with one concrete fix. Gaps, not scores. Fixes, not filler.">
 <link rel="icon" href="favicon.ico" sizes="any">
 <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
 <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
@@ -34,41 +34,41 @@
      OnPaper — "proofreader's desk". Design tokens from the handoff.
      ================================================================ */
   :root {
-    /* ---- Midnight Wool (dark) ---- deep navy wool ground, warm chalk text,
-       one faint lamplight glow. Token names kept from the light skin; only
-       their values invert, so the whole UI re-skins from here. */
-    --paper-bg:   #111A28;   /* ground navy (never pure black) */
-    --paper:      #192434;   /* cards / inputs / bar — surface step */
-    --paper-lt:   #202C40;   /* chip / raised surface */
-    --ink:        #E9E6DF;   /* body chalk text + chalk-fill button */
-    --ink-2:      #dfe3dd;   /* strong body / fix text */
-    --ink-3:      #b7bfca;   /* secondary body */
-    --ink-4:      #97A1B0;   /* muted body / step copy */
-    --mono-muted: #8794a5;
-    --faint:      #6E7A8C;
-    --faint-2:    #6E7A8C;   /* placeholders */
-    --faint-3:    #6E7A8C;   /* char counts */
-    --red:        #E0705C;   /* chalk red — the single warm accent */
-    --red-dark:   #E88B7A;
+    /* ---- Daylight Paper (light) ---- pale blue-grey ground, dark-navy ink,
+       the same warm red accent. Token names kept from the dark skin; only
+       their values change, so the whole UI re-skins from here. */
+    --paper-bg:   #F0F4F7;   /* pale blue-grey page ground */
+    --paper:      #FFFFFF;   /* cards / inputs / bar — surface step */
+    --paper-lt:   #E3EAF0;   /* chip / raised / field-within-card surface */
+    --ink:        #111A28;   /* body ink (dark navy) + solid-fill button */
+    --ink-2:      #111A28;   /* strong body / fix text — same darkest ink */
+    --ink-3:      #384A66;   /* secondary body — lighter tint of #111A28 */
+    --ink-4:      #4E6180;   /* muted body / step copy — lighter tint of #111A28 */
+    --mono-muted: #5E7089;   /* faint navy labels — lighter tint of #111A28 */
+    --faint:      #8793A3;   /* light grey (kept neutral) */
+    --faint-2:    #9AA5B3;   /* placeholders — light grey (kept neutral) */
+    --faint-3:    #9AA5B3;   /* char counts — light grey (kept neutral) */
+    --red:        #E0705C;   /* warm red — the single accent */
+    --red-dark:   #C6543F;   /* hover: darker on a light ground */
     --red-focus:  #E0705C;
-    --line:       rgba(233,230,223,0.10);   /* hairline dividers */
-    --line-in:    rgba(233,230,223,0.14);   /* input / bar borders */
-    --card-line:  rgba(233,230,223,0.10);
-    --card-line2: rgba(233,230,223,0.10);
-    --dash:       rgba(233,230,223,0.25);
-    --rule:       rgba(224,112,92,0.30);     /* faint red margin rule */
-    --tag-border: rgba(224,112,92,0.50);
-    --err-bg:     rgba(224,112,92,0.12);
-    --err-border: rgba(224,112,92,0.32);
-    --best-bg:    #202C40;
-    --btn-line:   rgba(233,230,223,0.20);    /* ghost / icon button borders */
-    --glow:       rgba(229,184,79,0.06);     /* warm lamplight wash */
+    --line:       rgba(17,26,40,0.10);    /* hairline dividers */
+    --line-in:    rgba(17,26,40,0.14);    /* input / bar borders */
+    --card-line:  rgba(17,26,40,0.10);
+    --card-line2: rgba(17,26,40,0.10);
+    --dash:       rgba(17,26,40,0.22);
+    --rule:       rgba(224,112,92,0.32);     /* faint red margin rule */
+    --tag-border: rgba(224,112,92,0.55);
+    --err-bg:     rgba(224,112,92,0.10);
+    --err-border: rgba(224,112,92,0.34);
+    --best-bg:    #E9F0F5;
+    --btn-line:   rgba(17,26,40,0.20);    /* ghost / icon button borders */
+    --glow:       rgba(224,112,92,0.05);     /* faint warm wash at the top */
 
     --serif-d: 'Libre Caslon Display', Georgia, 'Times New Roman', serif;
     --serif-b: 'Newsreader', Georgia, 'Times New Roman', serif;
     --mono:    'IBM Plex Mono', ui-monospace, 'SF Mono', Menlo, monospace;
 
-    --ok: #7FB38A;   /* chalk green — good-match grade */
+    --ok: #4F9E6E;   /* green — good-match grade */
   }
 
   * { box-sizing: border-box; }
@@ -168,7 +168,7 @@
     transition: opacity .2s, box-shadow .2s, background .2s, transform .1s;
   }
   .op-btn:active { transform: translateY(1px); }
-  .op-btn:disabled { background: #3a475a; color: #8794a5; cursor: not-allowed; opacity: 0.7; box-shadow: none; }
+  .op-btn:disabled { background: #C7D0DA; color: #8793A3; cursor: not-allowed; opacity: 0.9; box-shadow: none; }
   .op-btn.is-loading { opacity: 1; }
   .op-btn-ghostdisabled {
     display: inline-flex; align-items: center; gap: 8px;
@@ -186,7 +186,7 @@
   }
   .op-ghost-btn:hover { border-color: var(--red); color: var(--ink); }
   .op-ghost-btn:active { transform: translateY(1px); }
-  .op-spin { display: inline-block; width: 14px; height: 14px; border: 2px solid rgba(17,26,40,0.30); border-top-color: var(--paper-bg); border-radius: 50%; animation: op-spin 0.7s linear infinite; }
+  .op-spin { display: inline-block; width: 14px; height: 14px; border: 2px solid rgba(240,244,247,0.35); border-top-color: var(--paper-bg); border-radius: 50%; animation: op-spin 0.7s linear infinite; }
   .op-getmore { font-family: var(--mono); font-size: 12px; padding: 0; border: none; background: transparent; color: var(--red); cursor: pointer; text-decoration: underline; text-underline-offset: 3px; text-decoration-color: var(--tag-border); }
   .op-runline { font-family: var(--mono); font-size: 11px; letter-spacing: 0.02em; color: var(--faint); }
   .op-runline .op-getmore { font-size: 11px; }
@@ -318,8 +318,63 @@
   .op-clear:hover { color: var(--red); border-color: var(--red-focus); }
   .op-clear[hidden] { display: none; }
 
+  /* ---- CV upload zone (replaces the CV textarea) ---- */
+  .op-upload {
+    width: 100%; min-height: 196px;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px;
+    padding: 30px 24px; border: 1.5px dashed var(--dash); border-radius: 3px;
+    background: var(--paper); color: var(--ink-3); cursor: pointer; text-align: center;
+    box-shadow: 2px 3px 0 rgba(0,0,0,0.18);
+    transition: border-color .15s, background .15s;
+  }
+  .op-upload:hover, .op-upload.is-drag { border-color: var(--red-focus); background: var(--paper-lt); }
+  .op-upload-ic { color: var(--red); width: 30px; height: 30px; }
+  .op-upload-main { font-family: var(--serif-b); font-size: 17px; color: var(--ink-2); }
+  .op-upload-sub { font-family: var(--mono); font-size: 11px; letter-spacing: 0.08em; color: var(--mono-muted); }
+  .op-upload[hidden] { display: none; }
+
+  /* ---- parsed-file chip ---- */
+  .op-filechip {
+    display: flex; align-items: center; gap: 14px; width: 100%; min-height: 196px;
+    padding: 22px 22px; border: 1px solid var(--line-in); border-radius: 3px; background: var(--paper);
+    box-shadow: 2px 3px 0 rgba(0,0,0,0.18);
+  }
+  .op-filechip[hidden] { display: none; }
+  .op-filechip-ic { color: var(--red); width: 26px; height: 26px; flex-shrink: 0; }
+  .op-filechip-body { flex: 1; min-width: 0; }
+  .op-filechip-name { font-family: var(--mono); font-size: 13px; color: var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .op-filechip-meta { font-family: var(--mono); font-size: 11px; color: var(--faint); margin-top: 4px; }
+  .op-filechip-x { position: static; flex-shrink: 0; }
+  .op-parsing { font-family: var(--mono); font-size: 12px; letter-spacing: 0.04em; color: var(--mono-muted); margin-top: 10px; display: flex; align-items: center; gap: 8px; }
+  .op-parsing[hidden] { display: none; }
+  .op-parsing .op-spin { border-color: rgba(17,26,40,0.18); border-top-color: var(--red); }
+
+  /* ---- JD card (matches the CV upload card's footprint) ---- */
+  .op-jd-card {
+    width: 100%; min-height: 196px;
+    display: flex; flex-direction: column; justify-content: center; gap: 14px;
+    padding: 30px 24px; border: 1px solid var(--line-in); border-radius: 3px;
+    background: var(--paper); box-shadow: 2px 3px 0 rgba(0,0,0,0.18);
+  }
+  .op-jd-head { display: flex; align-items: center; justify-content: center; gap: 10px; }
+  .op-jd-ic { color: var(--red); width: 24px; height: 24px; }
+  .op-jd-main { font-family: var(--serif-b); font-size: 17px; color: var(--ink-2); }
+  .op-url-input {
+    width: 100%; padding: 14px 16px; border: 1px solid var(--line-in); border-radius: 3px;
+    background: var(--paper-lt); font-family: var(--mono); font-size: 13px; color: var(--ink);
+    transition: border-color .18s, box-shadow .18s;
+  }
+  .op-url-input:focus { border-color: var(--red-focus); box-shadow: 0 0 0 3px rgba(224,112,92,0.16); }
+  .op-field-hint { font-family: var(--mono); font-size: 11px; line-height: 1.5; letter-spacing: 0.03em; color: var(--mono-muted); text-align: center; }
+
   /* ---- results: icon actions + toast ---- */
-  .op-rtools { display: flex; justify-content: flex-end; gap: 10px; margin-bottom: 14px; }
+  .op-rtools { display: flex; align-items: center; justify-content: flex-end; gap: 12px; margin-bottom: 14px; }
+  .op-rtools .op-rstamp { margin-right: 4px; }
+  .op-rsource { font-family: var(--mono); font-size: 12px; line-height: 1.5; color: var(--ink-4); margin: 0 0 20px; word-break: break-word; }
+  .op-rsource .op-rsource-label { color: var(--mono-muted); }
+  .op-rsource a { color: var(--red); text-decoration: none; border-bottom: 1px dashed var(--tag-border); }
+  .op-rsource a:hover { color: var(--red-dark); }
+  .op-rsource .op-rsource-sep { color: var(--faint); margin: 0 9px; }
   .op-icon-btn {
     width: 40px; height: 40px; display: inline-flex; align-items: center; justify-content: center;
     border: 1px solid var(--btn-line); border-radius: 3px; background: transparent; color: var(--ink-3); cursor: pointer;
@@ -342,6 +397,11 @@
   }
   .op-confirm-title { font-family: var(--serif-d); font-weight: 400; font-size: 26px; line-height: 1.2; color: var(--ink); margin: 0 0 24px; text-wrap: pretty; }
   .op-confirm-actions { display: flex; flex-wrap: wrap; gap: 12px; }
+  .op-confirm-note { font-size: 16px; line-height: 1.6; color: var(--ink-3); margin: 0 0 14px; text-wrap: pretty; }
+  .op-confirm-busy { display: flex; align-items: baseline; gap: 10px; }
+  .op-confirm-foot { font-family: var(--mono); font-size: 11px; letter-spacing: 0.02em; color: var(--faint); margin: 4px 0 24px; }
+  .op-confirm-actions:empty + .op-confirm-foot, .op-confirm-foot:last-child { margin-bottom: 0; }
+  .op-mini-spin { flex: none; width: 13px; height: 13px; align-self: center; border: 2px solid var(--line-in); border-top-color: var(--red); border-radius: 50%; animation: op-spin 0.7s linear infinite; }
 
   /* ---- "coming soon" diagonal stamp over the packs ---- */
   .op-packs-wrap { position: relative; }
@@ -393,27 +453,46 @@
     <div id="viewInput">
       <section class="op-hero">
         <h1 class="op-h1">Match your <span class="op-wavy">CV</span> to the <span class="op-wavy">Job Description</span></h1>
-        <p class="op-sub">Paste your CV and a job description <span class="op-red">&rsaquo;</span> check the fit and close the gaps</p>
+        <p class="op-sub">Upload your CV and paste the job link <span class="op-red">&rsaquo;</span> check the fit and close the gaps</p>
       </section>
 
       <section class="op-io-sec">
         <div class="op-io">
           <div class="op-col">
             <div class="op-labelrow">
-              <label class="op-label" id="cvLabel" for="fitCv" hidden><span>Your CV</span><span class="op-count" id="cvCount"></span></label>
+              <label class="op-label" id="cvLabel" hidden><span>Your CV</span><span class="op-count" id="cvCount"></span></label>
             </div>
             <div class="op-field">
-              <textarea id="fitCv" class="op-textarea ph-no-capture" placeholder="Paste CV here" spellcheck="false"></textarea>
-              <button type="button" class="op-clear" id="cvClear" aria-label="Clear CV" hidden>&times;</button>
+              <input id="fitCvFile" type="file" accept=".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document" hidden>
+              <button type="button" class="op-upload" id="cvDrop" aria-label="Upload your CV (PDF or DOCX)">
+                <svg class="op-upload-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4"/><path d="M7 9l5-5 5 5"/><path d="M4 20h16"/></svg>
+                <span class="op-upload-main">Upload your CV</span>
+                <span class="op-upload-sub">PDF or DOCX &middot; drag &amp; drop or choose a file</span>
+              </button>
+              <div class="op-filechip ph-no-capture" id="cvChip" hidden>
+                <svg class="op-filechip-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3v5h5"/><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/></svg>
+                <div class="op-filechip-body">
+                  <div class="op-filechip-name" id="cvChipName"></div>
+                  <div class="op-filechip-meta" id="cvChipMeta"></div>
+                </div>
+                <button type="button" class="op-clear op-filechip-x" id="cvChipX" aria-label="Remove file">&times;</button>
+              </div>
+              <div class="op-parsing" id="cvParsing" hidden><span class="op-spin" aria-hidden="true"></span><span>Reading your CV…</span></div>
             </div>
           </div>
           <div class="op-col">
             <div class="op-labelrow">
-              <label class="op-label" id="jdLabel" for="fitJd" hidden><span>Job description</span><span class="op-count" id="jdCount"></span></label>
+              <label class="op-label" id="jdLabel" for="fitJdUrl" hidden><span>Job description</span><span class="op-count" id="jdCount"></span></label>
             </div>
             <div class="op-field">
-              <textarea id="fitJd" class="op-textarea ph-no-capture" placeholder="Paste Job Description here" spellcheck="false"></textarea>
-              <button type="button" class="op-clear" id="jdClear" aria-label="Clear job description" hidden>&times;</button>
+              <div class="op-jd-card">
+                <div class="op-jd-head">
+                  <svg class="op-jd-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1 1"/><path d="M14 11a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1-1"/></svg>
+                  <span class="op-jd-main">Paste the job link</span>
+                </div>
+                <input id="fitJdUrl" type="text" class="op-url-input ph-no-capture" placeholder="https://…  or paste the full job description" autocomplete="off" spellcheck="false">
+                <div class="op-field-hint">Paste a link, or the full job description text &mdash; either way, we don&rsquo;t store it.</div>
+              </div>
             </div>
           </div>
         </div>
@@ -443,7 +522,7 @@
           <div class="op-step">
             <div class="op-stepnum">03</div>
             <h3 class="op-steph">Frictionless</h3>
-            <p class="op-stepp">Plain text, zero formatting templates to fight with, smoothing the way to your first interview</p>
+            <p class="op-stepp">Upload your CV and drop in the job link &mdash; no templates to fight with, smoothing the way to your first interview</p>
           </div>
         </div>
       </section>
@@ -453,7 +532,8 @@
     <div id="viewResults" hidden>
       <div class="op-results">
         <div class="op-rtools">
-          <button type="button" class="op-icon-btn" id="fitDownload" aria-label="Download fit check" title="Download">
+          <span class="op-rstamp" id="resultStamp"></span>
+          <button type="button" class="op-icon-btn" id="fitDownload" aria-label="Download fit check" title="Download PDF">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12"/><path d="M7 11l5 5 5-5"/><path d="M4 20h16"/></svg>
           </button>
           <button type="button" class="op-icon-btn" id="fitCopy" aria-label="Copy fit check" title="Copy">
@@ -463,10 +543,8 @@
         <span class="op-samplebadge" id="sampleBadge" hidden>Sample</span>
         <div class="op-kicker">Gap report</div>
         <h2 class="op-rtitle" id="resultTitle"></h2>
-        <div class="op-rmeta">
-          <span class="op-match" id="resultMatch" hidden>Match &middot; <span class="op-match-val" id="resultMatchVal"></span></span>
-          <span class="op-rstamp" id="resultStamp"></span>
-        </div>
+        <p class="op-rsource" id="resultSource" hidden></p>
+        <span class="op-match" id="resultMatch" hidden>Match &middot; <span class="op-match-val" id="resultMatchVal"></span></span>
         <p class="op-deal" id="resultDeal" hidden><span class="op-deal-label">Dealbreakers</span><span class="op-deal-text" id="resultDealText"></span></p>
         <p class="op-intro">What the role asks for that your CV doesn&rsquo;t yet show &mdash; with one concrete fix each.</p>
 
@@ -555,7 +633,7 @@
     <div class="op-menu-item">
       <button type="button" class="op-menu-q" aria-expanded="false"><span>How it works</span><span class="op-menu-plus">+</span></button>
       <div class="op-menu-a" hidden>
-        <p><span class="op-red">Paste the text</span> of your CV and the job description. You don&rsquo;t need to format it or make it pretty &mdash; copy-paste works.</p>
+        <p><span class="op-red">Upload your CV</span> as a PDF or DOCX, and <span class="op-red">paste the link</span> to the job posting. We read the text from your file in your browser and open the link to read the job &mdash; no formatting or copy-paste needed.</p>
         <p><span class="op-red">Get your Fit Check.</span> OnPaper analyzes the relationship between your experience and what the role is looking for. You&rsquo;ll get:</p>
         <p><span class="op-menu-lead">Overall fit</span> &mdash; how closely your background matches the role.<br>
         <span class="op-menu-lead">Gaps &amp; concerns</span> &mdash; requirements that may be missing or unclear.<br>
@@ -568,9 +646,11 @@
       <button type="button" class="op-menu-q" aria-expanded="false"><span>Privacy</span><span class="op-menu-plus">+</span></button>
       <div class="op-menu-a" hidden>
         <p><strong>Your job search is personal.</strong></p>
-        <p><span class="op-menu-lead">We don&rsquo;t keep anything you paste.</span> They&rsquo;re used once, in the moment, to generate your fit check, and then they&rsquo;re gone. We don&rsquo;t save them, and we can&rsquo;t pull them up later.</p>
+        <p><span class="op-menu-lead">We don&rsquo;t keep your CV or the job text.</span> They&rsquo;re used once, in the moment, to generate your fit check, and then they&rsquo;re gone. We don&rsquo;t save them, and we can&rsquo;t pull them up later.</p>
+        <p><span class="op-menu-lead">Your CV file never leaves your browser.</span> When you upload a PDF or DOCX, the text is pulled out on your own device. Only that text is sent to run the check &mdash; the file itself stays with you.</p>
+        <p><span class="op-menu-lead">The job link is read once.</span> We open the link you paste on our server to read the posting text for this one check, and we don&rsquo;t store the link or the page.</p>
         <p><span class="op-menu-lead">No account, no sign-up, no email, no name.</span> You never hand us your identity. Your browser holds a small random ID so we can remember how many runs you have left, and it isn&rsquo;t linked to who you are.</p>
-        <p><span class="op-menu-lead">How the run actually works.</span> To run the comparison, we send your CV and the job text to Anthropic, the company behind the Claude AI that does the analysis. We don&rsquo;t store either one ourselves.</p>
+        <p><span class="op-menu-lead">How the run actually works.</span> To run the comparison, we send your CV text and the job text to Anthropic, the company behind the Claude AI that does the analysis. We don&rsquo;t store either one ourselves.</p>
         <p><span class="op-menu-lead">We measure anonymously how the site is used</span> &mdash; for example, which pages get opened and roughly how long a check takes, using privacy-friendly analytics on European servers. It never includes your CV, the job text, or your results, it doesn&rsquo;t use cookies, and it never identifies you.</p>
         <p><span class="op-red">In short:</span> your CV stays yours. We help you hold it up against a job, and then we let it go.</p>
       </div>
@@ -611,6 +691,29 @@
   </div>
 </div>
 
+<!-- JD URL blocked → automatically looking for the same job on another public source (transient, no buttons) -->
+<div class="op-confirm-back" id="jdSearchBack" hidden>
+  <div class="op-confirm" role="dialog" aria-modal="true" aria-busy="true" aria-label="Looking for this job on another public source">
+    <p class="op-confirm-title">We can&rsquo;t access this job directly</p>
+    <p class="op-confirm-note">Some websites restrict access to their job postings, so we can&rsquo;t retrieve the full description from this link.</p>
+    <p class="op-confirm-note op-confirm-busy"><span class="op-mini-spin" aria-hidden="true"></span>We&rsquo;re looking for the same position on another public source.</p>
+    <p class="op-confirm-foot">No run has been used.</p>
+  </div>
+</div>
+
+<!-- JD URL blocked AND the alternative-source search also failed → recovery -->
+<div class="op-confirm-back" id="jdFailBack" hidden>
+  <div class="op-confirm" role="dialog" aria-modal="true" aria-label="Couldn't retrieve the job description">
+    <p class="op-confirm-title">We couldn&rsquo;t retrieve the job description</p>
+    <p class="op-confirm-note">We couldn&rsquo;t access the full description from this link or find the position on another public source.</p>
+    <p class="op-confirm-note">To continue, copy the full job description from the job posting and paste it into OnPaper.</p>
+    <p class="op-confirm-foot">No run has been used.</p>
+    <div class="op-confirm-actions">
+      <button type="button" class="op-btn" id="jdPasteBtn">I&rsquo;ll paste the JD text</button>
+    </div>
+  </div>
+</div>
+
 <!-- Identical re-submission confirm: same CV + JD as the last successful run -->
 <div class="op-confirm-back" id="rerunBack" hidden>
   <div class="op-confirm" role="dialog" aria-modal="true" aria-label="Run the same fit check again">
@@ -630,9 +733,23 @@
   var REDEEM_URL  = API_BASE + "/redeem";
   var BALANCE_URL = API_BASE + "/balance";
 
-  var LS_CV  = "triage_fit_cv";    // your CV, remembered so you don't retype
-  var LS_JD  = "triage_fit_jd";    // last JD you pasted
-  var LS_UID = "onpaper_uid";      // anonymous browser token (usage balance lives server-side)
+  var LS_CV   = "triage_fit_cv";     // text extracted from your uploaded CV (client-side only)
+  var LS_CVNM = "triage_fit_cv_name"; // uploaded CV filename, to restore the chip on reload
+  var LS_JD   = "triage_fit_jd";     // last job-posting URL you entered
+  var LS_UID  = "onpaper_uid";       // anonymous browser token (usage balance lives server-side)
+
+  // Client-side CV parsing libraries, pinned + SRI-locked. They run only in the
+  // browser and never send the CV anywhere — the extracted text follows the same
+  // path a paste used to. Lazy-loaded on first file pick so they don't touch load.
+  var PDF_JS      = "https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js";
+  var PDF_JS_SRI  = "sha384-/1qUCSGwTur9vjf/z9lmu/eCUYbpOTgSjmpbMQZ1/CtX2v/WcAIKqRv+U1DUCG6e";
+  var PDF_WORKER  = "https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js";
+  var MAMMOTH     = "https://cdn.jsdelivr.net/npm/mammoth@1.8.0/mammoth.browser.min.js";
+  var MAMMOTH_SRI = "sha384-/cXAMbzovUIKbBERjPmR3SnPTh8siWr5lsvFYj1Uq4XP0yaJUZJmsh0YXyGv5P0y";
+  // jsPDF builds the downloadable report as a clean text PDF (not a screen capture).
+  var JSPDF     = "https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js";
+  var JSPDF_SRI = "sha384-en/ztfPSRkGfME4KIm05joYXynqzUgbsG5nMrj/xEFAHXkeZfO3yMK8QQ+mP7p1/";
+  var MAX_FILE_BYTES = 10 * 1024 * 1024; // 10 MB upload guard
 
   // Anonymous token: identifies this browser's usage balance. Never shown to the user.
   function uuid() {
@@ -648,7 +765,9 @@
 
   var $ = function (id) { return document.getElementById(id); };
   var els = {
-    cv: $("fitCv"), jd: $("fitJd"),
+    cvFile: $("fitCvFile"), cvDrop: $("cvDrop"), cvChip: $("cvChip"),
+    cvChipName: $("cvChipName"), cvChipMeta: $("cvChipMeta"), cvChipX: $("cvChipX"),
+    cvParsing: $("cvParsing"), jdUrl: $("fitJdUrl"),
     cvLabel: $("cvLabel"), jdLabel: $("jdLabel"), cvCount: $("cvCount"), jdCount: $("jdCount"),
     run: $("fitRun"), runLabel: $("fitRunLabel"), spin: $("fitSpin"),
     error: $("fitError"), sample: $("fitSample"),
@@ -656,10 +775,9 @@
     barRun: $("barRun"), barOut: $("barOut"), barResults: $("barResults"),
     runLine: $("runLine"), runRemaining: $("runRemaining"), barMsg: $("barMsg"),
     fitNew: $("fitNew"), copy: $("fitCopy"), download: $("fitDownload"),
-    cvClear: $("cvClear"), jdClear: $("jdClear"),
     sampleBadge: $("sampleBadge"),
     resultTitle: $("resultTitle"), resultMatch: $("resultMatch"), resultMatchVal: $("resultMatchVal"),
-    resultStamp: $("resultStamp"), resultDeal: $("resultDeal"), resultDealText: $("resultDealText"),
+    resultStamp: $("resultStamp"), resultSource: $("resultSource"), resultDeal: $("resultDeal"), resultDealText: $("resultDealText"),
     gapList: $("gapList"),
     payBack: $("payBack"), payModal: $("payModal"), payClose: $("payClose"),
     getMore1: $("getMore1"), getMore2: $("getMore2"), getMore3: $("getMore3"),
@@ -668,6 +786,8 @@
     shortBack: $("shortBack"), shortBackBtn: $("shortBackBtn"), shortYesBtn: $("shortYesBtn"),
     cvBack: $("cvBack"), cvBackBtn: $("cvBackBtn"), cvRunBtn: $("cvRunBtn"),
     failBack: $("failBack"), failTryBtn: $("failTryBtn"),
+    jdSearchBack: $("jdSearchBack"),
+    jdFailBack: $("jdFailBack"), jdPasteBtn: $("jdPasteBtn"),
     rerunBack: $("rerunBack"), rerunBackBtn: $("rerunBackBtn"), rerunRunBtn: $("rerunRunBtn")
   };
   if (!els.run) return;
@@ -686,29 +806,187 @@
   }
   var analysisRuns = 0;
   var lastText = "";   // last raw report text (for Copy / Download)
+  var reportCvName = "", reportJdUrl = "";   // the CV file + job link behind the shown report
   // Identical-resubmission guard: remember the CV + JD of the immediately previous
   // successful run so re-running the exact same inputs asks for a one-time confirm
   // (it still costs 1 run). Cleared implicitly once either input is edited.
   var lastRunCv = "", lastRunJd = "", haveLastRun = false, rerunConfirmed = false;
 
-  // ---- restore CV/JD, wire persistence + char-count labels ----
-  function syncCount(ta, label, count, clear) {
-    var n = ta.value.trim().length;
-    label.hidden = n === 0;
-    count.textContent = n ? (n + " chars") : "";
-    if (clear) clear.hidden = ta.value.length === 0;
+  // ---- CV (uploaded file → extracted text) + JD (job URL) state ----
+  // The CV lives as extracted text; the file itself never leaves the browser.
+  var cvText = get(LS_CV);
+  var cvName = get(LS_CVNM);
+
+  function fmtBytes(n) {
+    if (!n && n !== 0) return "";
+    if (n < 1024) return n + " B";
+    if (n < 1024 * 1024) return Math.round(n / 1024) + " KB";
+    return (n / (1024 * 1024)).toFixed(1) + " MB";
   }
-  els.cv.value = get(LS_CV);
-  els.jd.value = get(LS_JD);
-  syncCount(els.cv, els.cvLabel, els.cvCount, els.cvClear);
-  syncCount(els.jd, els.jdLabel, els.jdCount, els.jdClear);
-  els.cv.addEventListener("input", function () { set(LS_CV, els.cv.value); syncCount(els.cv, els.cvLabel, els.cvCount, els.cvClear); onEdit(); });
-  els.jd.addEventListener("input", function () { set(LS_JD, els.jd.value); syncCount(els.jd, els.jdLabel, els.jdCount, els.jdClear); onEdit(); });
-  function clearField(ta, ls, label, count, clear) {
-    ta.value = ""; set(ls, ""); syncCount(ta, label, count, clear); onEdit(); ta.focus();
+
+  // Render the CV column: upload zone when empty, filename chip when we have text.
+  function renderCv() {
+    var have = !!(cvText && cvText.trim());
+    els.cvDrop.hidden = have;
+    els.cvChip.hidden = !have;
+    els.cvLabel.hidden = !have;
+    els.cvCount.textContent = have ? (cvText.trim().length + " chars read") : "";
+    if (have) {
+      els.cvChipName.textContent = cvName || "Your CV";
+      els.cvChipMeta.textContent = cvText.trim().length.toLocaleString() + " characters read";
+    }
   }
-  els.cvClear.addEventListener("click", function () { clearField(els.cv, LS_CV, els.cvLabel, els.cvCount, els.cvClear); });
-  els.jdClear.addEventListener("click", function () { clearField(els.jd, LS_JD, els.jdLabel, els.jdCount, els.jdClear); });
+  function setCv(text, name, sizeBytes) {
+    cvText = text || "";
+    cvName = name || "CV";
+    set(LS_CV, cvText); set(LS_CVNM, cvName);
+    els.cvChipMeta && (els.cvChipMeta.dataset.size = sizeBytes || "");
+    renderCv();
+    onEdit();
+  }
+  function removeCv() {
+    cvText = ""; cvName = "";
+    set(LS_CV, ""); set(LS_CVNM, "");
+    els.cvFile.value = "";
+    els.cvParsing.hidden = true;
+    renderCv();
+    onEdit();
+  }
+
+  // ---- lazy library loaders (pinned + SRI) ----
+  function loadScript(src, sri) {
+    return new Promise(function (resolve, reject) {
+      var s = document.createElement("script");
+      s.src = src; s.async = true;
+      if (sri) { s.integrity = sri; s.crossOrigin = "anonymous"; }
+      s.onload = resolve;
+      s.onerror = function () { reject(new Error("load-failed")); };
+      document.head.appendChild(s);
+    });
+  }
+  var pdfReady = null, mammothReady = null;
+  function ensurePdf() {
+    if (!pdfReady) pdfReady = loadScript(PDF_JS, PDF_JS_SRI).then(function () {
+      window.pdfjsLib.GlobalWorkerOptions.workerSrc = PDF_WORKER;
+    });
+    return pdfReady;
+  }
+  function ensureMammoth() {
+    if (!mammothReady) mammothReady = loadScript(MAMMOTH, MAMMOTH_SRI);
+    return mammothReady;
+  }
+  var jspdfReady = null;
+  function ensureJsPdf() {
+    if (!jspdfReady) jspdfReady = loadScript(JSPDF, JSPDF_SRI);
+    return jspdfReady;
+  }
+
+  function normalizeText(t) {
+    return (t || "").replace(/\r/g, "").replace(/[ \t\f\v]+/g, " ").replace(/ *\n */g, "\n").replace(/\n{3,}/g, "\n\n").trim();
+  }
+  async function parsePdf(buf) {
+    await ensurePdf();
+    var doc = await window.pdfjsLib.getDocument({ data: buf }).promise;
+    var out = [];
+    for (var i = 1; i <= doc.numPages; i++) {
+      var page = await doc.getPage(i);
+      var content = await page.getTextContent();
+      out.push(content.items.map(function (it) { return it.str; }).join(" "));
+    }
+    try { doc.destroy(); } catch (e) {}
+    return normalizeText(out.join("\n"));
+  }
+  async function parseDocx(buf) {
+    await ensureMammoth();
+    var r = await window.mammoth.extractRawText({ arrayBuffer: buf });
+    return normalizeText(r && r.value);
+  }
+
+  async function handleFile(file) {
+    if (!file) return;
+    setError("");
+    var name = file.name || "CV";
+    var lower = name.toLowerCase();
+    var isPdf = lower.endsWith(".pdf") || file.type === "application/pdf";
+    var isDocx = lower.endsWith(".docx") || file.type === "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+    if (!isPdf && !isDocx) { setError("Please upload a PDF or DOCX file."); return; }
+    if (file.size > MAX_FILE_BYTES) { setError("That file is over 10 MB. Please upload a smaller CV."); return; }
+
+    els.cvDrop.hidden = true; els.cvChip.hidden = true; els.cvParsing.hidden = false;
+    var t0 = Date.now();
+    try {
+      var buf = await file.arrayBuffer();
+      var text = isPdf ? await parsePdf(buf) : await parseDocx(buf);
+      els.cvParsing.hidden = true;
+      if (!text || text.replace(/\s/g, "").length < 100) {
+        // Almost no text — usually a scanned/image-only PDF.
+        renderCv(); // back to the current state (drop zone if still empty)
+        setError(isPdf
+          ? "We couldn’t read text from that PDF — it may be a scan or image. Try exporting a text-based PDF, or a DOCX."
+          : "We couldn’t read text from that file. Try a different export.");
+        track("cv_parse_failed", { file_type: isPdf ? "pdf" : "docx", reason: "empty" });
+        return;
+      }
+      setCv(text, name, file.size);
+      track("cv_file_parsed", { file_type: isPdf ? "pdf" : "docx", chars: text.length, ms: Date.now() - t0 });
+    } catch (err) {
+      els.cvParsing.hidden = true;
+      renderCv();
+      var loadErr = err && /load-failed/.test(err.message || "");
+      setError(loadErr
+        ? "Couldn’t load the file reader. Check your connection and try again."
+        : "We couldn’t read that file. Make sure it’s a valid PDF or DOCX.");
+      track("cv_parse_failed", { file_type: isPdf ? "pdf" : "docx", reason: loadErr ? "lib_load" : "parse_error" });
+    }
+  }
+
+  // file picker + drag-and-drop + remove
+  els.cvDrop.addEventListener("click", function () { els.cvFile.click(); });
+  els.cvFile.addEventListener("change", function () { handleFile(els.cvFile.files && els.cvFile.files[0]); });
+  els.cvChipX.addEventListener("click", removeCv);
+  ["dragenter", "dragover"].forEach(function (ev) {
+    els.cvDrop.addEventListener(ev, function (e) { e.preventDefault(); els.cvDrop.classList.add("is-drag"); });
+  });
+  ["dragleave", "dragend", "drop"].forEach(function (ev) {
+    els.cvDrop.addEventListener(ev, function () { els.cvDrop.classList.remove("is-drag"); });
+  });
+  els.cvDrop.addEventListener("drop", function (e) {
+    e.preventDefault();
+    var f = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+    if (f) handleFile(f);
+  });
+
+  // ---- JD url: restore + persist + validate ----
+  function normalizeUrl(v) {
+    var s = (v || "").trim();
+    if (!s) return "";
+    if (!/^https?:\/\//i.test(s)) s = "https://" + s; // tolerate a bare host paste
+    return s;
+  }
+  function isProbablyUrl(v) {
+    var s = normalizeUrl(v);
+    if (!s) return false;
+    try { var u = new URL(s); return !!u.hostname && u.hostname.indexOf(".") > 0; }
+    catch (e) { return false; }
+  }
+  // The JD field accepts either a job link or the full pasted job description.
+  // Classify what's in it: "url" (fetch server-side) | "text" (send as-is) | "".
+  function jdKind(v) {
+    var s = (v || "").trim();
+    if (!s) return "";
+    return isProbablyUrl(s) ? "url" : "text";
+  }
+  // Restore whatever was last in the field — a link or pasted JD text both persist.
+  var savedJd = get(LS_JD);
+  els.jdUrl.value = savedJd;
+  els.jdLabel.hidden = !els.jdUrl.value.trim();
+  els.jdUrl.addEventListener("input", function () {
+    set(LS_JD, els.jdUrl.value);
+    els.jdLabel.hidden = !els.jdUrl.value.trim();
+    onEdit();
+  });
+
+  renderCv();
 
   function setError(msg) { els.error.textContent = msg || ""; els.error.hidden = !msg; }
 
@@ -758,7 +1036,7 @@
     if (n <= 0) els.run.disabled = true;
   }
   function findDisabled() {
-    return loading || !els.cv.value.trim() || !els.jd.value.trim() || remaining === 0;
+    return loading || !cvText.trim() || !jdKind(els.jdUrl.value) || remaining === 0;
   }
   function refreshRunDisabled() { els.run.disabled = findDisabled(); }
   function onEdit() {
@@ -820,6 +1098,42 @@
   }
   function el(tag, cls, txt) { var e = document.createElement(tag); if (cls) e.className = cls; if (txt != null) e.textContent = txt; return e; }
 
+  // Compact, readable form of a job URL: host + trimmed path, no query string.
+  function shortUrl(u) {
+    if (!u) return "";
+    try {
+      var url = new URL(u);
+      var host = url.hostname.replace(/^www\./, "");
+      var path = url.pathname.replace(/\/+$/, "");
+      var s = host + path;
+      return s.length > 48 ? s.slice(0, 47) + "…" : s;
+    } catch (e) {
+      return u.length > 48 ? u.slice(0, 47) + "…" : u;
+    }
+  }
+
+  // "CV: file.docx · Job: host/path" line under the title. Skipped if we have neither.
+  function renderSource() {
+    var src = els.resultSource;
+    if (!src) return;
+    src.innerHTML = "";
+    var parts = 0;
+    if (reportCvName) {
+      src.appendChild(el("span", "op-rsource-label", "CV: "));
+      src.appendChild(document.createTextNode(reportCvName));
+      parts++;
+    }
+    if (reportJdUrl) {
+      if (parts) src.appendChild(el("span", "op-rsource-sep", "·"));
+      src.appendChild(el("span", "op-rsource-label", "Job: "));
+      var a = el("a", null, shortUrl(reportJdUrl));
+      a.href = reportJdUrl; a.target = "_blank"; a.rel = "noopener noreferrer";
+      src.appendChild(a);
+      parts++;
+    }
+    src.hidden = parts === 0;
+  }
+
   // ---- render results ----
   function showResults(text, isSample) {
     lastText = text || "";
@@ -835,22 +1149,16 @@
     if (subject) els.resultTitle.textContent = subject;
     else els.resultTitle.textContent = (gaps.length || (r.body ? 1 : 0)) + (gaps.length === 1 ? " gap found" : " gaps found");
 
-    // match grade
-    if (r.match) {
-      els.resultMatch.hidden = false;
-      els.resultMatch.className = "op-match op-match--" + matchKey(r.match);
-      els.resultMatchVal.textContent = r.match;
-    } else { els.resultMatch.hidden = true; }
+    // match grade — hidden for now (parsing kept; restore by re-enabling this block)
+    els.resultMatch.hidden = true;
 
     els.resultStamp.textContent = "Generated " + stamp;
 
-    // dealbreakers
-    if (r.deal) {
-      els.resultDeal.hidden = false;
-      var none = /^none\b/i.test(r.deal);
-      els.resultDeal.className = "op-deal" + (none ? " op-deal--none" : "");
-      els.resultDealText.textContent = r.deal;
-    } else { els.resultDeal.hidden = true; }
+    // source line: which CV file + job link produced this report
+    renderSource();
+
+    // dealbreakers — hidden for now (parsing kept; restore by re-enabling this block)
+    els.resultDeal.hidden = true;
 
     // gap cards (or raw fallback)
     els.gapList.innerHTML = "";
@@ -892,10 +1200,8 @@
     var r = parseReport(lastText);
     var subject = (r.role && r.company) ? (r.role + " — " + r.company) : (r.role || r.company || "");
     var stamp = new Date().toLocaleString(undefined, { day: "numeric", month: "short", year: "numeric", hour: "numeric", minute: "2-digit" });
-    return "OnPaper — Match report\n" +
+    return "OnPaper — Fit report\n" +
       (subject ? subject + "\n" : "") +
-      (r.match ? "Match: " + r.match + "\n" : "") +
-      (r.deal ? "Dealbreakers: " + r.deal + "\n" : "") +
       "Generated " + stamp + "\n\n" +
       (r.body || "(No gaps returned.)");
   }
@@ -911,17 +1217,18 @@
   }
 
   // ---- the call: POST to the OnPaper backend (holds the key + the prompt) ----
-  async function callClaude(cv, jd) {
+  async function callClaude(payload) {
     var res = await fetch(API_URL, {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ cv: cv, jd: jd, token: uid })
+      body: JSON.stringify(payload)
     });
     var data = {};
     try { data = await res.json(); } catch (e) {}
     if (!res.ok) {
       var err = new Error(data.error || ("Request failed (" + res.status + ")"));
       if (typeof data.remaining === "number") err.remaining = data.remaining;
+      if (data.stage) err.stage = data.stage;   // "blocked" | "search_failed"
       throw err;
     }
     return { text: (data.text || "").trim(), remaining: data.remaining };
@@ -945,42 +1252,67 @@
 
   // Entry point from the button. skipShort = user already confirmed the short-text warning.
   function attemptRun(skipShort) {
-    var cv = els.cv.value.trim(), jd = els.jd.value.trim();
-    if (!cv || !jd) { setError("Paste both a CV and a job description."); return; }
+    var cv = cvText.trim();
+    var kind = jdKind(els.jdUrl.value);
+    var jd = kind === "url" ? normalizeUrl(els.jdUrl.value) : els.jdUrl.value.trim();
+    if (!cv) { setError("Upload your CV to run a fit check."); return; }
+    if (!kind) { setError("Paste a link to the job posting, or the full job description text."); return; }
+    // Pasted JD text is sent straight to the analysis, so enforce the same lower
+    // bound the backend uses. (A link is fetched + bounded server-side instead.)
+    if (kind === "text" && jd.length < HARD_MIN) {
+      setError("Paste the full job description (at least " + HARD_MIN + " characters), or a link to the posting.");
+      return;
+    }
     setError("");
-    // Hard length bounds (match the backend) — caught here so the user gets a clear reason.
-    if (cv.length > HARD_MAX || jd.length > HARD_MAX) {
-      var over = [];
-      if (cv.length > HARD_MAX) over.push("CV");
-      if (jd.length > HARD_MAX) over.push("job description");
-      setError("Your " + over.join(" and ") + " " + (over.length > 1 ? "are" : "is") + " too long. Keep each under " +
-        HARD_MAX.toLocaleString() + " characters (CV " + cv.length.toLocaleString() + ", job " + jd.length.toLocaleString() + ") and try again.");
+    // CV length bounds (the job text is fetched + bounded server-side).
+    if (cv.length > HARD_MAX) {
+      setError("Your CV is too long (" + cv.length.toLocaleString() + " characters). Keep it under " +
+        HARD_MAX.toLocaleString() + " and try again.");
       return;
     }
-    if (cv.length < HARD_MIN || jd.length < HARD_MIN) {
-      setError("Please paste a bit more — each box needs at least " + HARD_MIN + " characters.");
+    if (cv.length < HARD_MIN) {
+      setError("We read very little text from that CV — it needs at least " + HARD_MIN + " characters. Try a text-based PDF or DOCX.");
       return;
     }
-    // Same CV + JD as the immediately previous successful run: confirm once (it uses 1 run).
-    // These inputs already passed the pre-flight checks last time, so skip straight to confirm.
+    // Same CV + job link as the immediately previous successful run: confirm once (it uses 1 run).
     if (haveLastRun && !rerunConfirmed && cv === lastRunCv && jd === lastRunJd) { openConfirm(els.rerunBack); return; }
-    if (!skipShort && (cv.length < MIN_CHARS || jd.length < MIN_CHARS)) { openConfirm(els.shortBack); return; }
+    if (!skipShort && cv.length < MIN_CHARS) { openConfirm(els.shortBack); return; }
     if (!looksLikeCV(cv)) { openConfirm(els.cvBack); return; }
     doRun();
   }
 
-  async function doRun() {
-    var cv = els.cv.value.trim(), jd = els.jd.value.trim();
-    if (!cv || !jd) return;
-    analysisRuns++;
+  // opts.search = this is the automatic "look on another public source" retry
+  // after a direct-fetch block (not a new run; charged only on final success).
+  async function doRun(opts) {
+    opts = opts || {};
+    var cv = cvText.trim();
+    var kind = jdKind(els.jdUrl.value);
+    if (!cv || !kind) return;
+    var jd = kind === "url" ? normalizeUrl(els.jdUrl.value) : els.jdUrl.value.trim();
+
+    // A link is resolved server-side (fetched, or searched on the retry); pasted
+    // text is sent straight through as the job description.
+    var payload = { cv: cv, token: uid };
+    var jdSource;
+    if (kind === "url") {
+      payload.jdUrl = jd;
+      if (opts.search) { payload.jdSearch = true; jdSource = "search"; }
+      else { jdSource = "url"; }
+    } else {
+      payload.jd = jd; jdSource = "paste";
+    }
+
     var t0 = Date.now();
-    track(analysisRuns > 1 ? "analysis_rerun" : "analysis_started", { cv_chars: cv.length, jd_chars: jd.length });
+    if (!opts.search) {
+      analysisRuns++;
+      track(analysisRuns > 1 ? "analysis_rerun" : "analysis_started", { cv_chars: cv.length, jd_source: jdSource });
+    }
 
     setLoading(true);
     setError("");
 
     try {
-      var data = await callClaude(cv, jd);
+      var data = await callClaude(payload);
       var out = data.text;
       var pr = parseReport(out || "");
       track("analysis_completed", {
@@ -990,18 +1322,39 @@
         duration_ms: Date.now() - t0
       });
       setLoading(false);
+      closeConfirm(els.jdSearchBack);                       // clear the transient "searching" state, if shown
       updateRemaining(data.remaining);
       lastRunCv = cv; lastRunJd = jd; haveLastRun = true;   // remember for identical-resubmission guard
+      reportCvName = cvName; reportJdUrl = (kind === "url") ? jd : ""; // link behind this report (none for pasted text)
       showResults(out || "", false);
     } catch (err) {
-      track("analysis_failed", { error_type: classifyErr(err), duration_ms: Date.now() - t0 });
       setLoading(false);
-      // The backend only spends a run on a successful response, so a thrown error means
-      // the run wasn't consumed. Show the failure modal (flow E).
+
+      // The website blocked the direct fetch. Don't treat this as a final
+      // failure: show the transient state and automatically look for the same
+      // position on another public source. No run has been used.
+      if (err.stage === "blocked") {
+        track("jd_fetch_blocked", {});
+        openConfirm(els.jdSearchBack);
+        doRun({ search: true });
+        return;
+      }
+      // The alternative-source search also failed → recovery state (paste JD text).
+      if (err.stage === "search_failed") {
+        track("jd_search_failed", {});
+        closeConfirm(els.jdSearchBack);
+        openConfirm(els.jdFailBack);
+        return;
+      }
+
+      // Any other error → generic failure modal (flow E). The backend only spends
+      // a run on a successful response, so the run is untouched here.
+      track("analysis_failed", { error_type: classifyErr(err), duration_ms: Date.now() - t0 });
+      closeConfirm(els.jdSearchBack);
       if (typeof err.remaining === "number") updateRemaining(err.remaining);
       refreshRunDisabled();
       // Show the real reason when the backend gave one; keep the reassuring default for
-      // network/unknown errors. A run is only ever spent on success, so it's untouched here.
+      // network/unknown errors.
       var msg = (err && err.message) || "";
       var isNetwork = /failed to fetch|networkerror|load failed|request failed/i.test(msg);
       var failTitle = document.getElementById("failTitle");
@@ -1055,11 +1408,21 @@
   function openConfirm(back) { back.hidden = false; }
   function closeConfirm(back) { back.hidden = true; }
   function anyConfirmOpen() {
-    return [els.shortBack, els.cvBack, els.failBack, els.rerunBack].filter(function (b) { return !b.hidden; });
+    // jdSearchBack is transient (auto-advances) and deliberately not dismissable.
+    return [els.shortBack, els.cvBack, els.failBack, els.jdFailBack, els.rerunBack].filter(function (b) { return !b.hidden; });
   }
-  // click-outside to dismiss (fail + short + cv + rerun all allow backdrop dismiss)
-  [els.shortBack, els.cvBack, els.failBack, els.rerunBack].forEach(function (b) {
+  // click-outside to dismiss (fail + short + cv + jd-recovery + rerun). Dismissing
+  // the JD recovery just returns to the input, same as its one button.
+  [els.shortBack, els.cvBack, els.failBack, els.jdFailBack, els.rerunBack].forEach(function (b) {
     b.addEventListener("click", function (e) { if (e.target === b) closeConfirm(b); });
+  });
+
+  // JD recovery — "I'll paste the JD text" simply returns to the JD input state
+  // (which already accepts both a link and pasted text); focus + select the field
+  // so the user can paste straight over whatever's there.
+  els.jdPasteBtn.addEventListener("click", function () {
+    closeConfirm(els.jdFailBack);
+    try { els.jdUrl.focus(); els.jdUrl.select(); } catch (e) {}
   });
 
   // flow D — short-text confirm
@@ -1099,13 +1462,63 @@
       toast("Report copied to clipboard");
     }, function () { toast("Copy failed"); });
   });
-  els.download.addEventListener("click", function () {
-    var blob = new Blob([plainText()], { type: "text/plain;charset=utf-8" });
-    var url = URL.createObjectURL(blob);
-    var a = document.createElement("a");
-    a.href = url; a.download = "onpaper-match-report-" + new Date().toISOString().slice(0, 10) + ".txt";
-    document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
-  });
+  // Build a clean, text-based PDF of the report (not a screenshot of the page).
+  async function downloadPdf() {
+    try { await ensureJsPdf(); } catch (e) { toast("Couldn’t load the PDF tool"); return; }
+    var jsPDF = window.jspdf && window.jspdf.jsPDF;
+    if (!jsPDF) { toast("Couldn’t load the PDF tool"); return; }
+
+    var r = parseReport(lastText);
+    var gaps = parseGaps(r.body);
+    var subject = (r.role && r.company) ? (r.role + " — " + r.company) : (r.role || r.company || "");
+    var stamp = new Date().toLocaleString(undefined, { day: "numeric", month: "short", year: "numeric", hour: "numeric", minute: "2-digit" });
+
+    var doc = new jsPDF({ unit: "pt", format: "a4" });
+    var pw = doc.internal.pageSize.getWidth();
+    var ph = doc.internal.pageSize.getHeight();
+    var m = 56, x = m, maxw = pw - m * 2, y = m;
+    var NAVY = [17, 26, 40], RED = [224, 112, 92], GREY = [110, 122, 140], INK = [40, 52, 72];
+
+    function need(h) { if (y + h > ph - m) { doc.addPage(); y = m; } }
+    function line() { need(14); doc.setDrawColor(224, 230, 236); doc.line(x, y, x + maxw, y); y += 16; }
+    function text(str, size, style, color, gapAfter) {
+      doc.setFont("helvetica", style || "normal"); doc.setFontSize(size);
+      doc.setTextColor(color[0], color[1], color[2]);
+      var lh = size * 1.38;
+      var lines = doc.splitTextToSize(String(str), maxw);
+      for (var i = 0; i < lines.length; i++) { need(lh); doc.text(lines[i], x, y); y += lh; }
+      if (gapAfter) y += gapAfter;
+    }
+    function labeled(label, body, gapAfter) {
+      need(15); doc.setFont("helvetica", "bold"); doc.setFontSize(10.5);
+      doc.setTextColor(NAVY[0], NAVY[1], NAVY[2]); doc.text(label, x, y); y += 14;
+      text(body, 11, "normal", INK, gapAfter);
+    }
+
+    text("OnPaper — Fit report", 18, "bold", NAVY, 6);
+    if (subject) text(subject, 13, "bold", RED, 4);
+    if (reportCvName) text("CV: " + reportCvName, 10, "normal", GREY, 0);
+    if (reportJdUrl) text("Job: " + reportJdUrl, 10, "normal", GREY, 0);
+    text("Generated " + stamp, 10, "normal", GREY, 10);
+    line();
+    text("What the role asks for that your CV doesn’t yet show — with one concrete fix each.", 10, "italic", GREY, 14);
+
+    if (gaps.length) {
+      gaps.forEach(function (g) {
+        need(46);
+        text("GAP " + g.num + (g.kind ? "   [" + (g.kind === "hard" ? "Hard" : "Closable") + "]" : ""), 11, "bold", RED, 2);
+        text(g.title || "Gap", 13, "bold", NAVY, 8);
+        if (g.detail) labeled("Evidence", g.detail, 8);
+        if (g.fix) labeled("Fix", g.fix, 14);
+        line();
+      });
+    } else {
+      text(r.body || "(No gaps returned.)", 11, "normal", INK, 0);
+    }
+
+    doc.save("onpaper-fit-report-" + new Date().toISOString().slice(0, 10) + ".pdf");
+  }
+  els.download.addEventListener("click", function () { downloadPdf(); });
 
   // ---- pay modal (packs "coming soon"; coupon is live) ----
   function openPay() { els.payBack.hidden = false; track("get_more_opened", {}); setTimeout(function () { els.coupon.focus(); }, 30); }
