@@ -393,11 +393,23 @@
   /* ---- results: icon actions + toast ---- */
   .op-rtools { display: flex; align-items: center; justify-content: flex-end; gap: 12px; margin-bottom: 14px; }
   .op-rtools .op-rstamp { margin-right: 4px; }
-  .op-rsource { font-family: var(--mono); font-size: 12px; line-height: 1.5; color: var(--ink-4); margin: 0 0 20px; word-break: break-word; }
-  .op-rsource .op-rsource-label { color: var(--mono-muted); }
+  /* CV + JD on one line; under space pressure the CV filename truncates first, then the JD company. */
+  .op-rsource { font-family: var(--mono); font-size: 12px; line-height: 1.5; color: var(--ink-4); margin: 0 0 20px; display: flex; align-items: baseline; flex-wrap: nowrap; overflow: hidden; }
+  .op-rsource .op-rsource-label { color: var(--mono-muted); flex: 0 0 auto; }
   .op-rsource a { color: var(--red); text-decoration: none; border-bottom: 1px dashed var(--tag-border); }
   .op-rsource a:hover { color: var(--red-dark); }
-  .op-rsource .op-rsource-sep { color: var(--faint); margin: 0 9px; }
+  .op-rsource .op-rsource-sep { color: var(--faint); margin: 0 9px; flex: 0 0 auto; }
+  /* CV group shrinks first (high shrink factor); label + filename ellipsize as one unit,
+     so a fully-squeezed CV never leaves an orphaned "CV:" with a blank after it. */
+  .op-rsource .op-rsource-cv { min-width: 4.5em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 0 100 auto; }
+  /* JD group shrinks only after the CV; the title stays, the company is what gives way. */
+  .op-rsource .op-rsource-jd { display: inline-flex; align-items: baseline; min-width: 0; flex: 0 1 auto; }
+  .op-rsource .op-rsource-jdlink { display: inline-flex; align-items: baseline; min-width: 0; white-space: nowrap; }
+  /* The dash never shrinks. Company gives way before the title (higher shrink factor);
+     the title shrinks last of all and keeps its leading words (the important ones). */
+  .op-rsource .op-rsource-dash { flex: 0 0 auto; }
+  .op-rsource .op-rsource-company { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 0 4 auto; }
+  .op-rsource .op-rsource-title { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 0 1 auto; }
   .op-icon-btn {
     width: 40px; height: 40px; display: inline-flex; align-items: center; justify-content: center;
     border: 1px solid var(--btn-line); border-radius: 3px; background: transparent; color: var(--ink-3); cursor: pointer;
@@ -1224,23 +1236,37 @@
     }
   }
 
-  // "CV: file.docx · Job: host/path" line under the title. Skipped if we have neither.
-  function renderSource() {
+  // One line: "CV: file.docx · Job: Title — Company" (the JD links to the posting).
+  // If it can't all fit, the CV filename truncates first, then the JD company (CSS).
+  // Skipped if we have neither side.
+  function renderSource(role, company) {
     var src = els.resultSource;
     if (!src) return;
     src.innerHTML = "";
     var parts = 0;
     if (reportCvName) {
-      src.appendChild(el("span", "op-rsource-label", "CV: "));
-      src.appendChild(document.createTextNode(reportCvName));
+      var cv = el("span", "op-rsource-cv");
+      cv.appendChild(el("span", "op-rsource-label", "CV: "));
+      cv.appendChild(document.createTextNode(reportCvName));
+      src.appendChild(cv);
       parts++;
     }
     if (reportJdUrl) {
       if (parts) src.appendChild(el("span", "op-rsource-sep", "·"));
-      src.appendChild(el("span", "op-rsource-label", "Job: "));
-      var a = el("a", null, shortUrl(reportJdUrl));
+      var jd = el("span", "op-rsource-jd");
+      jd.appendChild(el("span", "op-rsource-label", "Job: "));
+      var a = el("a", "op-rsource-jdlink");
       a.href = reportJdUrl; a.target = "_blank"; a.rel = "noopener noreferrer";
-      src.appendChild(a);
+      if (role || company) {
+        if (role) a.appendChild(el("span", "op-rsource-title", role));
+        if (role && company) a.appendChild(el("span", "op-rsource-dash", " — "));
+        if (company) a.appendChild(el("span", "op-rsource-company", company));
+      } else {
+        // no title/company parsed — fall back to the short URL as the link text
+        a.appendChild(el("span", "op-rsource-title", shortUrl(reportJdUrl)));
+      }
+      jd.appendChild(a);
+      src.appendChild(jd);
       parts++;
     }
     src.hidden = parts === 0;
@@ -1267,7 +1293,7 @@
     els.resultStamp.textContent = "Generated " + stamp;
 
     // source line: which CV file + job link produced this report
-    renderSource();
+    renderSource(r.role, r.company);
 
     // dealbreakers — hidden for now (parsing kept; restore by re-enabling this block)
     els.resultDeal.hidden = true;
