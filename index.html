@@ -333,6 +333,29 @@
   .op-upload-sub { font-family: var(--mono); font-size: 11px; letter-spacing: 0.08em; color: var(--mono-muted); }
   .op-upload[hidden] { display: none; }
 
+  /* ---- paste-CV fallback (upload stays the primary path) ---- */
+  .op-paste-toggle {
+    display: block; margin: 12px auto 0; padding: 2px 0;
+    font-family: var(--mono); font-size: 11px; letter-spacing: 0.06em;
+    color: var(--mono-muted); background: none; border: none; cursor: pointer;
+    border-bottom: 1px dashed var(--dash);
+  }
+  .op-paste-toggle:hover { color: var(--ink-3); }
+  .op-paste-toggle[hidden] { display: none; }
+  .op-paste { width: 100%; }
+  .op-paste[hidden] { display: none; }
+  .op-paste-area {
+    width: 100%; height: 196px; resize: vertical; box-sizing: border-box;
+    padding: 16px 18px; border: 1px solid var(--line-in); border-radius: 3px;
+    background: var(--paper);
+    font-family: var(--mono); font-size: 13px; line-height: 1.6; color: var(--ink);
+    box-shadow: 2px 3px 0 rgba(0,0,0,0.18);
+    transition: border-color .18s, box-shadow .18s;
+  }
+  .op-paste-area:focus { border-color: var(--red-focus); box-shadow: 0 0 0 3px rgba(224,112,92,0.16); }
+  .op-paste-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 10px; }
+  .op-paste-actions .op-btn, .op-paste-actions .op-ghost-btn { padding: 10px 22px; font-size: 13px; }
+
   /* ---- parsed-file chip ---- */
   .op-filechip {
     display: flex; align-items: center; gap: 14px; width: 100%; min-height: 196px;
@@ -478,6 +501,14 @@
                 <button type="button" class="op-clear op-filechip-x" id="cvChipX" aria-label="Remove file">&times;</button>
               </div>
               <div class="op-parsing" id="cvParsing" hidden><span class="op-spin" aria-hidden="true"></span><span>Reading your CV…</span></div>
+              <button type="button" class="op-paste-toggle" id="cvPasteToggle">or paste your CV text instead</button>
+              <div class="op-paste" id="cvPaste" hidden>
+                <textarea id="cvPasteText" class="op-paste-area ph-no-capture" placeholder="Paste the full text of your CV here…" spellcheck="false"></textarea>
+                <div class="op-paste-actions">
+                  <button type="button" class="op-ghost-btn" id="cvPasteCancel">cancel</button>
+                  <button type="button" class="op-btn" id="cvPasteUse">Use this text</button>
+                </div>
+              </div>
             </div>
           </div>
           <div class="op-col">
@@ -749,6 +780,12 @@
   // jsPDF builds the downloadable report as a clean text PDF (not a screen capture).
   var JSPDF     = "https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js";
   var JSPDF_SRI = "sha384-en/ztfPSRkGfME4KIm05joYXynqzUgbsG5nMrj/xEFAHXkeZfO3yMK8QQ+mP7p1/";
+  // MuPDF (WASM) reads PDFs pdf.js can't — notably Figma exports, whose unnamed
+  // Type 3 fonts pdf.js rejects. Pinned; loaded on demand only when pdf.js comes
+  // back empty, so the ~3 MB (brotli) wasm never touches the common path. Runs
+  // fully in the browser, so the CV still never leaves the device. ES module, so
+  // it's pulled via dynamic import() rather than the classic loadScript+SRI path.
+  var MUPDF = "https://cdn.jsdelivr.net/npm/mupdf@1.28.0/dist/mupdf.js";
   var MAX_FILE_BYTES = 10 * 1024 * 1024; // 10 MB upload guard
 
   // Anonymous token: identifies this browser's usage balance. Never shown to the user.
@@ -768,6 +805,8 @@
     cvFile: $("fitCvFile"), cvDrop: $("cvDrop"), cvChip: $("cvChip"),
     cvChipName: $("cvChipName"), cvChipMeta: $("cvChipMeta"), cvChipX: $("cvChipX"),
     cvParsing: $("cvParsing"), jdUrl: $("fitJdUrl"),
+    cvPasteToggle: $("cvPasteToggle"), cvPaste: $("cvPaste"), cvPasteText: $("cvPasteText"),
+    cvPasteUse: $("cvPasteUse"), cvPasteCancel: $("cvPasteCancel"),
     cvLabel: $("cvLabel"), jdLabel: $("jdLabel"), cvCount: $("cvCount"), jdCount: $("jdCount"),
     run: $("fitRun"), runLabel: $("fitRunLabel"), spin: $("fitSpin"),
     error: $("fitError"), sample: $("fitSample"),
@@ -824,19 +863,31 @@
     return (n / (1024 * 1024)).toFixed(1) + " MB";
   }
 
-  // Render the CV column: upload zone when empty, filename chip when we have text.
+  // Render the CV column: upload zone when empty, filename chip when we have text,
+  // or the paste panel when the user opts to (or is asked to) paste text instead.
+  var pasteOpen = false;
   function renderCv() {
     var have = !!(cvText && cvText.trim());
-    els.cvDrop.hidden = have;
     els.cvChip.hidden = !have;
     els.cvLabel.hidden = !have;
+    els.cvDrop.hidden = have || pasteOpen;
+    els.cvPasteToggle.hidden = have || pasteOpen;
+    els.cvPaste.hidden = !pasteOpen || have;
     els.cvCount.textContent = have ? (cvText.trim().length + " chars read") : "";
     if (have) {
       els.cvChipName.textContent = cvName || "Your CV";
       els.cvChipMeta.textContent = cvText.trim().length.toLocaleString() + " characters read";
     }
   }
+  function openPaste() {
+    pasteOpen = true;
+    els.cvParsing.hidden = true;
+    renderCv();
+    try { els.cvPasteText.focus(); } catch (e) {}
+  }
+  function closePaste() { pasteOpen = false; renderCv(); }
   function setCv(text, name, sizeBytes) {
+    pasteOpen = false;
     cvText = text || "";
     cvName = name || "CV";
     set(LS_CV, cvText); set(LS_CVNM, cvName);
@@ -849,6 +900,8 @@
     set(LS_CV, ""); set(LS_CVNM, "");
     els.cvFile.value = "";
     els.cvParsing.hidden = true;
+    pasteOpen = false;
+    if (els.cvPasteText) els.cvPasteText.value = "";
     renderCv();
     onEdit();
   }
@@ -880,13 +933,20 @@
     if (!jspdfReady) jspdfReady = loadScript(JSPDF, JSPDF_SRI);
     return jspdfReady;
   }
+  var mupdfReady = null;
+  function ensureMupdf() {
+    // Dynamic import() works from this classic script and lets the module pull
+    // its own wasm. Cached after the first call so we load it at most once.
+    if (!mupdfReady) mupdfReady = import(MUPDF);
+    return mupdfReady;
+  }
 
   function normalizeText(t) {
     return (t || "").replace(/\r/g, "").replace(/[ \t\f\v]+/g, " ").replace(/ *\n */g, "\n").replace(/\n{3,}/g, "\n\n").trim();
   }
-  async function parsePdf(buf) {
-    await ensurePdf();
-    var doc = await window.pdfjsLib.getDocument({ data: buf }).promise;
+  function textWeight(t) { return (t || "").replace(/\s/g, "").length; }
+  async function extractPdfText(data) {
+    var doc = await window.pdfjsLib.getDocument({ data: data }).promise;
     var out = [];
     for (var i = 1; i <= doc.numPages; i++) {
       var page = await doc.getPage(i);
@@ -895,6 +955,41 @@
     }
     try { doc.destroy(); } catch (e) {}
     return normalizeText(out.join("\n"));
+  }
+  // MuPDF (WASM) fallback. pdf.js can't read some PDFs at all — notably Figma
+  // exports, whose unnamed Type 3 fonts it rejects, yielding zero text even
+  // though the text is live and selectable. MuPDF reads them cleanly. It runs
+  // fully in the browser, so the CV still never leaves the device.
+  async function parsePdfWithMupdf(buf) {
+    var mupdf = await ensureMupdf();
+    var doc = mupdf.Document.openDocument(new Uint8Array(buf), "application/pdf");
+    var out = [];
+    var n = doc.countPages();
+    for (var i = 0; i < n; i++) {
+      var page = doc.loadPage(i);
+      var st = page.toStructuredText("preserve-whitespace");
+      out.push(st.asText());
+      try { st.destroy(); page.destroy(); } catch (e) {}
+    }
+    try { doc.destroy(); } catch (e) {}
+    return normalizeText(out.join("\n"));
+  }
+  async function parsePdf(buf) {
+    await ensurePdf();
+    // slice(0) hands pdf.js its own buffer to detach, leaving `buf` for a retry.
+    var text = await extractPdfText(new Uint8Array(buf).slice(0));
+    if (textWeight(text) >= 100) return text;
+    // pdf.js came back (near-)empty — try MuPDF, which handles the PDFs it can't.
+    try {
+      var text2 = await parsePdfWithMupdf(buf);
+      if (textWeight(text2) > textWeight(text)) {
+        track("cv_pdf_mupdf_fallback", { chars: text2.length });
+        return text2;
+      }
+    } catch (e) {
+      track("cv_mupdf_failed", { msg: (e && e.message || "").slice(0, 80) });
+    }
+    return text;
   }
   async function parseDocx(buf) {
     await ensureMammoth();
@@ -913,17 +1008,19 @@
     if (file.size > MAX_FILE_BYTES) { setError("That file is over 10 MB. Please upload a smaller CV."); return; }
 
     els.cvDrop.hidden = true; els.cvChip.hidden = true; els.cvParsing.hidden = false;
+    els.cvPasteToggle.hidden = true; els.cvPaste.hidden = true;
     var t0 = Date.now();
     try {
       var buf = await file.arrayBuffer();
       var text = isPdf ? await parsePdf(buf) : await parseDocx(buf);
       els.cvParsing.hidden = true;
-      if (!text || text.replace(/\s/g, "").length < 100) {
-        // Almost no text — usually a scanned/image-only PDF.
-        renderCv(); // back to the current state (drop zone if still empty)
+      if (!text || textWeight(text) < 100) {
+        // We couldn't pull readable text (scan/image, or an export this reader
+        // can't decode). Explain, and let the user paste their CV text instead.
         setError(isPdf
-          ? "We couldn’t read text from that PDF — it may be a scan or image. Try exporting a text-based PDF, or a DOCX."
-          : "We couldn’t read text from that file. Try a different export.");
+          ? "We couldn’t pull readable text from that PDF — it may be a scan, or an export this reader can’t decode. Paste your CV text below to continue."
+          : "We couldn’t read text from that file. Paste your CV text below to continue.");
+        openPaste();
         track("cv_parse_failed", { file_type: isPdf ? "pdf" : "docx", reason: "empty" });
         return;
       }
@@ -931,11 +1028,14 @@
       track("cv_file_parsed", { file_type: isPdf ? "pdf" : "docx", chars: text.length, ms: Date.now() - t0 });
     } catch (err) {
       els.cvParsing.hidden = true;
-      renderCv();
       var loadErr = err && /load-failed/.test(err.message || "");
+      // Pasting bypasses the reader entirely, so offer it on any failure.
       setError(loadErr
-        ? "Couldn’t load the file reader. Check your connection and try again."
-        : "We couldn’t read that file. Make sure it’s a valid PDF or DOCX.");
+        ? "Couldn’t load the file reader. You can paste your CV text below instead."
+        : (isPdf
+          ? "We couldn’t read that PDF. Paste your CV text below to continue."
+          : "We couldn’t read that file. Make sure it’s a valid PDF or DOCX, or paste your CV text below."));
+      openPaste();
       track("cv_parse_failed", { file_type: isPdf ? "pdf" : "docx", reason: loadErr ? "lib_load" : "parse_error" });
     }
   }
@@ -954,6 +1054,18 @@
     e.preventDefault();
     var f = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
     if (f) handleFile(f);
+  });
+
+  // ---- paste-CV fallback: upload stays primary; paste is the escape hatch ----
+  els.cvPasteToggle.addEventListener("click", function () { setError(""); openPaste(); });
+  els.cvPasteCancel.addEventListener("click", function () { setError(""); closePaste(); });
+  els.cvPasteUse.addEventListener("click", function () {
+    var t = normalizeText(els.cvPasteText.value);
+    if (textWeight(t) < 100) { setError("That looks too short — paste the full text of your CV."); return; }
+    setError("");
+    setCv(t, "Pasted CV", 0);
+    els.cvPasteText.value = "";
+    track("cv_pasted", { chars: t.length });
   });
 
   // ---- JD url: restore + persist + validate ----
