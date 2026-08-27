@@ -873,7 +873,7 @@
     els.cvDrop.hidden = have || pasteOpen;
     els.cvPasteToggle.hidden = have || pasteOpen;
     els.cvPaste.hidden = !pasteOpen || have;
-    els.cvCount.textContent = have ? (cvText.trim().length + " chars read") : "";
+    els.cvCount.textContent = ""; // count shown once, inside the field chip (cvChipMeta) below
     if (have) {
       els.cvChipName.textContent = cvName || "Your CV";
       els.cvChipMeta.textContent = cvText.trim().length.toLocaleString() + " characters read";
@@ -1351,7 +1351,7 @@
   var MIN_CHARS = 300;
   // Hard bounds — must match the backend (onpaper-api/api/analyze.js). Enforced before
   // sending so oversize/short input gets a clear message instead of a generic failure.
-  var HARD_MIN = 500, HARD_MAX = 12000;
+  var HARD_MIN = 500, HARD_MAX = 5000;
   // Heuristic for "this doesn't look like a complete CV" (flow D, tier 3). Lenient by design.
   function looksLikeCV(t) {
     if (t.length < 200) return false;
@@ -1372,18 +1372,25 @@
     // Pasted JD text is sent straight to the analysis, so enforce the same lower
     // bound the backend uses. (A link is fetched + bounded server-side instead.)
     if (kind === "text" && jd.length < HARD_MIN) {
-      setError("Paste the full job description (at least " + HARD_MIN + " characters), or a link to the posting.");
+      setError("That job description is too short for us to work with — and probably for talent acquisition too. At the moment we process between " +
+        HARD_MIN.toLocaleString() + " and " + HARD_MAX.toLocaleString() + " characters. Paste the full posting, or a link to it.");
+      return;
+    }
+    if (kind === "text" && jd.length > HARD_MAX) {
+      setError("That job description is too long for us to work with — and probably for talent acquisition too. At the moment we process between " +
+        HARD_MIN.toLocaleString() + " and " + HARD_MAX.toLocaleString() + " characters.");
       return;
     }
     setError("");
     // CV length bounds (the job text is fetched + bounded server-side).
     if (cv.length > HARD_MAX) {
-      setError("Your CV is too long (" + cv.length.toLocaleString() + " characters). Keep it under " +
-        HARD_MAX.toLocaleString() + " and try again.");
+      setError("That CV is too long for us to work with — and probably for talent acquisition too. At the moment we process CVs between " +
+        HARD_MIN.toLocaleString() + " and " + HARD_MAX.toLocaleString() + " characters (yours is " + cv.length.toLocaleString() + ").");
       return;
     }
     if (cv.length < HARD_MIN) {
-      setError("We read very little text from that CV — it needs at least " + HARD_MIN + " characters. Try a text-based PDF or DOCX.");
+      setError("That CV is too short for us to work with — and probably for talent acquisition too. At the moment we process CVs between " +
+        HARD_MIN.toLocaleString() + " and " + HARD_MAX.toLocaleString() + " characters. Try a text-based PDF or DOCX.");
       return;
     }
     // Same CV + job link as the immediately previous successful run: confirm once (it uses 1 run).
