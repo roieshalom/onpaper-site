@@ -386,14 +386,8 @@
   .op-upload[hidden] { display: none; }
 
   /* ---- paste-CV fallback (upload stays the primary path) ---- */
-  .op-paste-toggle {
-    display: block; margin: 12px auto 0; padding: 2px 0;
-    font-family: var(--mono); font-size: 11px; letter-spacing: 0.06em;
-    color: var(--mono-muted); background: none; border: none; cursor: pointer;
-    border-bottom: 1px dashed var(--dash);
-  }
-  .op-paste-toggle:hover { color: var(--ink-3); }
-  .op-paste-toggle[hidden] { display: none; }
+  .op-upload-paste { color: var(--ink-3); border-bottom: 1px dashed var(--dash); cursor: pointer; transition: color 120ms; }
+  .op-upload-paste:hover { color: var(--ink-2); }
   .op-paste { width: 100%; }
   .op-paste[hidden] { display: none; }
   .op-paste-area {
@@ -441,6 +435,8 @@
   }
   .op-url-input:focus { border-color: var(--red-focus); box-shadow: 0 0 0 3px rgba(224,112,92,0.16); }
   .op-field-hint { font-family: var(--mono); font-size: 11px; line-height: 1.5; letter-spacing: 0.03em; color: var(--mono-muted); text-align: center; }
+  .op-privacy-note { margin-top: 22px; display: flex; justify-content: center; align-items: center; gap: 7px; color: var(--ink-3); }
+  .op-privacy-ic { width: 13px; height: 13px; flex: none; opacity: 0.85; }
 
   /* ---- results: icon actions + toast ---- */
   .op-rtools { display: flex; align-items: center; justify-content: flex-end; gap: 12px; margin-bottom: 14px; }
@@ -546,14 +542,14 @@
         <div class="op-io">
           <div class="op-col">
             <div class="op-labelrow">
-              <label class="op-label" id="cvLabel" hidden><span>Your CV</span><span class="op-count" id="cvCount"></span></label>
+              <label class="op-label" id="cvLabel"><span>Your CV</span><span class="op-count" id="cvCount"></span></label>
             </div>
             <div class="op-field">
               <input id="fitCvFile" type="file" accept=".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document" hidden>
               <button type="button" class="op-upload" id="cvDrop" aria-label="Upload your CV (PDF or DOCX)">
                 <svg class="op-upload-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4"/><path d="M7 9l5-5 5 5"/><path d="M4 20h16"/></svg>
                 <span class="op-upload-main">Upload your CV</span>
-                <span class="op-upload-sub">PDF or DOCX &middot; drag &amp; drop or choose a file</span>
+                <span class="op-upload-sub">PDF or DOCX &middot; or <span class="op-upload-paste" id="cvPasteInline" role="button" tabindex="0">paste raw text</span></span>
               </button>
               <div class="op-filechip ph-no-capture" id="cvChip" hidden>
                 <svg class="op-filechip-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3v5h5"/><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/></svg>
@@ -564,7 +560,6 @@
                 <button type="button" class="op-clear op-filechip-x" id="cvChipX" aria-label="Remove file">&times;</button>
               </div>
               <div class="op-parsing" id="cvParsing" hidden><span class="op-spin" aria-hidden="true"></span><span>Reading your CV…</span></div>
-              <button type="button" class="op-paste-toggle" id="cvPasteToggle">or paste your CV text instead</button>
               <div class="op-paste" id="cvPaste" hidden>
                 <textarea id="cvPasteText" class="op-paste-area ph-no-capture" placeholder="Paste the full text of your CV here…" spellcheck="false"></textarea>
                 <div class="op-paste-actions">
@@ -576,7 +571,7 @@
           </div>
           <div class="op-col">
             <div class="op-labelrow">
-              <label class="op-label" id="jdLabel" for="fitJdUrl" hidden><span>Job description</span><span class="op-count" id="jdCount"></span></label>
+              <label class="op-label" id="jdLabel" for="fitJdUrl"><span>Job description</span><span class="op-count" id="jdCount"></span></label>
             </div>
             <div class="op-field">
               <div class="op-jd-card">
@@ -585,11 +580,13 @@
                   <span class="op-jd-main">Paste the job link</span>
                 </div>
                 <input id="fitJdUrl" type="text" class="op-url-input ph-no-capture" placeholder="https://…  or paste the full job description" autocomplete="off" spellcheck="false">
-                <div class="op-field-hint">Paste a link, or the full job description text &mdash; either way, we don&rsquo;t store it.</div>
+                <div class="op-field-hint">Paste a link, or the full job description text.</div>
               </div>
             </div>
           </div>
         </div>
+
+        <p class="op-field-hint op-privacy-note"><svg class="op-privacy-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg><span>We use the data once to run your check. Nothing is saved.</span></p>
 
         <div class="op-tools">
           <div class="op-error" id="fitError" hidden></div>
@@ -884,7 +881,7 @@
     cvFile: $("fitCvFile"), cvDrop: $("cvDrop"), cvChip: $("cvChip"),
     cvChipName: $("cvChipName"), cvChipMeta: $("cvChipMeta"), cvChipX: $("cvChipX"),
     cvParsing: $("cvParsing"), jdUrl: $("fitJdUrl"),
-    cvPasteToggle: $("cvPasteToggle"), cvPaste: $("cvPaste"), cvPasteText: $("cvPasteText"),
+    cvPasteInline: $("cvPasteInline"), cvPaste: $("cvPaste"), cvPasteText: $("cvPasteText"),
     cvPasteUse: $("cvPasteUse"), cvPasteCancel: $("cvPasteCancel"),
     cvLabel: $("cvLabel"), jdLabel: $("jdLabel"), cvCount: $("cvCount"), jdCount: $("jdCount"),
     run: $("fitRun"), runLabel: $("fitRunLabel"), spin: $("fitSpin"),
@@ -948,9 +945,12 @@
   function renderCv() {
     var have = !!(cvText && cvText.trim());
     els.cvChip.hidden = !have;
-    els.cvLabel.hidden = !have;
+    els.cvLabel.hidden = have;
+    // The upload card and the filename chip are both fixed-height blocks that
+    // swap 1:1, so the column height (and the divider/steps below) never shifts.
+    // The "paste raw text" affordance lives inside the upload card, so it hides
+    // and shows with it automatically.
     els.cvDrop.hidden = have || pasteOpen;
-    els.cvPasteToggle.hidden = have || pasteOpen;
     els.cvPaste.hidden = !pasteOpen || have;
     els.cvCount.textContent = ""; // count shown once, inside the field chip (cvChipMeta) below
     if (have) {
@@ -1087,7 +1087,7 @@
     if (file.size > MAX_FILE_BYTES) { setError("That file is over 10 MB. Please upload a smaller CV."); return; }
 
     els.cvDrop.hidden = true; els.cvChip.hidden = true; els.cvParsing.hidden = false;
-    els.cvPasteToggle.hidden = true; els.cvPaste.hidden = true;
+    els.cvPaste.hidden = true;
     var t0 = Date.now();
     try {
       var buf = await file.arrayBuffer();
@@ -1120,7 +1120,12 @@
   }
 
   // file picker + drag-and-drop + remove
-  els.cvDrop.addEventListener("click", function () { els.cvFile.click(); });
+  els.cvDrop.addEventListener("click", function (e) {
+    // "paste raw text" is nested in the card — let it open the paste box instead
+    // of the file picker (its own handler stops propagation, so this is a guard).
+    if (e.target.closest("#cvPasteInline")) return;
+    els.cvFile.click();
+  });
   els.cvFile.addEventListener("change", function () { handleFile(els.cvFile.files && els.cvFile.files[0]); });
   els.cvChipX.addEventListener("click", removeCv);
   ["dragenter", "dragover"].forEach(function (ev) {
@@ -1136,7 +1141,10 @@
   });
 
   // ---- paste-CV fallback: upload stays primary; paste is the escape hatch ----
-  els.cvPasteToggle.addEventListener("click", function () { setError(""); openPaste(); });
+  els.cvPasteInline.addEventListener("click", function (e) { e.stopPropagation(); setError(""); openPaste(); });
+  els.cvPasteInline.addEventListener("keydown", function (e) {
+    if (e.key === "Enter" || e.key === " ") { e.preventDefault(); e.stopPropagation(); setError(""); openPaste(); }
+  });
   els.cvPasteCancel.addEventListener("click", function () { setError(""); closePaste(); });
   els.cvPasteUse.addEventListener("click", function () {
     var t = normalizeText(els.cvPasteText.value);
@@ -1181,10 +1189,10 @@
   // Restore whatever was last in the field — a link or pasted JD text both persist.
   var savedJd = get(LS_JD);
   els.jdUrl.value = savedJd;
-  els.jdLabel.hidden = !els.jdUrl.value.trim();
+  els.jdLabel.hidden = !!els.jdUrl.value.trim();
   els.jdUrl.addEventListener("input", function () {
     set(LS_JD, els.jdUrl.value);
-    els.jdLabel.hidden = !els.jdUrl.value.trim();
+    els.jdLabel.hidden = !!els.jdUrl.value.trim();
     onEdit();
   });
 
@@ -1344,7 +1352,7 @@
   // controls to disabled/readonly so keyboard/tab focus can't reach them.
   function lockInputs(on) {
     els.viewInput.classList.toggle("is-locked", on);
-    [els.cvFile, els.cvDrop, els.cvChipX, els.cvPasteToggle,
+    [els.cvFile, els.cvDrop, els.cvChipX,
      els.cvPasteUse, els.cvPasteCancel].forEach(function (el) {
       if (el) el.disabled = on;
     });
