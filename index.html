@@ -454,14 +454,14 @@
   /* CV group shrinks first (high shrink factor); label + filename ellipsize as one unit,
      so a fully-squeezed CV never leaves an orphaned "CV:" with a blank after it. */
   .op-rsource .op-rsource-cv { min-width: 4.5em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 0 100 auto; }
-  /* JD group shrinks only after the CV; the title stays, the company is what gives way. */
+  /* JD group shrinks only after the CV; the company leads and stays, the role is what gives way. */
   .op-rsource .op-rsource-jd { display: inline-flex; align-items: baseline; min-width: 0; flex: 0 1 auto; }
   .op-rsource .op-rsource-jdlink { display: inline-flex; align-items: baseline; min-width: 0; white-space: nowrap; }
-  /* The dash never shrinks. Company gives way before the title (higher shrink factor);
-     the title shrinks last of all and keeps its leading words (the important ones). */
+  /* The dash never shrinks. The role gives way before the company (higher shrink factor);
+     the company (shown first) shrinks last of all and keeps its leading words (the important ones). */
   .op-rsource .op-rsource-dash { flex: 0 0 auto; }
-  .op-rsource .op-rsource-company { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 0 4 auto; }
-  .op-rsource .op-rsource-title { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 0 1 auto; }
+  .op-rsource .op-rsource-company { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 0 1 auto; }
+  .op-rsource .op-rsource-title { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 0 4 auto; }
   .op-icon-btn {
     width: 40px; height: 40px; display: inline-flex; align-items: center; justify-content: center;
     border: 1px solid var(--btn-line); border-radius: 3px; background: transparent; color: var(--ink-3); cursor: pointer;
@@ -1470,8 +1470,8 @@
     }
   }
 
-  // One line: "CV: file.docx · Job: Title — Company" (the JD links to the posting).
-  // If it can't all fit, the CV filename truncates first, then the JD company (CSS).
+  // One line: "CV: file.docx · Job: Company — Title" (the JD links to the posting).
+  // If it can't all fit, the CV filename truncates first, then the JD role (CSS).
   // Skipped if we have neither side.
   function renderSource(role, company) {
     var src = els.resultSource;
@@ -1492,9 +1492,9 @@
       var a = el("a", "op-rsource-jdlink");
       a.href = reportJdUrl; a.target = "_blank"; a.rel = "noopener noreferrer";
       if (role || company) {
-        if (role) a.appendChild(el("span", "op-rsource-title", role));
-        if (role && company) a.appendChild(el("span", "op-rsource-dash", " — "));
         if (company) a.appendChild(el("span", "op-rsource-company", company));
+        if (role && company) a.appendChild(el("span", "op-rsource-dash", " — "));
+        if (role) a.appendChild(el("span", "op-rsource-title", role));
       } else {
         // no title/company parsed — fall back to the short URL as the link text
         a.appendChild(el("span", "op-rsource-title", shortUrl(reportJdUrl)));
@@ -1516,8 +1516,8 @@
 
     els.sampleBadge.hidden = !isSample;
 
-    // title: role — company if present, else gap count
-    var subject = (r.role && r.company) ? (r.role + " — " + r.company) : (r.role || r.company || "");
+    // title: company — role if present, else gap count
+    var subject = (r.company && r.role) ? (r.company + " — " + r.role) : (r.company || r.role || "");
     if (subject) els.resultTitle.textContent = subject;
     else els.resultTitle.textContent = (gaps.length || (r.body ? 1 : 0)) + (gaps.length === 1 ? " gap found" : " gaps found");
 
@@ -1570,7 +1570,7 @@
 
   function plainText() {
     var r = parseReport(lastText);
-    var subject = (r.role && r.company) ? (r.role + " — " + r.company) : (r.role || r.company || "");
+    var subject = (r.company && r.role) ? (r.company + " — " + r.role) : (r.company || r.role || "");
     var stamp = new Date().toLocaleString(undefined, { day: "numeric", month: "short", year: "numeric", hour: "numeric", minute: "2-digit" });
     return "OnPaper — Fit report\n" +
       (subject ? subject + "\n" : "") +
@@ -1891,53 +1891,68 @@
 
     var r = parseReport(lastText);
     var gaps = parseGaps(r.body);
-    var subject = (r.role && r.company) ? (r.role + " — " + r.company) : (r.role || r.company || "");
+    // Header: company first, then role (matches the on-screen "Job:" line).
+    var subject = (r.company && r.role) ? (r.company + " — " + r.role) : (r.company || r.role || "");
     var stamp = new Date().toLocaleString(undefined, { day: "numeric", month: "short", year: "numeric", hour: "numeric", minute: "2-digit" });
-
-    var doc = new jsPDF({ unit: "pt", format: "a4" });
-    var pw = doc.internal.pageSize.getWidth();
-    var ph = doc.internal.pageSize.getHeight();
-    var m = 56, x = m, maxw = pw - m * 2, y = m;
     var NAVY = [17, 26, 40], RED = [224, 112, 92], GREY = [110, 122, 140], INK = [40, 52, 72];
 
-    function need(h) { if (y + h > ph - m) { doc.addPage(); y = m; } }
-    function line() { need(14); doc.setDrawColor(224, 230, 236); doc.line(x, y, x + maxw, y); y += 16; }
-    function text(str, size, style, color, gapAfter) {
-      doc.setFont("helvetica", style || "normal"); doc.setFontSize(size);
-      doc.setTextColor(color[0], color[1], color[2]);
-      var lh = size * 1.38;
-      var lines = doc.splitTextToSize(String(str), maxw);
-      for (var i = 0; i < lines.length; i++) { need(lh); doc.text(lines[i], x, y); y += lh; }
-      if (gapAfter) y += gapAfter;
-    }
-    function labeled(label, body, gapAfter) {
-      need(15); doc.setFont("helvetica", "bold"); doc.setFontSize(10.5);
-      doc.setTextColor(NAVY[0], NAVY[1], NAVY[2]); doc.text(label, x, y); y += 14;
-      text(body, 11, "normal", INK, gapAfter);
+    // The download is always exactly one A4 page. We render the whole report at a
+    // scale factor `s` (fonts + vertical spacing shrink together) and, if it runs
+    // past the page, re-render smaller until it fits. No addPage() is ever called.
+    function build(s) {
+      var doc = new jsPDF({ unit: "pt", format: "a4" });
+      var pw = doc.internal.pageSize.getWidth();
+      var ph = doc.internal.pageSize.getHeight();
+      var m = 56, x = m, maxw = pw - m * 2, y = m;
+
+      function line() { doc.setDrawColor(224, 230, 236); doc.line(x, y, x + maxw, y); y += 16 * s; }
+      function text(str, size, style, color, gapAfter) {
+        size *= s;
+        doc.setFont("helvetica", style || "normal"); doc.setFontSize(size);
+        doc.setTextColor(color[0], color[1], color[2]);
+        var lh = size * 1.38;
+        var lines = doc.splitTextToSize(String(str), maxw);
+        for (var i = 0; i < lines.length; i++) { doc.text(lines[i], x, y); y += lh; }
+        if (gapAfter) y += gapAfter * s;
+      }
+      function labeled(label, body, gapAfter) {
+        doc.setFont("helvetica", "bold"); doc.setFontSize(10.5 * s);
+        doc.setTextColor(NAVY[0], NAVY[1], NAVY[2]); doc.text(label, x, y); y += 14 * s;
+        text(body, 11, "normal", INK, gapAfter);
+      }
+
+      text("OnPaper — Fit report", 18, "bold", NAVY, 6);
+      if (subject) text(subject, 13, "bold", RED, 4);
+      if (reportCvName) text("CV: " + reportCvName, 10, "normal", GREY, 0);
+      if (reportJdUrl) text("Job: " + reportJdUrl, 10, "normal", GREY, 0);
+      text("Generated " + stamp, 10, "normal", GREY, 10);
+      line();
+      text("What the role asks for that your CV doesn’t yet show — with one concrete fix each.", 10, "italic", GREY, 14);
+
+      if (gaps.length) {
+        gaps.forEach(function (g) {
+          text("GAP " + g.num + (g.kind ? "   [" + (g.kind === "hard" ? "Hard" : "Closable") + "]" : ""), 11, "bold", RED, 2);
+          text(g.title || "Gap", 13, "bold", NAVY, 8);
+          if (g.detail) labeled("Evidence", g.detail, 8);
+          if (g.fix) labeled("Fix", g.fix, 14);
+          line();
+        });
+      } else {
+        text(r.body || "(No gaps returned.)", 11, "normal", INK, 0);
+      }
+
+      return { doc: doc, used: y, limit: ph - m };
     }
 
-    text("OnPaper — Fit report", 18, "bold", NAVY, 6);
-    if (subject) text(subject, 13, "bold", RED, 4);
-    if (reportCvName) text("CV: " + reportCvName, 10, "normal", GREY, 0);
-    if (reportJdUrl) text("Job: " + reportJdUrl, 10, "normal", GREY, 0);
-    text("Generated " + stamp, 10, "normal", GREY, 10);
-    line();
-    text("What the role asks for that your CV doesn’t yet show — with one concrete fix each.", 10, "italic", GREY, 14);
-
-    if (gaps.length) {
-      gaps.forEach(function (g) {
-        need(46);
-        text("GAP " + g.num + (g.kind ? "   [" + (g.kind === "hard" ? "Hard" : "Closable") + "]" : ""), 11, "bold", RED, 2);
-        text(g.title || "Gap", 13, "bold", NAVY, 8);
-        if (g.detail) labeled("Evidence", g.detail, 8);
-        if (g.fix) labeled("Fix", g.fix, 14);
-        line();
-      });
-    } else {
-      text(r.body || "(No gaps returned.)", 11, "normal", INK, 0);
+    // Fit to one page: measure, then shrink toward the largest scale that fits.
+    var s = 1, out = build(s);
+    for (var i = 0; i < 8 && out.used > out.limit; i++) {
+      s = Math.max(0.42, s * (out.limit - 56) / (out.used - 56) * 0.99);
+      out = build(s);
+      if (s <= 0.42) break;
     }
 
-    doc.save("onpaper-fit-report-" + new Date().toISOString().slice(0, 10) + ".pdf");
+    out.doc.save("onpaper-fit-report-" + new Date().toISOString().slice(0, 10) + ".pdf");
   }
   els.download.addEventListener("click", function () { downloadPdf(); });
 
