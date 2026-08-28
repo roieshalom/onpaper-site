@@ -356,6 +356,16 @@
   .op-fb-text:focus { outline: none; border-color: var(--red-focus); box-shadow: 0 0 0 3px rgba(224,112,92,0.16); }
   .op-fb-foot { display: flex; flex-direction: column; align-items: center; gap: 10px; margin-top: 16px; }
   .op-fb-mail { font-family: var(--mono); font-size: 11px; letter-spacing: 0.04em; color: var(--mono-muted); }
+  .op-fb-mail a { color: var(--red); text-decoration: none; border-bottom: 1px solid var(--red-focus); }
+  .op-fb-mail a:hover { color: var(--red); border-bottom-color: var(--red); }
+  .op-fb-email {
+    width: 100%; box-sizing: border-box; margin-bottom: 10px;
+    padding: 11px 16px; border: 1px solid var(--line-in); border-radius: 3px;
+    background: var(--paper);
+    font-family: var(--mono); font-size: 13px; line-height: 1.4; color: var(--ink);
+    transition: border-color .18s, box-shadow .18s;
+  }
+  .op-fb-email:focus { outline: none; border-color: var(--red-focus); box-shadow: 0 0 0 3px rgba(224,112,92,0.16); }
   .op-fb-send { padding: 12px 28px; font-size: 13px; }
 
   /* ---- input field + clear button ---- */
@@ -755,10 +765,11 @@
           <button type="button" class="op-fb-tab" data-fb="Bug report" aria-selected="false">Bug report</button>
           <button type="button" class="op-fb-tab" data-fb="Feature request" aria-selected="false">Feature request</button>
         </div>
-        <textarea class="op-fb-text" id="fbText" rows="5" maxlength="2000" placeholder="What happened? What did you expect?"></textarea>
+        <input type="email" class="op-fb-email" id="fbEmail" autocomplete="email" placeholder="Your email (optional, so we can reply)">
+        <textarea class="op-fb-text" id="fbText" rows="5" maxlength="2000" placeholder="Tell us what you think."></textarea>
         <div class="op-fb-foot">
           <button type="button" class="op-btn op-fb-send" id="fbSend">Send feedback</button>
-          <span class="op-fb-mail">Goes to hello@onpaper.fit</span>
+          <span class="op-fb-mail">Contact us at <a href="mailto:hello@onpaper.fit">hello@onpaper.fit</a></span>
         </div>
       </div>
     </div>
@@ -1858,12 +1869,19 @@
   (function () {
     var tabs = Array.prototype.slice.call(document.querySelectorAll(".op-fb-tab"));
     var txt = document.getElementById("fbText");
+    var email = document.getElementById("fbEmail");
     var send = document.getElementById("fbSend");
     if (!tabs.length || !txt || !send) return;
     var kind = "General feedback";
+    var placeholders = {
+      "General feedback": "Tell us what you think.",
+      "Bug report": "What happened? What did you expect?",
+      "Feature request": "What would you like OnPaper to do?"
+    };
     tabs.forEach(function (t) {
       t.addEventListener("click", function () {
         kind = t.getAttribute("data-fb");
+        txt.setAttribute("placeholder", placeholders[kind] || "");
         tabs.forEach(function (o) {
           var on = o === t;
           o.classList.toggle("is-active", on);
@@ -1871,15 +1889,41 @@
         });
       });
     });
+    // Web3Forms access key (from web3forms.com — delivers to hello@onpaper.fit).
+    var WEB3FORMS_KEY = "e782b093-785d-4501-b8b5-d0bfa81e862e";
     send.addEventListener("click", function () {
       var body = txt.value.trim();
       if (!body) { txt.focus(); return; }
+      var from = email ? email.value.trim() : "";
       track("feedback_send", { kind: kind });
-      var href = "mailto:hello@onpaper.fit"
-        + "?subject=" + encodeURIComponent("OnPaper — " + kind)
-        + "&body=" + encodeURIComponent(body);
-      window.location.href = href;
-      txt.value = "";
+      send.disabled = true;
+      var orig = send.textContent;
+      send.textContent = "Sending…";
+      fetch("https://api.web3forms.com/submit", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "Accept": "application/json" },
+        body: JSON.stringify({
+          access_key: WEB3FORMS_KEY,
+          subject: "OnPaper — " + kind,
+          from_name: "OnPaper feedback",
+          email: from || "no-reply@onpaper.fit",
+          message: body + (from ? "" : "\n\n(no reply address given)")
+        })
+      }).then(function (r) { return r.json(); }).then(function (d) {
+        if (d && d.success) {
+          send.textContent = "Thanks — sent";
+          txt.value = "";
+          if (email) email.value = "";
+          setTimeout(function () { send.disabled = false; send.textContent = orig; }, 2500);
+        } else { throw new Error((d && d.message) || "send failed"); }
+      }).catch(function () {
+        send.textContent = "Couldn’t send — email us";
+        send.disabled = false;
+        var href = "mailto:hello@onpaper.fit?subject=" + encodeURIComponent("OnPaper — " + kind)
+          + "&body=" + encodeURIComponent(from ? (body + "\n\n— from: " + from) : body);
+        window.location.href = href;
+        setTimeout(function () { send.textContent = orig; }, 3000);
+      });
     });
   })();
 
