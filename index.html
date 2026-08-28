@@ -83,6 +83,16 @@
   textarea:focus, input:focus { outline: none; }
   .op-textarea:focus { border-color: var(--red-focus); box-shadow: 0 0 0 3px rgba(224,112,92,0.16); }
   ::selection { background: rgba(143,180,217,0.30); }
+
+  /* ---- Locked input area while a run is in flight (the eventual animation
+         will sit over this same region; the bottom action bar stays live) ---- */
+  #viewInput.is-locked .op-io-sec {
+    pointer-events: none;
+    user-select: none;
+    opacity: 0.5;
+    filter: blur(1.5px) saturate(0.9);
+    transition: opacity .3s ease, filter .3s ease;
+  }
   @keyframes op-spin { to { transform: rotate(360deg); } }
   @keyframes op-rise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
   @keyframes rainbow-heart {
@@ -1145,11 +1155,165 @@
   // in-progress report. (The server is the real guard: it won't charge if the
   // client disconnects mid-run.) This only prompts; it can't block leaving.
   function warnUnload(e) { e.preventDefault(); e.returnValue = ""; return ""; }
+
+  // ---- Loading overlay (design handoff: "OnPaper Loader") ----------------
+  // Vector SVG pinned over the viewport. Card borders draw on, then red wavy
+  // rays beam CV -> JD in a seamless loop. Geometry is measured from the live
+  // card elements every frame (getBoundingClientRect), so it tracks any
+  // breakpoint. pointer-events:none — never blocks the action bar beneath.
+  var OnPaperLoader = (function () {
+    var NS = "http://www.w3.org/2000/svg";
+    function mk(tag, attrs) { var n = document.createElementNS(NS, tag); for (var k in attrs) n.setAttribute(k, attrs[k]); return n; }
+    function easeInOutQuad(t) { return t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2; }
+    function easeOutCubic(t) { return 1 - Math.pow(1 - t, 3); }
+    function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
+
+    function Loader(opts) {
+      this.left = opts.leftCard; this.right = opts.rightCard;
+      this.color = opts.color || "#ed2c0a";
+      this.ink = opts.ink || "#111A28";
+      this.rayCount = opts.rayCount || 3;
+      this.speed = opts.speed || 12;
+      this.showIntro = opts.showIntro !== false;
+      this.introDur = 1.4; this.loopDur = 3.6;
+      this.START_FRAC = 0.69; this.END_FRAC = 0.375;
+      this._raf = null; this._t0 = 0;
+      this._build();
+    }
+    Loader.prototype._build = function () {
+      var svg = mk("svg", { "pointer-events": "none", "aria-hidden": "true" });
+      svg.style.cssText = "position:fixed;inset:0;width:100vw;height:100vh;z-index:9999;overflow:visible;";
+      this.svg = svg;
+      this.gBorders = mk("g", {}); this.gRays = mk("g", {});
+      svg.appendChild(this.gBorders); svg.appendChild(this.gRays);
+      this.rectL = mk("rect", { fill: "none", "stroke-linejoin": "round", "stroke-linecap": "round", pathLength: 1 });
+      this.rectR = mk("rect", { fill: "none", "stroke-linejoin": "round", "stroke-linecap": "round", pathLength: 1 });
+      this.gBorders.appendChild(this.rectL); this.gBorders.appendChild(this.rectR);
+      this.lines = [];
+      for (var i = 0; i < this.rayCount; i++) {
+        var base = mk("path", { fill: "none", "stroke-linecap": "round" });
+        var pulse = mk("path", { fill: "none", "stroke-linecap": "round", pathLength: 1000, "stroke-dasharray": "24 226" });
+        this.gRays.appendChild(base); this.gRays.appendChild(pulse);
+        this.lines.push({ base: base, pulse: pulse });
+      }
+    };
+    // Wave sampled along a "main" axis, oscillating on the "cross" axis.
+    // horizontal=true -> beam runs left->right (main=x, cross=y);
+    // horizontal=false -> beam runs top->bottom (main=y, cross=x).
+    Loader.prototype._wavePath = function (m0, m1, cross, amp, k, phase, horizontal) {
+      var n = 72, d = "";
+      for (var i = 0; i <= n; i++) {
+        var m = m0 + ((m1 - m0) * i) / n;
+        var c = cross + amp * Math.sin(k * (m - m0) - phase);
+        var x = horizontal ? m : c, y = horizontal ? c : m;
+        d += (i === 0 ? "M" : "L") + x.toFixed(1) + " " + y.toFixed(1) + " ";
+      }
+      return d;
+    };
+    Loader.prototype._drawRect = function (rect, box, strokeW, progress) {
+      rect.setAttribute("x", box.left); rect.setAttribute("y", box.top);
+      rect.setAttribute("width", box.width); rect.setAttribute("height", box.height);
+      rect.setAttribute("stroke", this.ink); rect.setAttribute("stroke-width", strokeW);
+      rect.setAttribute("stroke-dasharray", 1); rect.setAttribute("stroke-dashoffset", 1 - progress);
+    };
+    Loader.prototype._frame = function (now) {
+      var t = (now - this._t0) / 1000;
+      var L = this.left.getBoundingClientRect(), R = this.right.getBoundingClientRect();
+      // Cards side-by-side -> horizontal beam; stacked (mobile) -> vertical beam.
+      var horizontal = R.left >= L.right - 1;
+      // "cross" is the dimension perpendicular to the beam.
+      var crossDim = horizontal ? L.height : L.width;
+      var strokeW = Math.max(2, Math.min(L.width, L.height) * 0.0107);
+      var amp = crossDim * 0.046, spacing = crossDim * 0.15;
+      var crossMid, m0, m1;
+      if (horizontal) {
+        crossMid = L.top + L.height / 2;
+        m0 = L.left + L.width * this.START_FRAC; m1 = R.left + R.width * this.END_FRAC;
+      } else {
+        crossMid = L.left + L.width / 2;
+        m0 = L.top + L.height * this.START_FRAC; m1 = R.top + R.height * this.END_FRAC;
+      }
+      var k = (2 * Math.PI) / ((m1 - m0) / 3.1);
+      var pL = this.showIntro ? easeInOutQuad(clamp((t - 0.05) / 0.6, 0, 1)) : 1;
+      var pR = this.showIntro ? easeInOutQuad(clamp((t - 0.55) / 0.65, 0, 1)) : 1;
+      this._drawRect(this.rectL, L, strokeW, pL); this._drawRect(this.rectR, R, strokeW, pR);
+      var rayIn = this.showIntro ? easeOutCubic(clamp((t - 0.95) / 0.6, 0, 1)) : 1;
+      var loopT = this.showIntro ? Math.max(0, t - this.introDur) : t;
+      var phase = ((2 * Math.PI * this.speed) / this.loopDur) * loopT;
+      var pulseOffset = -250 * ((loopT / this.loopDur) * (this.speed / 2));
+      for (var i = 0; i < this.rayCount; i++) {
+        var cross = crossMid + (i - (this.rayCount - 1) / 2) * spacing;
+        var a = amp * (i === Math.floor(this.rayCount / 2) ? 1 : 0.82);
+        var d = this._wavePath(m0, m1, cross, a, k, phase + i * 0.9, horizontal);
+        var ln = this.lines[i];
+        ln.base.setAttribute("d", d); ln.base.setAttribute("stroke", this.color);
+        ln.base.setAttribute("stroke-width", strokeW); ln.base.setAttribute("opacity", 0.4 * rayIn);
+        ln.pulse.setAttribute("d", d); ln.pulse.setAttribute("stroke", this.color);
+        ln.pulse.setAttribute("stroke-width", strokeW * 1.5); ln.pulse.setAttribute("opacity", rayIn);
+        ln.pulse.setAttribute("stroke-dashoffset", pulseOffset);
+      }
+      this._raf = window.requestAnimationFrame(this._frame.bind(this));
+    };
+    Loader.prototype.start = function () {
+      if (this._raf) return;
+      document.body.appendChild(this.svg);
+      this._t0 = performance.now(); this.svg.style.opacity = "1";
+      this._raf = window.requestAnimationFrame(this._frame.bind(this));
+    };
+    Loader.prototype.stop = function () {
+      var self = this;
+      this.svg.style.transition = "opacity 0.35s ease"; this.svg.style.opacity = "0";
+      setTimeout(function () {
+        window.cancelAnimationFrame(self._raf); self._raf = null;
+        if (self.svg.parentNode) self.svg.parentNode.removeChild(self.svg);
+      }, 360);
+    };
+    return Loader;
+  })();
+
+  var opLoader = null;
+  // The left "card" is whichever CV sub-state is on screen (upload box, parsed
+  // file chip, or paste box); the right card is always the JD card.
+  function visibleLeftCard() {
+    var cands = [els.cvChip, els.cvDrop, els.cvPasteText];
+    for (var i = 0; i < cands.length; i++) if (cands[i] && cands[i].offsetParent !== null) return cands[i];
+    return els.cvDrop;
+  }
+  function startLoaderOverlay() {
+    if (opLoader) return;
+    var cs = getComputedStyle(document.documentElement);
+    var red = (cs.getPropertyValue("--red") || "").trim() || "#ed2c0a";
+    var ink = (cs.getPropertyValue("--ink") || "").trim() || "#111A28";
+    var right = document.querySelector(".op-jd-card");
+    var left = visibleLeftCard();
+    if (!left || !right) return;
+    opLoader = new OnPaperLoader({ leftCard: left, rightCard: right, color: red, ink: ink });
+    opLoader.start();
+  }
+  function stopLoaderOverlay() {
+    if (!opLoader) return;
+    opLoader.stop(); opLoader = null;
+  }
+  // Make the input fields non-editable while a run is in flight. The CSS scrim
+  // (#viewInput.is-locked) blocks pointer access; we also flip the real form
+  // controls to disabled/readonly so keyboard/tab focus can't reach them.
+  function lockInputs(on) {
+    els.viewInput.classList.toggle("is-locked", on);
+    [els.cvFile, els.cvDrop, els.cvChipX, els.cvPasteToggle,
+     els.cvPasteUse, els.cvPasteCancel].forEach(function (el) {
+      if (el) el.disabled = on;
+    });
+    [els.jdUrl, els.cvPasteText].forEach(function (el) {
+      if (el) el.readOnly = on;
+    });
+  }
   function setLoading(on) {
     loading = on;
     els.run.classList.toggle("is-loading", on);
     els.run.disabled = on;
     els.spin.hidden = !on;
+    lockInputs(on);
+    if (on) startLoaderOverlay(); else stopLoaderOverlay();
     if (on) window.addEventListener("beforeunload", warnUnload);
     else window.removeEventListener("beforeunload", warnUnload);
     updateRunLabel();
