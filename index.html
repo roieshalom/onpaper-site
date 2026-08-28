@@ -1182,7 +1182,9 @@
     }
     Loader.prototype._build = function () {
       var svg = mk("svg", { "pointer-events": "none", "aria-hidden": "true" });
-      svg.style.cssText = "position:fixed;inset:0;width:100vw;height:100vh;z-index:9999;overflow:visible;";
+      // z-index sits above the input cards but below the action bar (z-index:5),
+      // so the bottom bar always stays in front of the animation.
+      svg.style.cssText = "position:fixed;inset:0;width:100vw;height:100vh;z-index:4;overflow:visible;";
       this.svg = svg;
       this.gBorders = mk("g", {}); this.gRays = mk("g", {});
       svg.appendChild(this.gBorders); svg.appendChild(this.gRays);
