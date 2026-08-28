@@ -330,6 +330,33 @@
     color: var(--ink); padding: 22px 0 6px;
   }
   .op-menu-lead { font-family: var(--serif-b); font-weight: 600; color: var(--ink-2); }
+  /* ---- feedback section (in menu) ---- */
+  .op-fb-seg {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px;
+    padding: 5px; margin: 4px 0 14px;
+    background: var(--paper-lt); border: 1px solid var(--line-in); border-radius: 4px;
+  }
+  .op-fb-tab {
+    font-family: var(--mono); font-size: 11px; letter-spacing: 0.04em;
+    line-height: 1.3; color: var(--mono-muted);
+    padding: 9px 6px; border: none; border-radius: 3px;
+    background: transparent; cursor: pointer; transition: background .15s, color .15s, box-shadow .15s;
+  }
+  .op-fb-tab:hover { color: var(--ink-2); }
+  .op-fb-tab.is-active {
+    background: var(--paper); color: var(--ink); box-shadow: 1px 2px 0 rgba(0,0,0,0.16);
+  }
+  .op-fb-text {
+    width: 100%; box-sizing: border-box; resize: vertical; min-height: 120px;
+    padding: 14px 16px; border: 1px solid var(--line-in); border-radius: 3px;
+    background: var(--paper);
+    font-family: var(--mono); font-size: 13px; line-height: 1.6; color: var(--ink);
+    transition: border-color .18s, box-shadow .18s;
+  }
+  .op-fb-text:focus { outline: none; border-color: var(--red-focus); box-shadow: 0 0 0 3px rgba(224,112,92,0.16); }
+  .op-fb-foot { display: flex; flex-direction: column; align-items: center; gap: 10px; margin-top: 16px; }
+  .op-fb-mail { font-family: var(--mono); font-size: 11px; letter-spacing: 0.04em; color: var(--mono-muted); }
+  .op-fb-send { padding: 12px 28px; font-size: 13px; }
 
   /* ---- input field + clear button ---- */
   .op-field { position: relative; }
@@ -681,14 +708,14 @@
   </div>
 </div>
 
-<!-- slide-in menu (About always open; How it works / Privacy / Why it costs, foldable) -->
+<!-- slide-in menu (About / How it works / Privacy / Feedback, all foldable; About starts open) -->
 <div class="op-menu-back" id="menuBack" hidden>
   <div class="op-menu-panel" id="menuPanel" role="dialog" aria-modal="true" aria-label="Menu">
     <button type="button" class="op-menu-close" id="menuClose" aria-label="Close menu">&times;</button>
 
     <div class="op-menu-item">
-      <div class="op-menu-h">About</div>
-      <div class="op-menu-a">
+      <button type="button" class="op-menu-q" aria-expanded="false"><span>About</span><span class="op-menu-plus">+</span></button>
+      <div class="op-menu-a" hidden>
         <p>OnPaper helps you answer one simple question: <span class="op-red">Does my CV fit this job description?</span></p>
         <p>Too many good candidates get filtered out the moment they hit &ldquo;send&rdquo;. Not because they can&rsquo;t do the job, but because their CV didn&rsquo;t clearly reflect who they really are. OnPaper is here to help you get past that first gate and reach your first interview. From there, it&rsquo;s on you to show up and present yourself at your best.</p>
         <p>OnPaper is about representing your true self better. Bringing out what&rsquo;s already there, not inventing what isn&rsquo;t. Don&rsquo;t claim experience or achievements you don&rsquo;t have. OnPaper compares your CV with a specific job description and shows you where you&rsquo;re a strong fit, where you might be missing something, and what deserves your attention &mdash; based on what the role is actually asking for, not generic CV advice.</p>
@@ -720,6 +747,23 @@
         <p><span class="op-menu-lead">How the run actually works.</span> To run the comparison, we send your CV text and the job text to Anthropic, the company behind the Claude AI that does the analysis. We don&rsquo;t store either one ourselves.</p>
         <p><span class="op-menu-lead">We measure anonymously how the site is used</span> &mdash; for example, which pages get opened and roughly how long a check takes, using privacy-friendly analytics on European servers. It never includes your CV, the job text, or your results, it doesn&rsquo;t use cookies, and it never identifies you.</p>
         <p><span class="op-red">In short:</span> your CV stays yours. We help you hold it up against a job, and then we let it go.</p>
+      </div>
+    </div>
+
+    <div class="op-menu-item">
+      <button type="button" class="op-menu-q" aria-expanded="false"><span>Feedback</span><span class="op-menu-plus">+</span></button>
+      <div class="op-menu-a" hidden>
+        <p>OnPaper is a work in progress, and your input shapes it.</p>
+        <div class="op-fb-seg" role="tablist" aria-label="Feedback type">
+          <button type="button" class="op-fb-tab is-active" data-fb="General feedback" aria-selected="true">General feedback</button>
+          <button type="button" class="op-fb-tab" data-fb="Bug report" aria-selected="false">Bug report</button>
+          <button type="button" class="op-fb-tab" data-fb="Feature request" aria-selected="false">Feature request</button>
+        </div>
+        <textarea class="op-fb-text" id="fbText" rows="5" maxlength="2000" placeholder="What happened? What did you expect?"></textarea>
+        <div class="op-fb-foot">
+          <button type="button" class="op-btn op-fb-send" id="fbSend">Send feedback</button>
+          <span class="op-fb-mail">Goes to hello@onpaper.fit</span>
+        </div>
       </div>
     </div>
 
@@ -1796,6 +1840,35 @@
       if (plus) plus.textContent = open ? "+" : "–";
     });
   });
+
+  // ---- feedback section ----
+  (function () {
+    var tabs = Array.prototype.slice.call(document.querySelectorAll(".op-fb-tab"));
+    var txt = document.getElementById("fbText");
+    var send = document.getElementById("fbSend");
+    if (!tabs.length || !txt || !send) return;
+    var kind = "General feedback";
+    tabs.forEach(function (t) {
+      t.addEventListener("click", function () {
+        kind = t.getAttribute("data-fb");
+        tabs.forEach(function (o) {
+          var on = o === t;
+          o.classList.toggle("is-active", on);
+          o.setAttribute("aria-selected", String(on));
+        });
+      });
+    });
+    send.addEventListener("click", function () {
+      var body = txt.value.trim();
+      if (!body) { txt.focus(); return; }
+      track("feedback_send", { kind: kind });
+      var href = "mailto:hello@onpaper.fit"
+        + "?subject=" + encodeURIComponent("OnPaper — " + kind)
+        + "&body=" + encodeURIComponent(body);
+      window.location.href = href;
+      txt.value = "";
+    });
+  })();
 
   // ---- results actions ----
   // "New fit check" is the sole way back to the input view (generic Back removed).
