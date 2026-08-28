@@ -729,8 +729,7 @@
       <div class="op-menu-a" hidden>
         <p><span class="op-red">Upload your CV</span> as a PDF or DOCX, and <span class="op-red">paste the link</span> to the job posting. We read the text from your file in your browser and open the link to read the job &mdash; no formatting or copy-paste needed.</p>
         <p><span class="op-red">Get your Fit Check.</span> OnPaper analyzes the relationship between your experience and what the role is looking for. You&rsquo;ll get:</p>
-        <p><span class="op-menu-lead">Overall fit</span> &mdash; how closely your background matches the role.<br>
-        <span class="op-menu-lead">Gaps &amp; concerns</span> &mdash; requirements that may be missing or unclear.<br>
+        <p><span class="op-menu-lead">Gaps &amp; concerns</span> &mdash; requirements that may be missing or unclear.<br>
         <span class="op-menu-lead">What to consider</span> &mdash; useful things to think about before applying.</p>
         <p><span class="op-red">Decide what to do.</span> Make the changes you agree with, and apply!</p>
       </div>
@@ -1830,14 +1829,20 @@
   els.menuBtn.addEventListener("click", function () { els.menuBack.hidden ? openMenu() : closeMenu(); });
   els.menuClose.addEventListener("click", closeMenu);
   els.menuBack.addEventListener("click", function (e) { if (e.target === els.menuBack) closeMenu(); });
-  Array.prototype.forEach.call(document.querySelectorAll("#menuPanel .op-menu-q"), function (q) {
+  var menuQs = Array.prototype.slice.call(document.querySelectorAll("#menuPanel .op-menu-q"));
+  function setMenuQ(q, open) {
+    q.setAttribute("aria-expanded", String(open));
+    var ans = q.nextElementSibling;
+    if (ans) ans.hidden = !open;
+    var plus = q.querySelector(".op-menu-plus");
+    if (plus) plus.textContent = open ? "–" : "+";
+  }
+  menuQs.forEach(function (q) {
     q.addEventListener("click", function () {
       var open = q.getAttribute("aria-expanded") === "true";
-      q.setAttribute("aria-expanded", String(!open));
-      var ans = q.nextElementSibling;
-      if (ans) ans.hidden = open;
-      var plus = q.querySelector(".op-menu-plus");
-      if (plus) plus.textContent = open ? "+" : "–";
+      // Accordion: only one section open at a time.
+      menuQs.forEach(function (other) { if (other !== q) setMenuQ(other, false); });
+      setMenuQ(q, !open);
     });
   });
 
