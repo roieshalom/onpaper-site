@@ -11,6 +11,10 @@
   // apps misreport vh/svh/dvh, which pushes the header/banner off-screen.
   (function () {
     if ("scrollRestoration" in history) history.scrollRestoration = "manual";
+    // Standalone (added to home screen) has no browser toolbar → pin the shell.
+    var standalone = window.navigator.standalone === true ||
+      (window.matchMedia && matchMedia("(display-mode: standalone)").matches);
+    if (standalone) document.documentElement.classList.add("is-standalone");
     function setH() {
       document.documentElement.style.setProperty("--app-h", window.innerHeight + "px");
       // iOS standalone cold-launch can start scrolled down, hiding the header/banner.
@@ -152,10 +156,10 @@
 
   /* ---- app shell ---- */
   .op-shell {
-    /* Pin the shell to the viewport edges. Unlike vh/svh/dvh or a scrollable
-       body, a fixed inset:0 box can never be scrolled off or mis-sized — the
-       header/banner stay glued to the top in iOS standalone (home-screen) apps. */
-    position: fixed; inset: 0;
+    /* Browser mode: normal flow sized to the dynamic viewport, so the shell sits
+       BELOW the browser toolbars (dvh shrinks when they're shown). --app-h is the
+       JS innerHeight fallback for engines with flaky dvh. */
+    position: relative; height: 100vh; height: 100dvh; height: var(--app-h, 100dvh);
     display: flex; flex-direction: column;
     background:
       radial-gradient(ellipse 1100px 520px at 50% -120px, var(--glow), transparent 70%),
@@ -163,6 +167,9 @@
     font-family: var(--serif-b); color: var(--ink);
     overflow: hidden;
   }
+  /* Standalone (home-screen app): no browser toolbar, so pin the shell to the
+     real viewport edges — immune to the cold-launch scroll/height glitch. */
+  html.is-standalone .op-shell { position: fixed; inset: 0; height: auto; }
   .op-noise {
     position: fixed; inset: 0; pointer-events: none; z-index: 0;
     opacity: 0.03; mix-blend-mode: overlay;
