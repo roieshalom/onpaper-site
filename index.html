@@ -14,8 +14,13 @@
       document.documentElement.style.setProperty("--app-h", window.innerHeight + "px");
     }
     setH();
+    // iOS standalone reports a stale innerHeight on cold launch, then corrects.
+    // Re-measure after load / when shown, plus a few delayed retries.
     addEventListener("resize", setH);
+    addEventListener("load", setH);
+    addEventListener("pageshow", setH);
     addEventListener("orientationchange", function () { setTimeout(setH, 200); });
+    [60, 250, 600, 1200].forEach(function (t) { setTimeout(setH, t); });
   })();
 </script>
 <meta name="description" content="Upload your CV and paste a job link. Get the real gaps between them, each with one concrete fix. Gaps, not scores. Fixes, not filler.">
