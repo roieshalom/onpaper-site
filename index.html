@@ -19,7 +19,7 @@
      under GDPR/TTDSG). Named events only, autocapture OFF, session replay OFF. Anonymous. -->
 <script>
   !function(t,e){var o,n,p,r;e.__SV||(window.posthog=e,e._i=[],e.init=function(i,s,a){function g(t,e){var o=e.split(".");2==o.length&&(t=t[o[0]],e=o[1]),t[e]=function(){t.push([e].concat(Array.prototype.slice.call(arguments,0)))}}(p=t.createElement("script")).type="text/javascript",p.crossOrigin="anonymous",p.async=!0,p.src=s.api_host.replace(".i.posthog.com","-assets.i.posthog.com")+"/static/array.js",(r=t.getElementsByTagName("script")[0]).parentNode.insertBefore(p,r);var u=e;for(void 0!==a?u=e[a]=[]:a="posthog",u.people=u.people||[],u.toString=function(t){var e="posthog";return"posthog"!==a&&(e+="."+a),t||(e+=" (stub)"),e},u.people.toString=function(){return u.toString(1)+".people (stub)"},o="init capture register register_once register_for_session unregister unregister_for_session getFeatureFlag getFeatureFlagPayload isFeatureEnabled reloadFeatureFlags updateEarlyAccessFeatureEnrollment getEarlyAccessFeatures on onFeatureFlags onSessionId getSurveys getActiveMatchingSurveys renderSurvey canRenderSurvey getNextSurveyStep identify setPersonProperties group resetGroups setPersonPropertiesForFlags resetPersonPropertiesForFlags setGroupPropertiesForFlags resetGroupPropertiesForFlags reset get_distinct_id getGroups get_session_id get_session_replay_url alias set_config startSessionRecording stopSessionRecording sessionRecordingStarted captureException loadToolbar get_property getSessionProperty createPersonProfile opt_in_capturing opt_out_capturing has_opted_in_capturing has_opted_out_capturing clear_opt_in_out_capturing debug getPageViewId captureTraceFeedback captureTraceMetric".split(" "),n=0;n<o.length;n++)g(u,o[n]);e._i.push([i,s,a])},e.__SV=1)}(document,window.posthog||[]);
-  posthog.init('phc_AtdHeL5respAzZDyFPjf9HULAHx9ECoDJqLqJAvRAFWt', {
+  posthog.init('phc_wFCSwGhnMi6RoiSGZaAYaaXhauBpB6aaQjW2382V4puL', {
     api_host: 'https://eu.i.posthog.com',
     person_profiles: 'identified_only',
     persistence: 'memory',
@@ -265,6 +265,30 @@
   .op-fix-text { font-size: 15px; line-height: 1.6; color: var(--ink-2); margin: 0; text-wrap: pretty; }
 
   .op-report-raw { white-space: pre-wrap; font-family: var(--serif-b); font-size: 15px; line-height: 1.65; color: var(--ink-2); background: var(--paper); border: 1px solid var(--card-line); border-left: 3px solid var(--red); border-radius: 3px; padding: 22px 24px; }
+
+  /* ===== BETA: per-report thumbs feedback (prefix op-rate- to stay clear of the op-fb- form) ===== */
+  .op-rate { margin-top: 34px; padding-top: 22px; border-top: 1px solid var(--line); }
+  .op-rate-q { font-family: var(--serif-b); font-size: 16px; color: var(--ink-2); margin-bottom: 14px; }
+  .op-rate-thumbs { display: flex; gap: 10px; }
+  .op-rate-btn { display: inline-flex; align-items: center; gap: 8px; font-family: var(--mono); font-size: 12px; letter-spacing: 0.04em; padding: 9px 15px; border: 1px solid var(--btn-line); border-radius: 3px; background: transparent; color: var(--ink-3); cursor: pointer; transition: border-color .15s, color .15s, background .15s; }
+  .op-rate-btn svg { width: 15px; height: 15px; }
+  .op-rate-btn:hover:not([disabled]) { border-color: var(--red); color: var(--ink); }
+  .op-rate-btn.is-on[data-r="up"] { border-color: var(--ok); color: var(--ok); background: rgba(79,158,110,0.09); }
+  .op-rate-btn.is-on[data-r="down"] { border-color: var(--red); color: var(--red); background: rgba(224,112,92,0.09); }
+  .op-rate-btn[disabled] { cursor: default; }
+  .op-rate-btn[disabled]:not(.is-on) { opacity: 0.4; }
+  .op-rate-reason { margin-top: 16px; }
+  .op-rate-rlabel { font-family: var(--mono); font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--mono-muted); margin-bottom: 10px; }
+  .op-rate-rlabel span { text-transform: none; letter-spacing: 0; opacity: 0.75; }
+  .op-rate-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+  .op-rate-chip { font-family: var(--mono); font-size: 12px; padding: 6px 12px; border: 1px solid var(--line-in); border-radius: 999px; background: var(--paper-lt); color: var(--ink-3); cursor: pointer; transition: border-color .12s, color .12s, background .12s; }
+  .op-rate-chip.is-on { border-color: var(--red); color: var(--red); background: var(--paper); }
+  .op-rate-row { display: flex; gap: 8px; }
+  .op-rate-input { flex: 1; min-width: 0; font-family: var(--serif-b); font-size: 14px; padding: 9px 13px; border: 1px solid var(--line-in); border-radius: 3px; background: var(--paper); color: var(--ink); }
+  .op-rate-input:focus { outline: none; border-color: var(--red-focus); box-shadow: 0 0 0 3px rgba(224,112,92,0.16); }
+  .op-rate-send { flex-shrink: 0; font-family: var(--mono); font-size: 12px; letter-spacing: 0.04em; padding: 9px 16px; border: none; border-radius: 3px; background: var(--ink); color: var(--paper-bg); cursor: pointer; }
+  .op-rate-send:hover { background: var(--red); }
+  .op-rate-thanks { margin-top: 14px; font-family: var(--mono); font-size: 12px; letter-spacing: 0.03em; color: var(--ok); }
 
   .op-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 24px; align-items: center; }
   .op-rbtn { font-family: var(--mono); font-size: 13px; letter-spacing: 0.04em; cursor: pointer; color: var(--ink-3); background: transparent; border: 1px solid var(--btn-line); border-radius: 3px; padding: 12px 22px; }
@@ -670,6 +694,35 @@
         <p class="op-intro">What the role asks for that your CV doesn&rsquo;t yet show &mdash; with one concrete fix each.</p>
 
         <div id="gapList"></div>
+
+        <!-- BETA: per-report thumbs feedback -->
+        <div class="op-rate" id="opRate" hidden>
+          <div class="op-rate-q">Was this fit check useful?</div>
+          <div class="op-rate-thumbs">
+            <button type="button" class="op-rate-btn" id="opRateUp" data-r="up" aria-label="Useful">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M7 11v9H4a1 1 0 0 1-1-1v-7a1 1 0 0 1 1-1h3z"/><path d="M7 11l4-8a2 2 0 0 1 2 2v4h5a2 2 0 0 1 2 2.3l-1.2 6A2 2 0 0 1 18.8 20H7"/></svg>
+              Useful
+            </button>
+            <button type="button" class="op-rate-btn" id="opRateDown" data-r="down" aria-label="Not useful">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M17 13V4h3a1 1 0 0 1 1 1v7a1 1 0 0 1-1 1h-3z"/><path d="M17 13l-4 8a2 2 0 0 1-2-2v-4H6a2 2 0 0 1-2-2.3l1.2-6A2 2 0 0 1 7.2 4H17"/></svg>
+              Not useful
+            </button>
+          </div>
+          <div class="op-rate-reason" id="opRateReason" hidden>
+            <div class="op-rate-rlabel">What was off? <span>(optional)</span></div>
+            <div class="op-rate-chips" id="opRateChips">
+              <button type="button" class="op-rate-chip" data-tag="wrong_gaps">Wrong gaps</button>
+              <button type="button" class="op-rate-chip" data-tag="missed">Missed something</button>
+              <button type="button" class="op-rate-chip" data-tag="too_harsh">Too harsh</button>
+              <button type="button" class="op-rate-chip" data-tag="too_generic">Too generic</button>
+            </div>
+            <div class="op-rate-row">
+              <input type="text" class="op-rate-input" id="opRateText" maxlength="140" placeholder="One line, if you like&hellip;" />
+              <button type="button" class="op-rate-send" id="opRateSend">Send</button>
+            </div>
+          </div>
+          <div class="op-rate-thanks" id="opRateThanks" hidden>Thanks &mdash; that sharpens the beta.</div>
+        </div>
       </div>
     </div>
 
@@ -1622,6 +1675,16 @@
     els.viewResults.hidden = false;
     els.actionBar.hidden = false;
     els.barRun.hidden = true; els.barOut.hidden = true; els.barResults.hidden = false;
+
+    // BETA: init per-report feedback with the same shape analysis_completed sends, plus a run id.
+    // (For a stable join, generate run_id once in doRun and stamp it on analysis_completed too.)
+    initRate({
+      match: r.match,
+      gaps_count: gaps.length,
+      has_dealbreakers: !!r.deal && !/^none/i.test(r.deal),
+      run_id: "run_" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6)
+    });
+
     document.querySelector(".op-scroll").scrollTop = 0;
   }
 
@@ -1827,7 +1890,7 @@
     }
   }
 
-  els.run.addEventListener("click", function () { attemptRun(false); });
+  els.run.addEventListener("click", function () { if (typeof MOCK !== "undefined" && MOCK) { showResults(SAMPLE, true); return; } attemptRun(false); });
 
   // ---- sample preview (no credit spent) ----
   var SAMPLE = [
@@ -1853,6 +1916,78 @@
     track("sample_previewed", {});
     showResults(SAMPLE, true);
   });
+
+  // ===== BETA: per-report thumbs feedback — one vote per report, non-PII =====
+  // Mock/preview mode: open with ?mock=1 (or #mock) to try the full result UI on the
+  // built-in SAMPLE report — no run consumed, and feedback is logged to the console
+  // instead of sent to PostHog. Remove this block + the MOCK check on the run button
+  // to drop preview mode; the widget itself ships unchanged.
+  var MOCK = /(?:[?&])mock=1\b/.test(location.search) || location.hash === "#mock";
+  window.__ev = [];
+  function rtrack(name, props) {
+    if (MOCK) { window.__ev.push({ event: name, props: props }); try { console.log("[mock]", name, JSON.stringify(props)); } catch (e) {} }
+    else { track(name, props); }
+  }
+
+  var rateCtx = null;   // { match, gaps_count, has_dealbreakers, run_id }
+  var rateVoted = false;
+  function rEl(id) { return document.getElementById(id); }
+
+  function initRate(ctx) {
+    rateCtx = ctx; rateVoted = false;
+    var w = rEl("opRate"); if (!w) return;
+    w.hidden = false;
+    ["opRateUp", "opRateDown"].forEach(function (id) { var b = rEl(id); b.classList.remove("is-on"); b.disabled = false; });
+    rEl("opRateReason").hidden = true;
+    rEl("opRateThanks").hidden = true;
+    rEl("opRateText").value = "";
+    Array.prototype.forEach.call(rEl("opRateChips").children, function (c) { c.classList.remove("is-on"); });
+    var prior = get("op_rate_" + ctx.run_id);              // durable: locked if already voted on this report
+    if (prior) lockRate(prior);
+  }
+
+  function lockRate(rating) {
+    rateVoted = true;
+    rEl("opRateUp").disabled = true;
+    rEl("opRateDown").disabled = true;
+    rEl(rating === "up" ? "opRateUp" : "opRateDown").classList.add("is-on");
+  }
+
+  function rateVote(rating) {
+    if (rateVoted || !rateCtx) return;                      // one vote per report
+    rtrack("report_feedback", {
+      rating: rating, match: rateCtx.match, gaps_count: rateCtx.gaps_count,
+      has_dealbreakers: rateCtx.has_dealbreakers, run_id: rateCtx.run_id
+    });
+    set("op_rate_" + rateCtx.run_id, rating);
+    lockRate(rating);
+    if (rating === "down") { rEl("opRateReason").hidden = false; try { rEl("opRateText").focus(); } catch (e) {} }
+    else { rEl("opRateThanks").hidden = false; }
+  }
+
+  (function wireRate() {
+    var up = rEl("opRateUp"); if (!up) return;
+    up.addEventListener("click", function () { rateVote("up"); });
+    rEl("opRateDown").addEventListener("click", function () { rateVote("down"); });
+    rEl("opRateChips").addEventListener("click", function (e) {
+      var c = e.target.closest(".op-rate-chip"); if (c) c.classList.toggle("is-on");
+    });
+    rEl("opRateSend").addEventListener("click", function () {
+      if (!rateCtx) return;
+      var tags = Array.prototype.filter.call(rEl("opRateChips").children, function (c) { return c.classList.contains("is-on"); })
+        .map(function (c) { return c.getAttribute("data-tag"); });
+      rtrack("report_feedback_detail", {
+        rating: "down", reason_tags: tags, reason_text: rEl("opRateText").value.trim(),
+        match: rateCtx.match, gaps_count: rateCtx.gaps_count,
+        has_dealbreakers: rateCtx.has_dealbreakers, run_id: rateCtx.run_id
+      });
+      rEl("opRateReason").hidden = true;
+      rEl("opRateThanks").hidden = false;
+    });
+  })();
+
+  // Mock preview: on load, jump straight to the SAMPLE result so the widget is visible.
+  if (MOCK) { window.addEventListener("load", function () { showResults(SAMPLE, true); }); }
 
   // ---- toast ----
   var toastTimer = null;
