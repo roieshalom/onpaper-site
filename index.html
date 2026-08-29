@@ -1732,6 +1732,8 @@
   // Hard bounds — must match the backend (onpaper-api/api/analyze.js). Enforced before
   // sending so oversize/short input gets a clear message instead of a generic failure.
   var HARD_MIN = 500, HARD_MAX = 5000;
+  // Pasted job descriptions can run longer than a CV, so they get a higher ceiling.
+  var JD_MAX = 10000;
   // Heuristic for "this doesn't look like a complete CV" (flow D, tier 3). Lenient by design.
   function looksLikeCV(t) {
     if (t.length < 200) return false;
@@ -1760,12 +1762,12 @@
     // bound the backend uses. (A link is fetched + bounded server-side instead.)
     if (kind === "text" && jd.length < HARD_MIN) {
       setError("That job description is too short for us to work with — and probably for talent acquisition too. At the moment we process between " +
-        HARD_MIN.toLocaleString() + " and " + HARD_MAX.toLocaleString() + " characters. Paste the full posting, or a link to it.");
+        HARD_MIN.toLocaleString() + " and " + JD_MAX.toLocaleString() + " characters. Paste the full posting, or a link to it.");
       return;
     }
-    if (kind === "text" && jd.length > HARD_MAX) {
+    if (kind === "text" && jd.length > JD_MAX) {
       setError("That job description is too long for us to work with — and probably for talent acquisition too. At the moment we process between " +
-        HARD_MIN.toLocaleString() + " and " + HARD_MAX.toLocaleString() + " characters.");
+        HARD_MIN.toLocaleString() + " and " + JD_MAX.toLocaleString() + " characters.");
       return;
     }
     setError("");
