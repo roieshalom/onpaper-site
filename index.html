@@ -11,9 +11,10 @@
   // apps misreport vh/svh/dvh, which pushes the header/banner off-screen.
   (function () {
     if ("scrollRestoration" in history) history.scrollRestoration = "manual";
-    // Standalone (added to home screen) has no browser toolbar → pin the shell.
-    var standalone = window.navigator.standalone === true ||
-      (window.matchMedia && matchMedia("(display-mode: standalone)").matches);
+    // Pin the shell ONLY for a true toolbar-less standalone app. navigator.standalone
+    // is the Safari home-screen signal (undefined in Chrome, whose shortcuts keep a
+    // toolbar and must stay in normal dvh flow so the header isn't hidden behind it).
+    var standalone = window.navigator.standalone === true;
     if (standalone) document.documentElement.classList.add("is-standalone");
     function setH() {
       document.documentElement.style.setProperty("--app-h", window.innerHeight + "px");
