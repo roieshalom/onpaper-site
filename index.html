@@ -157,10 +157,12 @@
 
   /* ---- app shell ---- */
   .op-shell {
-    /* Browser mode: normal flow sized to the dynamic viewport, so the shell sits
-       BELOW the browser toolbars (dvh shrinks when they're shown). --app-h is the
-       JS innerHeight fallback for engines with flaky dvh. */
-    position: relative; height: 100vh; height: 100dvh; height: var(--app-h, 100dvh);
+    /* position:fixed is WebKit's actual fix for this class of bug: iOS pins fixed
+       elements to the VISUAL viewport so browser toolbars can never cover them.
+       A dvh/vh-sized flex column doesn't get that guarantee and can be offset by
+       the toolbar with no resize event ever firing. Applies in Chrome too — its
+       toolbar sits outside the same WebKit render, which still honors this. */
+    position: fixed; inset: 0;
     display: flex; flex-direction: column;
     background:
       radial-gradient(ellipse 1100px 520px at 50% -120px, var(--glow), transparent 70%),
