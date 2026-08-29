@@ -1,8 +1,10 @@
 <!DOCTYPE html>
 <html lang="en">
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#F0F4F7">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
 <title>OnPaper</title>
 <meta name="description" content="Upload your CV and paste a job link. Get the real gaps between them, each with one concrete fix. Gaps, not scores. Fixes, not filler.">
 <link rel="icon" href="favicon.ico" sizes="any">
@@ -72,9 +74,13 @@
   }
 
   * { box-sizing: border-box; }
-  html, body { margin: 0; }
+  /* Lock the document itself: the app-shell owns the viewport and scrolling
+     happens inside .op-scroll. Without this, iOS mobile browsers let the body
+     scroll on first paint (before the address bar collapses), pushing the
+     header + top of the notice up out of view. */
+  html, body { margin: 0; height: 100%; overflow: hidden; }
   html { background: var(--paper-bg); }
-  body { background: var(--paper-bg); }
+  body { background: var(--paper-bg); overscroll-behavior: none; }
   [hidden] { display: none !important; }
 
   a { color: var(--red); }
@@ -126,7 +132,9 @@
 
   /* ---- app shell ---- */
   .op-shell {
-    position: relative; height: 100vh; height: 100dvh;
+    /* svh = smallest viewport (address bar shown) so the shell never exceeds the
+       visible area and clips the bottom bar; dvh refines it where supported. */
+    position: relative; height: 100vh; height: 100svh; height: 100dvh;
     display: flex; flex-direction: column;
     background:
       radial-gradient(ellipse 1100px 520px at 50% -120px, var(--glow), transparent 70%),
@@ -141,7 +149,7 @@
   }
 
   /* ---- header ---- */
-  .op-header { flex-shrink: 0; position: relative; z-index: 2; background: var(--paper-bg); border-bottom: 1px solid var(--line); }
+  .op-header { flex-shrink: 0; position: relative; z-index: 2; background: var(--paper-bg); border-bottom: 1px solid var(--line); padding-top: env(safe-area-inset-top, 0px); }
   .op-header-in { max-width: 1000px; margin: 0 auto; padding: 22px 32px; display: flex; align-items: center; justify-content: space-between; gap: 16px; }
   .op-wordmark { font-family: var(--serif-d); font-size: 26px; letter-spacing: -0.01em; }
   .op-wordmark .op-red, .op-red { color: var(--red); }
@@ -205,7 +213,7 @@
   .op-foot-tag { font-family: var(--mono); font-size: 11px; letter-spacing: 0.1em; color: var(--faint); }
 
   /* ---- docked action bar ---- */
-  .op-bar { flex-shrink: 0; position: relative; z-index: 5; background: var(--paper); border-top: 1px solid var(--line-in); box-shadow: 0 -8px 26px rgba(0,0,0,0.28); }
+  .op-bar { flex-shrink: 0; position: relative; z-index: 5; background: var(--paper); border-top: 1px solid var(--line-in); box-shadow: 0 -8px 26px rgba(0,0,0,0.28); padding-bottom: env(safe-area-inset-bottom, 0px); }
   .op-bar-in { position: relative; max-width: 840px; margin: 0 auto; padding: 15px 24px; display: flex; flex-direction: column; align-items: center; gap: 9px; }
   .op-btn {
     display: inline-flex; align-items: center; gap: 10px;
