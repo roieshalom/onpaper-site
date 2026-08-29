@@ -10,8 +10,11 @@
   // Lock the app-shell to the real visible height. iOS standalone (home-screen)
   // apps misreport vh/svh/dvh, which pushes the header/banner off-screen.
   (function () {
+    if ("scrollRestoration" in history) history.scrollRestoration = "manual";
     function setH() {
       document.documentElement.style.setProperty("--app-h", window.innerHeight + "px");
+      // iOS standalone cold-launch can start scrolled down, hiding the header/banner.
+      window.scrollTo(0, 0);
     }
     setH();
     // iOS standalone reports a stale innerHeight on cold launch, then corrects.
