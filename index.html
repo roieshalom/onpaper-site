@@ -149,6 +149,14 @@
   .op-foot-mark .op-logo { height: 20px; }
   .op-meta { font-family: var(--mono); font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--mono-muted); }
 
+  /* ---- desktop-recommended notice (subtle, non-blocking, dismissable) ---- */
+  .op-notice { flex-shrink: 0; position: relative; z-index: 2; background: var(--best-bg); border-bottom: 1px solid var(--line); }
+  .op-notice-in { max-width: 1000px; margin: 0 auto; padding: 9px 44px 9px 32px; display: flex; align-items: baseline; gap: 8px; }
+  .op-notice-t { font-family: var(--mono); font-size: 11px; letter-spacing: 0.02em; color: var(--ink-3); }
+  .op-notice-t strong { font-weight: 600; color: var(--ink-2); }
+  .op-notice-x { position: absolute; top: 50%; right: 20px; transform: translateY(-50%); background: none; border: none; cursor: pointer; padding: 4px; line-height: 1; color: var(--ink-4); font-size: 16px; }
+  .op-notice-x:hover { color: var(--ink-2); }
+
   /* ---- scroll region ---- */
   .op-scroll { flex: 1; overflow-y: auto; position: relative; z-index: 1; }
 
@@ -582,6 +590,14 @@
     </div>
   </header>
 
+  <!-- desktop-recommended notice -->
+  <div class="op-notice" id="deskNotice" role="note" hidden>
+    <div class="op-notice-in">
+      <span class="op-notice-t"><strong>Best experienced on desktop</strong> &mdash; OnPaper is designed for desktop, where working with your CV and job description is easiest.</span>
+    </div>
+    <button type="button" class="op-notice-x" id="deskNoticeX" aria-label="Dismiss">&times;</button>
+  </div>
+
   <!-- scroll region -->
   <div class="op-scroll">
 
@@ -993,6 +1009,14 @@
 
   function get(k) { try { return localStorage.getItem(k) || ""; } catch (e) { return ""; } }
   function set(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
+
+  // desktop-recommended notice: subtle, non-blocking, dismissable (remembered)
+  (function () {
+    var n = $("deskNotice"), x = $("deskNoticeX");
+    if (!n || !x) return;
+    if (get("op_desk_notice") !== "dismissed") n.hidden = false;
+    x.addEventListener("click", function () { n.hidden = true; set("op_desk_notice", "dismissed"); });
+  })();
 
   // analytics: fire a PostHog event with non-sensitive metadata only (no CV/JD/passcode/PII).
   function track(name, props) { try { if (window.posthog && posthog.capture) posthog.capture(name, props || {}); } catch (e) {} }
@@ -2259,7 +2283,16 @@
       els.coupon.value = "";
       updateRemaining(data.remaining);
       refreshRunDisabled();
-      track("coupon_redeemed", { already: !!data.already, granted: data.granted || 0 });
+      // Mark genuine (first-time) redemptions as beta users. Skips the idempotent
+      // `already` re-submit so properties/event fire exactly once per redemption.
+      if (!data.already) {
+        try {
+          if (window.posthog && posthog.setPersonProperties) {
+            posthog.setPersonProperties({ user_type: "beta", acquisition: "coupon", coupon_code: code });
+          }
+        } catch (e) {}
+        track("coupon_redeemed", { coupon_code: code, granted: data.granted || 0 });
+      }
     } catch (err) {
       couponMsg(err.message, true);
     } finally {
