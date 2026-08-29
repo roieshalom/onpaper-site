@@ -93,6 +93,21 @@
     filter: blur(1.5px) saturate(0.9);
     transition: opacity .3s ease, filter .3s ease;
   }
+  /* While a run is in flight, lift the whole input view upward so the loading
+     animation (the loader tracks the cards' live geometry every frame, so the
+     rays follow) rises above the modal, which sits just below centre. */
+  #viewInput { transition: transform .5s cubic-bezier(.22,1,.36,1); }
+  /* Lift only when the window is tall enough for the animation to clear the
+     modal; shorter windows keep the modal centred over the cards. A fixed px
+     lift (not vh) lands the cards just below the header at any height, while the
+     below-centre modal — which only drops lower as height grows — stays clear. */
+  @media (min-height: 680px) {
+    #viewInput.is-locked { transform: translateY(-230px); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    #viewInput { transition: none; }
+    #viewInput.is-locked { transform: none; }
+  }
   @keyframes op-spin { to { transform: rotate(360deg); } }
   @keyframes op-rise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
   @keyframes rainbow-heart {
@@ -483,7 +498,12 @@
   }
 
   /* ---- confirm / failure modals (D + E) ---- */
-  .op-confirm-back { position: fixed; inset: 0; z-index: 46; background: rgba(0,0,0,0.62); display: flex; align-items: center; justify-content: center; padding: 24px; }
+  /* Scrim stays light + softly blurred so the lifted CV↔JD animation reads
+     through it; the card is opaque, so readability is unaffected. Extra top
+     padding biases the card to sit just below dead-centre, leaving the upper
+     area for the animation revealed by the lifted input cards. */
+  .op-confirm-back { position: fixed; inset: 0; z-index: 46; background: rgba(17,26,40,0.22); backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(3px); display: flex; align-items: center; justify-content: center; padding: 15vh 24px 24px; opacity: 0; transition: opacity .2s ease; }
+  .op-confirm-back.is-shown { opacity: 1; }
   .op-confirm {
     width: 100%; max-width: 460px; background: var(--paper); border: 1px solid var(--line-in);
     border-radius: 12px; box-shadow: 0 24px 60px rgba(0,0,0,0.55); padding: 34px 32px 30px; animation: op-rise .25s ease both;
@@ -931,6 +951,8 @@
     return "api_error";
   }
   var analysisRuns = 0;
+  var runStartMs = 0;  // when the current run began (for the min "thinking" floor)
+  var MIN_THINK_MS = 2500; // on success, keep the animation up at least this long
   var lastText = "";   // last raw report text (for Copy / Download)
   var reportCvName = "", reportJdUrl = "";   // the CV file + job link behind the shown report
   // Identical-resubmission guard: remember the CV + JD of the immediately previous
@@ -1372,6 +1394,10 @@
     });
   }
   function setLoading(on) {
+    // Frame the input cards at the top of the scroll area when a run begins, so
+    // the lift (#viewInput.is-locked) reveals the animation above the modal
+    // instead of pushing already-scrolled cards off-screen.
+    if (on) { try { document.querySelector(".op-scroll").scrollTop = 0; } catch (e) {} }
     loading = on;
     els.run.classList.toggle("is-loading", on);
     els.run.disabled = on;
@@ -1381,6 +1407,18 @@
     if (on) window.addEventListener("beforeunload", warnUnload);
     else window.removeEventListener("beforeunload", warnUnload);
     updateRunLabel();
+  }
+  // Return the run button to its resting state WITHOUT tearing down the loader
+  // overlay or the lifted/dimmed cards. Used when the "couldn't retrieve" modal
+  // opens: the waves keep running behind it (and the cards stay lifted) until
+  // the user dismisses the modal, at which point closeConfirm() stops them.
+  function idleRunButton() {
+    loading = false;
+    els.run.classList.remove("is-loading");
+    els.spin.hidden = true;
+    window.removeEventListener("beforeunload", warnUnload);
+    updateRunLabel();
+    refreshRunDisabled();
   }
 
   // Remaining analyses (server-authoritative; null = unknown until first action).
@@ -1709,6 +1747,7 @@
 
     var t0 = Date.now();
     if (!opts.search) {
+      runStartMs = t0;   // measure the min-think floor from the original run, not the search retry
       analysisRuns++;
       track(analysisRuns > 1 ? "analysis_rerun" : "analysis_started", { cv_chars: cv.length, jd_source: jdSource });
     }
@@ -1726,6 +1765,12 @@
         has_dealbreakers: !!pr.deal && !/^none/i.test(pr.deal),
         duration_ms: Date.now() - t0
       });
+      // Everything worked and both CV + JD were resolved: keep the animation up
+      // for a minimum "thinking" time so a fast response still reads as real
+      // work. Only on success — a failure shows a modal, and the user just wants
+      // that as soon as possible.
+      var thinkLeft = MIN_THINK_MS - (Date.now() - runStartMs);
+      if (thinkLeft > 0) { await new Promise(function (r) { setTimeout(r, thinkLeft); }); }
       setLoading(false);
       closeConfirm(els.jdSearchBack);                       // clear the transient "searching" state, if shown
       updateRemaining(data.remaining);
@@ -1733,27 +1778,37 @@
       reportCvName = cvName; reportJdUrl = (kind === "url") ? jd : ""; // link behind this report (none for pasted text)
       showResults(out || "", false);
     } catch (err) {
-      setLoading(false);
+      // NOTE: deliberately no setLoading(false) here. The blocked→search retry
+      // and the "couldn't retrieve" modal both keep the loader waves + lifted
+      // cards alive. The loader is torn down only on a real end state: success
+      // (above), a generic error (below), or when the user dismisses the fail
+      // modal (closeConfirm → stopLoaderOverlay). Stopping+restarting it here is
+      // what made the card contour replay and the cards drop + re-lift.
 
       // The website blocked the direct fetch. Don't treat this as a final
-      // failure: show the transient state and automatically look for the same
+      // failure: keep the animation running and automatically look for the same
       // position on another public source. No run has been used.
       if (err.stage === "blocked") {
         track("jd_fetch_blocked", {});
         openConfirm(els.jdSearchBack);
-        doRun({ search: true });
+        doRun({ search: true });   // reuses the running loader (startLoaderOverlay is a no-op while one exists)
         return;
       }
-      // The alternative-source search also failed → recovery state (paste JD text).
+      // The alternative-source search also failed → recovery state (paste JD
+      // text). Keep the waves + lifted cards alive behind the modal until the
+      // user dismisses it; just release the button so the bar isn't "Thinking…".
       if (err.stage === "search_failed") {
         track("jd_search_failed", {});
         closeConfirm(els.jdSearchBack);
+        idleRunButton();
         openConfirm(els.jdFailBack);
         return;
       }
 
-      // Any other error → generic failure modal (flow E). The backend only spends
+      // Any other error → generic failure modal (flow E). This is a real end
+      // state, so stop the animation and drop the cards. The backend only spends
       // a run on a successful response, so the run is untouched here.
+      setLoading(false);
       track("analysis_failed", { error_type: classifyErr(err), duration_ms: Date.now() - t0 });
       closeConfirm(els.jdSearchBack);
       if (typeof err.remaining === "number") updateRemaining(err.remaining);
@@ -1810,8 +1865,28 @@
   }
 
   // ---- generic confirm/overlay helpers (menu + D/E modals) ----
-  function openConfirm(back) { back.hidden = false; }
-  function closeConfirm(back) { back.hidden = true; }
+  // Overlays fade in/out (opacity) whenever they come or go. Because
+  // [hidden] { display:none } can't transition, we flip hidden first (display
+  // it at opacity 0), force a reflow, then add .is-shown to fade in; on close we
+  // fade out and defer hidden until the fade finishes.
+  var FADE_MS = 200;
+  function openConfirm(back) {
+    clearTimeout(back._fadeTimer);
+    back.hidden = false;
+    void back.offsetHeight;               // reflow so the opacity:0 start is registered
+    back.classList.add("is-shown");
+  }
+  function closeConfirm(back) {
+    if (back.hidden) return;
+    back.classList.remove("is-shown");    // fade out
+    clearTimeout(back._fadeTimer);
+    back._fadeTimer = setTimeout(function () { back.hidden = true; }, FADE_MS + 20);
+    // The JD "couldn't retrieve" modal keeps the loader waves + lifted cards
+    // running behind it; dismissing it (its button, click-outside, or Esc, all
+    // of which route through here) is where we finally stop the waves and drop
+    // the cards back into place.
+    if (back === els.jdFailBack) { stopLoaderOverlay(); lockInputs(false); refreshRunDisabled(); }
+  }
   function anyConfirmOpen() {
     // jdSearchBack is transient (auto-advances) and deliberately not dismissable.
     return [els.shortBack, els.cvBack, els.failBack, els.jdFailBack, els.rerunBack].filter(function (b) { return !b.hidden; });
