@@ -6,6 +6,18 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <title>OnPaper</title>
+<script>
+  // Lock the app-shell to the real visible height. iOS standalone (home-screen)
+  // apps misreport vh/svh/dvh, which pushes the header/banner off-screen.
+  (function () {
+    function setH() {
+      document.documentElement.style.setProperty("--app-h", window.innerHeight + "px");
+    }
+    setH();
+    addEventListener("resize", setH);
+    addEventListener("orientationchange", function () { setTimeout(setH, 200); });
+  })();
+</script>
 <meta name="description" content="Upload your CV and paste a job link. Get the real gaps between them, each with one concrete fix. Gaps, not scores. Fixes, not filler.">
 <link rel="icon" href="favicon.ico" sizes="any">
 <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
@@ -135,6 +147,9 @@
     /* svh = smallest viewport (address bar shown) so the shell never exceeds the
        visible area and clips the bottom bar; dvh refines it where supported. */
     position: relative; height: 100vh; height: 100svh; height: 100dvh;
+    /* JS sets --app-h from window.innerHeight — the only value that is correct in
+       iOS home-screen (standalone) apps, where vh/svh/dvh misreport. */
+    height: var(--app-h, 100dvh);
     display: flex; flex-direction: column;
     background:
       radial-gradient(ellipse 1100px 520px at 50% -120px, var(--glow), transparent 70%),
