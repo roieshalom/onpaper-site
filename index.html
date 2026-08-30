@@ -610,6 +610,17 @@
     .op-bar-in { padding: 13px 20px; }
     .op-notice-in { padding-left: 20px; padding-right: 40px; }
     .op-notice-t { font-size: 12.5px; }
+
+    /* Mobile browser (NOT the standalone home-screen app): abandon the fixed-height
+       app-shell and become a normal scrolling page. Browsers position normal-flow
+       content below their own toolbars natively, so the header/banner can never be
+       clipped at the top — the root cause of the "cut on load" bug. The action bar
+       sticks to the bottom of the viewport instead of being docked in a locked shell.
+       Standalone (html.is-standalone) keeps the pinned layout, which works there. */
+    html:not(.is-standalone), html:not(.is-standalone) body { height: auto; min-height: 100%; overflow: visible; }
+    html:not(.is-standalone) .op-shell { position: static; height: auto; min-height: 100dvh; overflow: visible; display: block; }
+    html:not(.is-standalone) .op-scroll { overflow: visible; }
+    html:not(.is-standalone) .op-bar { position: sticky; bottom: 0; }
   }
 </style>
 
