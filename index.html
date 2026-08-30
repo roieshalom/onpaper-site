@@ -394,7 +394,9 @@
   .op-menu-btn[aria-expanded="true"] span:last-child { transform: translateY(-4px) rotate(-45deg); }
 
   /* ---- slide-in menu drawer ---- */
-  .op-menu-back { position: fixed; inset: 0; z-index: 45; background: rgba(0,0,0,0.62); display: flex; justify-content: flex-end; }
+  /* Fades in/out like the processing/confirm scrim (.op-confirm-back). */
+  .op-menu-back { position: fixed; inset: 0; z-index: 45; background: rgba(0,0,0,0.62); display: flex; justify-content: flex-end; opacity: 0; transition: opacity .2s ease; }
+  .op-menu-back.is-shown { opacity: 1; }
   .op-menu-panel {
     position: relative;
     width: min(440px, 90vw); height: 100%; background: var(--paper);
@@ -416,8 +418,9 @@
     background: transparent; border: none; padding: 22px 0; cursor: pointer;
   }
   .op-menu-q .op-menu-plus { font-family: var(--serif-d); font-size: 22px; color: var(--red); line-height: 1; }
-  .op-menu-a { font-family: var(--serif-b); font-size: 15px; line-height: 1.62; color: var(--ink-3); padding: 0 0 22px; }
-  .op-menu-a[hidden] { display: none; }
+  /* Foldable answers animate height + fade open/close (JS sets the height). */
+  .op-menu-a { font-family: var(--serif-b); font-size: 15px; line-height: 1.62; color: var(--ink-3); box-sizing: border-box; height: 0; padding: 0 0 22px; overflow: hidden; opacity: 0; transition: height .28s ease, opacity .2s ease; }
+  .op-menu-a.is-open { opacity: 1; }
   .op-menu-a p { margin: 0 0 12px; }
   .op-menu-a p:last-child { margin-bottom: 0; }
   /* Always-open section (About): same look as a menu question, but static. */
@@ -2241,8 +2244,9 @@
   els.rerunRunBtn.addEventListener("click", function () { closeConfirm(els.rerunBack); rerunConfirmed = true; doRun(); });
 
   // ---- slide-in menu ----
-  function openMenu() { els.menuBack.hidden = false; els.menuBtn.setAttribute("aria-expanded", "true"); track("menu_opened", {}); }
-  function closeMenu() { els.menuBack.hidden = true; els.menuBtn.setAttribute("aria-expanded", "false"); }
+  // Same fade-in/out as the processing/confirm scrim (openConfirm/closeConfirm).
+  function openMenu() { openConfirm(els.menuBack); els.menuBtn.setAttribute("aria-expanded", "true"); track("menu_opened", {}); }
+  function closeMenu() { closeConfirm(els.menuBack); els.menuBtn.setAttribute("aria-expanded", "false"); }
   els.menuBtn.addEventListener("click", function () { els.menuBack.hidden ? openMenu() : closeMenu(); });
   els.menuClose.addEventListener("click", closeMenu);
   els.menuBack.addEventListener("click", function (e) { if (e.target === els.menuBack) closeMenu(); });
@@ -2250,7 +2254,25 @@
   function setMenuQ(q, open) {
     q.setAttribute("aria-expanded", String(open));
     var ans = q.nextElementSibling;
-    if (ans) ans.hidden = !open;
+    if (ans) {
+      clearTimeout(ans._foldTimer);
+      if (open) {
+        ans.hidden = false;
+        void ans.offsetHeight;            // register the height:0 start (was display:none)
+        ans.classList.add("is-open");
+        ans.style.height = ans.scrollHeight + "px";
+        // Once expanded, drop to auto so tall/reflowing content isn't clipped.
+        ans._foldTimer = setTimeout(function () {
+          if (ans.classList.contains("is-open")) ans.style.height = "auto";
+        }, 300);
+      } else if (ans.classList.contains("is-open")) {
+        // From auto → current px → 0 so the collapse can transition.
+        ans.style.height = ans.scrollHeight + "px";
+        void ans.offsetHeight;
+        ans.classList.remove("is-open");
+        ans.style.height = "0";
+      }
+    }
     var plus = q.querySelector(".op-menu-plus");
     if (plus) plus.textContent = open ? "–" : "+";
   }
