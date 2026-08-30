@@ -1334,6 +1334,22 @@
     if (!s) return "";
     return isProbablyUrl(s) ? "url" : "text";
   }
+  // A job-SEARCH / listing page (e.g. linkedin.com/jobs/search-results) carries
+  // no single posting to read, so fetching + the same-position search both come
+  // back empty and waste the user's time. Catch the obvious ones up front and
+  // ask for the specific posting instead. (A real LinkedIn posting is
+  // /jobs/view/<id>.) Conservative by design — only clear listing paths.
+  function isJobSearchUrl(v) {
+    try {
+      var u = new URL(normalizeUrl(v));
+      var host = u.hostname.replace(/^www\./, "").toLowerCase();
+      var path = u.pathname.replace(/\/+$/, "").toLowerCase();
+      if (/(^|\.)linkedin\.com$/.test(host))
+        return path === "/jobs" || /^\/jobs\/(search|search-results|collections)$/.test(path);
+      if (/(^|\.)indeed\./.test(host)) return path === "/jobs";
+      return false;
+    } catch (e) { return false; }
+  }
   // Does pasted text actually read like a job posting, or is it random letters /
   // a stray paste (by mistake, or someone poking at the field)? Real prose reliably
   // carries common English function words; gibberish and keyboard-mashing won't.
@@ -1699,10 +1715,17 @@
 
     els.sampleBadge.hidden = !isSample;
 
-    // title: company — role if present, else gap count
+    // A real report carries the header block (role/company/match/deal) or at
+    // least one parsed gap. Anything else is an off-format / refusal body we
+    // must NOT dress up as a gap (the backend already blocks this and doesn't
+    // charge; this is defense-in-depth for the render path).
+    var isReport = !!(r.role || r.company || r.match || r.deal) || gaps.length > 0;
+
+    // title: company — role if present, else honest gap count (never a fabricated 1)
     var subject = (r.company && r.role) ? (r.company + " — " + r.role) : (r.company || r.role || "");
     if (subject) els.resultTitle.textContent = subject;
-    else els.resultTitle.textContent = (gaps.length || (r.body ? 1 : 0)) + (gaps.length === 1 ? " gap found" : " gaps found");
+    else if (isReport) els.resultTitle.textContent = gaps.length + (gaps.length === 1 ? " gap found" : " gaps found");
+    else els.resultTitle.textContent = "Couldn’t read that posting";
 
     // match grade — hidden for now (parsing kept; restore by re-enabling this block)
     els.resultMatch.hidden = true;
@@ -1737,11 +1760,15 @@
         }
         els.gapList.appendChild(card);
       });
-    } else if (r.body) {
-      // format varied — preserve the full report as readable text
+    } else if (isReport && r.body) {
+      // a report shape but gaps we couldn't split into cards — preserve as text
       els.gapList.appendChild(el("div", "op-report-raw", r.body));
-    } else {
+    } else if (isReport) {
       els.gapList.appendChild(el("div", "op-report-raw", "(No gaps returned.)"));
+    } else {
+      // not a report at all — don't pass a refusal off as a gap
+      els.gapList.appendChild(el("div", "op-report-raw",
+        "We couldn’t read a real job posting from that link. Open the specific job and paste its full description text, then run the check again."));
     }
 
     els.viewInput.hidden = true;
@@ -1824,6 +1851,11 @@
     var jd = kind === "url" ? normalizeUrl(els.jdUrl.value) : els.jdUrl.value.trim();
     if (!cv) { setError("Upload your CV to run a fit check."); return; }
     if (!kind) { setError("Paste a link to the job posting, or the full job description text."); return; }
+    // A search / listing page has no single posting to read — ask for the specific job.
+    if (kind === "url" && isJobSearchUrl(jd)) {
+      setError("That’s a job-search results page, not a single posting. Open the specific job and paste its link (for LinkedIn, one like linkedin.com/jobs/view/…) or its full text.");
+      return;
+    }
     // Pasted JD text is sent straight to the analysis. First make sure it actually
     // reads like a posting — random letters / stray pastes get a specific message
     // instead of the "too short" one, which wrongly implies a longer version exists.
