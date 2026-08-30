@@ -523,9 +523,28 @@
   .op-filechip-name { font-family: var(--mono); font-size: 13px; color: var(--ink); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .op-filechip-meta { font-family: var(--mono); font-size: 11px; color: var(--faint); margin-top: 4px; }
   .op-filechip-x { position: static; flex-shrink: 0; }
-  .op-parsing { font-family: var(--mono); font-size: 12px; letter-spacing: 0.04em; color: var(--mono-muted); margin-top: 10px; display: flex; align-items: center; gap: 8px; }
+  .op-parsing {
+    position: relative; width: 100%; min-height: 196px; box-sizing: border-box;
+    display: flex; align-items: center; justify-content: center;
+    padding: 16px; overflow: hidden; border-radius: 3px;
+    background: #EAEAEA;
+    /* Same shadow as the raised cards (2px 3px 0), but inset — so it reads
+       on the top-left edge, pressed into the surface. */
+    box-shadow: inset 2px 3px 0 rgba(0, 0, 0, 0.18);
+  }
   .op-parsing[hidden] { display: none; }
-  .op-parsing .op-spin { border-color: rgba(17,26,40,0.18); border-top-color: var(--red); }
+  /* Animated illustration, contained so it never exceeds the card footprint. */
+  .op-parsing-anim {
+    position: absolute; inset: 8px; margin: auto;
+    max-width: calc(100% - 16px); max-height: calc(100% - 16px);
+    width: auto; height: auto; object-fit: contain;
+    opacity: 0.9; pointer-events: none;
+  }
+  .op-parsing-spin {
+    position: absolute; top: 16px; left: 16px; z-index: 1;
+    width: 34px; height: 34px; border-width: 3px;
+    border-color: rgba(17,26,40,0.18); border-top-color: var(--red);
+  }
 
   /* ---- JD card (matches the CV upload card's footprint) ---- */
   .op-jd-card {
@@ -700,7 +719,10 @@
                 </div>
                 <button type="button" class="op-clear op-filechip-x" id="cvChipX" aria-label="Remove file">&times;</button>
               </div>
-              <div class="op-parsing" id="cvParsing" hidden><span class="op-spin" aria-hidden="true"></span><span>Reading your CV…</span></div>
+              <div class="op-parsing" id="cvParsing" hidden>
+                <span class="op-spin op-parsing-spin" role="status" aria-label="Reading your CV"></span>
+                <img class="op-parsing-anim" src="teamwork.svg" alt="" aria-hidden="true" />
+              </div>
               <div class="op-paste" id="cvPaste" hidden>
                 <textarea id="cvPasteText" class="op-paste-area ph-no-capture" placeholder="Paste the full text of your CV here…" spellcheck="false"></textarea>
                 <div class="op-paste-actions">
@@ -1288,6 +1310,11 @@
     try {
       var buf = await file.arrayBuffer();
       var text = isPdf ? await parsePdf(buf) : await parseDocx(buf);
+      // Dev-only: on localhost, hold the parsing animation for ~5s so it can be
+      // seen. Real hosts skip this entirely.
+      if (/^(localhost|127\.0\.0\.1)$/.test(location.hostname)) {
+        await new Promise(function (r) { setTimeout(r, 5000); });
+      }
       els.cvParsing.hidden = true;
       if (!text || textWeight(text) < 100) {
         // We couldn't pull readable text (scan/image, or an export this reader
