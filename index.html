@@ -491,9 +491,9 @@
   .op-upload-sub { font-family: var(--mono); font-size: 11px; letter-spacing: 0.08em; color: var(--mono-muted); }
   .op-upload[hidden] { display: none; }
 
-  /* ---- paste-CV fallback (upload stays the primary path) ---- */
-  .op-upload-paste { color: var(--ink-3); border-bottom: 1px dashed var(--dash); cursor: pointer; transition: color 120ms; }
-  .op-upload-paste:hover { color: var(--ink-2); }
+  /* ---- "Raw text" affordance inside each card (upload/link stay primary) ---- */
+  .op-rawlink { color: var(--ink-3); border-bottom: 1px dashed var(--dash); cursor: pointer; transition: color 120ms; }
+  .op-rawlink:hover { color: var(--ink-2); }
   .op-paste { width: 100%; }
   .op-paste[hidden] { display: none; }
   .op-paste-area {
@@ -531,15 +531,32 @@
     padding: 30px 24px; border: 1px solid var(--line-in); border-radius: 3px;
     background: var(--paper); box-shadow: 2px 3px 0 rgba(0,0,0,0.18);
   }
+  .op-jd-card[hidden] { display: none; }
   .op-jd-head { display: flex; align-items: center; justify-content: center; gap: 10px; }
   .op-jd-ic { color: var(--red); width: 24px; height: 24px; }
   .op-jd-main { font-family: var(--serif-b); font-size: 17px; color: var(--ink-2); }
+  /* Input and clear button sit in a row with a white gap between them; the
+     clear button reuses the CV file-chip's × (op-clear op-filechip-x). */
+  .op-url-wrap { display: flex; align-items: center; gap: 10px; width: 100%; }
+  .op-url-box { position: relative; flex: 1; min-width: 0; }
   .op-url-input {
-    width: 100%; padding: 14px 16px; border: 1px solid var(--line-in); border-radius: 3px;
+    width: 100%; box-sizing: border-box; padding: 14px 16px; border: 1px solid var(--line-in); border-radius: 3px;
     background: var(--paper-lt); font-family: var(--mono); font-size: 13px; color: var(--ink);
+    white-space: nowrap;
     transition: border-color .18s, box-shadow .18s;
   }
   .op-url-input:focus { border-color: var(--red-focus); box-shadow: 0 0 0 3px rgba(224,112,92,0.16); }
+  /* Once the field has a value: a slight fade OVER the text at the right edge,
+     so a long value rolls off under it (not truncated with an ellipsis). Fades
+     to the field's own colour (--paper-lt). */
+  .op-url-wrap.has-value .op-url-input { padding-right: 4px; }
+  .op-url-wrap.has-value .op-url-box::after {
+    content: ""; position: absolute; top: 1px; bottom: 1px; right: 1px; width: 16px;
+    pointer-events: none; border-radius: 0 3px 3px 0;
+    /* translucent so the text stays visible, continuing behind the shadow */
+    background: linear-gradient(to right, rgba(140,140,140,0), rgba(140,140,140,0.55));
+  }
+  .op-jd-formats { margin-top: 2px; }
   .op-field-hint { font-family: var(--mono); font-size: 11px; line-height: 1.5; letter-spacing: 0.03em; color: var(--mono-muted); text-align: center; }
   .op-privacy-note { margin-top: 22px; display: flex; justify-content: center; align-items: center; gap: 7px; color: var(--ink-3); }
   .op-privacy-ic { width: 13px; height: 13px; flex: none; opacity: 0.85; }
@@ -670,6 +687,7 @@
               <button type="button" class="op-upload" id="cvDrop" aria-label="Upload your CV (PDF or DOCX)">
                 <svg class="op-upload-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4"/><path d="M7 9l5-5 5 5"/><path d="M4 20h16"/></svg>
                 <span class="op-upload-main">Upload your CV</span>
+                <span class="op-upload-sub">PDF &middot; DOCX &middot; <span class="op-rawlink" id="cvPasteInline" role="button" tabindex="0">Raw text</span></span>
               </button>
               <div class="op-filechip ph-no-capture" id="cvChip" hidden>
                 <svg class="op-filechip-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3v5h5"/><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/></svg>
@@ -688,20 +706,31 @@
                 </div>
               </div>
             </div>
-            <div class="op-field-hint op-formats" id="cvFormats">PDF &middot; DOCX &middot; <span class="op-rawlink" id="cvPasteInline" role="button" tabindex="0">Raw text</span></div>
           </div>
           <div class="op-col">
             <div class="op-labelrow">
               <label class="op-label" id="jdLabel" for="fitJdUrl"><span>Job description</span><span class="op-count" id="jdCount"></span></label>
             </div>
             <div class="op-field">
-              <div class="op-jd-card">
+              <div class="op-jd-card" id="jdCard">
                 <div class="op-jd-head">
                   <svg class="op-jd-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1 1"/><path d="M14 11a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1-1"/></svg>
                   <span class="op-jd-main">Paste the job link</span>
                 </div>
-                <input id="fitJdUrl" type="text" class="op-url-input ph-no-capture" placeholder="https://…  or paste the full job description" autocomplete="off" spellcheck="false">
-                <div class="op-field-hint">Paste a link, or the full job description text.</div>
+                <div class="op-url-wrap" id="jdUrlWrap">
+                  <div class="op-url-box">
+                    <input id="fitJdUrl" type="text" class="op-url-input ph-no-capture" placeholder="https://…  or paste the full job description" autocomplete="off" spellcheck="false">
+                  </div>
+                  <button type="button" class="op-clear op-filechip-x" id="jdUrlX" aria-label="Clear job link" hidden>&times;</button>
+                </div>
+                <div class="op-field-hint op-jd-formats">Link &middot; <span class="op-rawlink" id="jdPasteInline" role="button" tabindex="0">Raw text</span></div>
+              </div>
+              <div class="op-paste" id="jdPaste" hidden>
+                <textarea id="jdPasteText" class="op-paste-area ph-no-capture" placeholder="Paste the full job description here…" spellcheck="false"></textarea>
+                <div class="op-paste-actions">
+                  <button type="button" class="op-ghost-btn" id="jdPasteCancel">cancel</button>
+                  <button type="button" class="op-btn" id="jdPasteUse">Use this text</button>
+                </div>
               </div>
             </div>
           </div>
@@ -1034,6 +1063,9 @@
     cvParsing: $("cvParsing"), jdUrl: $("fitJdUrl"),
     cvPasteInline: $("cvPasteInline"), cvPaste: $("cvPaste"), cvPasteText: $("cvPasteText"),
     cvPasteUse: $("cvPasteUse"), cvPasteCancel: $("cvPasteCancel"),
+    jdCard: $("jdCard"), jdUrlWrap: $("jdUrlWrap"), jdUrlX: $("jdUrlX"),
+    jdPasteInline: $("jdPasteInline"), jdPaste: $("jdPaste"), jdPasteText: $("jdPasteText"),
+    jdPasteUse: $("jdPasteUse"), jdPasteCancel: $("jdPasteCancel"),
     cvLabel: $("cvLabel"), jdLabel: $("jdLabel"), cvCount: $("cvCount"), jdCount: $("jdCount"),
     run: $("fitRun"), runLabel: $("fitRunLabel"), spin: $("fitSpin"),
     error: $("fitError"), sample: $("fitSample"),
@@ -1363,17 +1395,61 @@
     var common = s.match(/\b(the|and|to|of|in|for|with|is|are|will|you|we|our|as|on|at|or|an|be|this|that|from|by|role|team|work|experience|skills|job|company|manager|engineer|design)\b/g) || [];
     return common.length >= 2;                              // some real sentence structure
   }
+  // Render the JD column: url card (default) vs raw-text box, plus the field's
+  // clear button + the soft "runs past the edge" shadow, shown once it has a value.
+  // The url input stays the single source of truth for the JD value — it accepts
+  // both a link and pasted full text, so the raw-text box just feeds into it.
+  var jdPasteOpen = false;
+  function renderJd() {
+    var have = !!els.jdUrl.value.trim();
+    els.jdCard.hidden = jdPasteOpen;
+    els.jdPaste.hidden = !jdPasteOpen;
+    els.jdUrlWrap.classList.toggle("has-value", have && !jdPasteOpen);
+    els.jdUrlX.hidden = !have || jdPasteOpen;   // clear button appears after paste only
+    els.jdLabel.hidden = have;
+  }
+  function openJdPaste() {
+    jdPasteOpen = true;
+    els.jdPasteText.value = els.jdUrl.value;    // carry over whatever's already there
+    setError("");
+    renderJd();
+    try { els.jdPasteText.focus(); } catch (e) {}
+  }
+  function closeJdPaste() { jdPasteOpen = false; renderJd(); }
+
   // Restore whatever was last in the field — a link or pasted JD text both persist.
   var savedJd = get(LS_JD);
   els.jdUrl.value = savedJd;
-  els.jdLabel.hidden = !!els.jdUrl.value.trim();
   els.jdUrl.addEventListener("input", function () {
     set(LS_JD, els.jdUrl.value);
-    els.jdLabel.hidden = !!els.jdUrl.value.trim();
+    renderJd();
+    onEdit();
+  });
+  els.jdUrlX.addEventListener("click", function () {
+    els.jdUrl.value = "";
+    set(LS_JD, "");
+    renderJd();
+    onEdit();
+    try { els.jdUrl.focus(); } catch (e) {}
+  });
+  // "Raw text" opens the same kind of paste box the CV has; "Use this text"
+  // drops the text back into the url field (which already handles pasted JD text).
+  els.jdPasteInline.addEventListener("click", function () { openJdPaste(); });
+  els.jdPasteInline.addEventListener("keydown", function (e) {
+    if (e.key === "Enter" || e.key === " ") { e.preventDefault(); openJdPaste(); }
+  });
+  els.jdPasteCancel.addEventListener("click", function () { setError(""); closeJdPaste(); });
+  els.jdPasteUse.addEventListener("click", function () {
+    var t = (els.jdPasteText.value || "").trim();
+    els.jdUrl.value = t;
+    set(LS_JD, t);
+    jdPasteOpen = false;
+    renderJd();
     onEdit();
   });
 
   renderCv();
+  renderJd();
 
   function setError(msg) { els.error.textContent = msg || ""; els.error.hidden = !msg; }
 
@@ -1530,10 +1606,11 @@
   function lockInputs(on) {
     els.viewInput.classList.toggle("is-locked", on);
     [els.cvFile, els.cvDrop, els.cvChipX,
-     els.cvPasteUse, els.cvPasteCancel].forEach(function (el) {
+     els.cvPasteUse, els.cvPasteCancel,
+     els.jdUrlX, els.jdPasteUse, els.jdPasteCancel].forEach(function (el) {
       if (el) el.disabled = on;
     });
-    [els.jdUrl, els.cvPasteText].forEach(function (el) {
+    [els.jdUrl, els.cvPasteText, els.jdPasteText].forEach(function (el) {
       if (el) el.readOnly = on;
     });
   }
@@ -2148,7 +2225,7 @@
   // so the user can paste straight over whatever's there.
   els.jdPasteBtn.addEventListener("click", function () {
     closeConfirm(els.jdFailBack);
-    try { els.jdUrl.focus(); els.jdUrl.select(); } catch (e) {}
+    openJdPaste();
   });
 
   // flow D — short-text confirm
