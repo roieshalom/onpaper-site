@@ -85,6 +85,7 @@
     --faint-3:    #9AA5B3;   /* char counts — light grey (kept neutral) */
     --red:        #ed2c0a;   /* warm red — the single accent */
     --red-dark:   #c41f00;   /* hover: darker on a light ground */
+    --amber:      #b5670c;   /* [Stretch] severity — between red and muted */
     --red-focus:  #ed2c0a;
     --line:       rgba(17,26,40,0.10);    /* hairline dividers */
     --line-in:    rgba(17,26,40,0.14);    /* input / bar borders */
@@ -311,6 +312,7 @@
   .op-gap-num { font-family: var(--mono); font-size: 11px; letter-spacing: 0.16em; color: var(--paper-bg); background: var(--red); display: inline-block; padding: 3px 9px; border-radius: 2px; }
   .op-gap-kind { font-family: var(--mono); font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; padding: 3px 8px; border-radius: 2px; border: 1px solid var(--tag-border); }
   .op-gap-kind--hard { color: var(--red); border-color: var(--tag-border); }
+  .op-gap-kind--stretch { color: var(--amber); border-color: var(--tag-border); }
   .op-gap-kind--closable { color: var(--mono-muted); border-color: var(--line-in); }
   .op-gap-title { font-family: var(--serif-b); font-weight: 500; font-size: 23px; margin: 0 0 11px; line-height: 1.3; }
   .op-gap-detail { font-size: 16px; line-height: 1.62; color: var(--ink-3); margin: 0 0 20px; text-wrap: pretty; }
@@ -668,7 +670,6 @@
               <button type="button" class="op-upload" id="cvDrop" aria-label="Upload your CV (PDF or DOCX)">
                 <svg class="op-upload-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4"/><path d="M7 9l5-5 5 5"/><path d="M4 20h16"/></svg>
                 <span class="op-upload-main">Upload your CV</span>
-                <span class="op-upload-sub">PDF or DOCX &middot; or <span class="op-upload-paste" id="cvPasteInline" role="button" tabindex="0">paste raw text</span></span>
               </button>
               <div class="op-filechip ph-no-capture" id="cvChip" hidden>
                 <svg class="op-filechip-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3v5h5"/><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/></svg>
@@ -687,6 +688,7 @@
                 </div>
               </div>
             </div>
+            <div class="op-field-hint op-formats" id="cvFormats">PDF &middot; DOCX &middot; <span class="op-rawlink" id="cvPasteInline" role="button" tabindex="0">Raw text</span></div>
           </div>
           <div class="op-col">
             <div class="op-labelrow">
@@ -1603,6 +1605,8 @@
   }
 
   // ---- report parsing ----
+  // Severity tags the prompt can attach to a gap, worst→easiest.
+  var KIND_LABEL = { hard: "Hard", stretch: "Stretch", closable: "Closable" };
   function parseReport(text) {
     var role = "", company = "", match = "", deal = "", rest = [];
     var lines = (text || "").split(/\r?\n/);
@@ -1629,8 +1633,8 @@
       if ((m = l.match(/^\s*GAP\s+\d+\s*:\s*(.*)$/i))) {
         push();
         var title = m[1].trim(), kind = "";
-        var tag = title.match(/\[\s*(hard|closable)\s*\]\s*$/i);
-        if (tag) { kind = tag[1].toLowerCase(); title = title.replace(/\[\s*(hard|closable)\s*\]\s*$/i, "").trim(); }
+        var tag = title.match(/\[\s*(hard|stretch|closable)\s*\]\s*$/i);
+        if (tag) { kind = tag[1].toLowerCase(); title = title.replace(/\[\s*(hard|stretch|closable)\s*\]\s*$/i, "").trim(); }
         cur = { num: String(gaps.length + 1).padStart(2, "0"), title: title, kind: kind, detail: "", fix: "" };
         section = "detail";
       } else if (cur && (m = l.match(/^\s*Evidence\s*:\s*(.*)$/i))) {
@@ -1745,7 +1749,7 @@
         var card = el("div", "op-gap");
         var tags = el("div", "op-gap-tags");
         tags.appendChild(el("span", "op-gap-num", "GAP " + g.num));
-        if (g.kind) tags.appendChild(el("span", "op-gap-kind op-gap-kind--" + g.kind, g.kind === "hard" ? "Hard" : "Closable"));
+        if (g.kind) tags.appendChild(el("span", "op-gap-kind op-gap-kind--" + g.kind, KIND_LABEL[g.kind] || "Closable"));
         card.appendChild(tags);
         card.appendChild(el("h3", "op-gap-title", g.title || "Gap"));
         if (g.detail) card.appendChild(el("p", "op-gap-detail", g.detail));
@@ -2300,7 +2304,7 @@
 
       if (gaps.length) {
         gaps.forEach(function (g) {
-          text("GAP " + g.num + (g.kind ? "   [" + (g.kind === "hard" ? "Hard" : "Closable") + "]" : ""), 11, "bold", RED, 2);
+          text("GAP " + g.num + (g.kind ? "   [" + (KIND_LABEL[g.kind] || "Closable") + "]" : ""), 11, "bold", RED, 2);
           text(g.title || "Gap", 13, "bold", NAVY, 8);
           if (g.detail) labeled("Evidence", g.detail, 8);
           if (g.fix) labeled("Fix", g.fix, 14);
