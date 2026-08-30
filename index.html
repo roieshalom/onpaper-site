@@ -1310,11 +1310,11 @@
     try {
       var buf = await file.arrayBuffer();
       var text = isPdf ? await parsePdf(buf) : await parseDocx(buf);
-      // Dev-only: on localhost, hold the parsing animation for ~5s so it can be
-      // seen. Real hosts skip this entirely.
-      if (/^(localhost|127\.0\.0\.1)$/.test(location.hostname)) {
-        await new Promise(function (r) { setTimeout(r, 5000); });
-      }
+      // Keep the reading animation on screen for a minimum of 900ms so it
+      // registers instead of flashing. This is a floor, not an added delay:
+      // parses slower than 900ms pass straight through with no extra wait.
+      var minLeft = 900 - (Date.now() - t0);
+      if (minLeft > 0) await new Promise(function (r) { setTimeout(r, minLeft); });
       els.cvParsing.hidden = true;
       if (!text || textWeight(text) < 100) {
         // We couldn't pull readable text (scan/image, or an export this reader
