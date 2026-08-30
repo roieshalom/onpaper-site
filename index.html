@@ -16,19 +16,27 @@
     // toolbar and must stay in normal dvh flow so the header isn't hidden behind it).
     var standalone = window.navigator.standalone === true;
     if (standalone) document.documentElement.classList.add("is-standalone");
+    var de = document.documentElement;
     function setH() {
-      document.documentElement.style.setProperty("--app-h", window.innerHeight + "px");
-      // iOS standalone cold-launch can start scrolled down, hiding the header/banner.
-      window.scrollTo(0, 0);
+      // visualViewport tracks the ACTUAL visible area, including offsetTop, during
+      // the cold-launch toolbar animation of a home-screen shortcut — the exact
+      // moment window.innerHeight/resize miss. Size + offset the shell to it.
+      var vv = window.visualViewport;
+      var h = vv ? vv.height : window.innerHeight;
+      var top = vv ? vv.offsetTop : 0;
+      de.style.setProperty("--app-h", h + "px");
+      de.style.setProperty("--app-top", top + "px");
     }
     setH();
-    // iOS standalone reports a stale innerHeight on cold launch, then corrects.
-    // Re-measure after load / when shown, plus a few delayed retries.
     addEventListener("resize", setH);
     addEventListener("load", setH);
     addEventListener("pageshow", setH);
     addEventListener("orientationchange", function () { setTimeout(setH, 200); });
-    [60, 250, 600, 1200].forEach(function (t) { setTimeout(setH, t); });
+    if (window.visualViewport) {
+      visualViewport.addEventListener("resize", setH);
+      visualViewport.addEventListener("scroll", setH);
+    }
+    [60, 250, 600, 1200, 2000].forEach(function (t) { setTimeout(setH, t); });
   })();
 </script>
 <meta name="description" content="Upload your CV and paste a job link. Get the real gaps between them, each with one concrete fix. Gaps, not scores. Fixes, not filler.">
@@ -162,7 +170,7 @@
        A dvh/vh-sized flex column doesn't get that guarantee and can be offset by
        the toolbar with no resize event ever firing. Applies in Chrome too — its
        toolbar sits outside the same WebKit render, which still honors this. */
-    position: fixed; inset: 0;
+    position: fixed; left: 0; right: 0; top: var(--app-top, 0px); height: var(--app-h, 100dvh);
     display: flex; flex-direction: column;
     background:
       radial-gradient(ellipse 1100px 520px at 50% -120px, var(--glow), transparent 70%),
