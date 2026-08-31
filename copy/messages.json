@@ -1,0 +1,1084 @@
+{
+  "meta": {
+    "product": "OnPaper",
+    "purpose": "Single source of truth for every user-facing message (modals, errors, success/status, buttons, labels, placeholders, hints, static content). Edit text here, reload messages.html to review. NOTE: the live app strings still live inline in onpaper-site/index.html and onpaper-api/*.js — this catalog mirrors them for alignment; changing a value here does not change the app until it's copied back to the listed source.",
+    "updated": "2026-08-31",
+    "sources": [
+      "onpaper-site/index.html",
+      "onpaper-api/api/analyze.js",
+      "onpaper-api/api/redeem.js",
+      "onpaper-api/api/balance.js",
+      "onpaper-api/lib/fetchjd.js"
+    ],
+    "categories": {
+      "modal": "Dialogs / confirm sheets",
+      "error": "Inline validation & parse errors (client)",
+      "api-error": "Errors returned by the backend and surfaced to the user",
+      "toast": "Transient bottom toasts",
+      "status": "Success / progress / thanks messages",
+      "button": "Buttons & CTAs",
+      "label": "Field labels, section kickers, balance line",
+      "placeholder": "Input placeholders",
+      "hint": "Helper / note text",
+      "content": "Static marketing & menu copy"
+    }
+  },
+  "messages": [
+    {
+      "id": "modal.short.title",
+      "category": "modal",
+      "surface": "Confirm · short text",
+      "trigger": "CV under soft length floor",
+      "text": "Text seems very short. Are you sure this is what you meant to submit?",
+      "source": "onpaper-site/index.html:977"
+    },
+    {
+      "id": "modal.short.back",
+      "category": "modal",
+      "surface": "Confirm · short text",
+      "trigger": "button",
+      "text": "back",
+      "source": "onpaper-site/index.html:979"
+    },
+    {
+      "id": "modal.short.yes",
+      "category": "modal",
+      "surface": "Confirm · short text",
+      "trigger": "button",
+      "text": "Yes",
+      "source": "onpaper-site/index.html:980"
+    },
+    {
+      "id": "modal.cv.title",
+      "category": "modal",
+      "surface": "Confirm · not a CV",
+      "trigger": "Text doesn't look like a CV",
+      "text": "This doesn’t look like a complete CV.",
+      "source": "onpaper-site/index.html:988"
+    },
+    {
+      "id": "modal.cv.back",
+      "category": "modal",
+      "surface": "Confirm · not a CV",
+      "trigger": "button",
+      "text": "back",
+      "source": "onpaper-site/index.html:990"
+    },
+    {
+      "id": "modal.cv.run",
+      "category": "modal",
+      "surface": "Confirm · not a CV",
+      "trigger": "button",
+      "text": "Run anyway",
+      "source": "onpaper-site/index.html:991"
+    },
+    {
+      "id": "modal.fail.title",
+      "category": "modal",
+      "surface": "Failure",
+      "trigger": "Generic run failure (default; overridden by backend reason when present)",
+      "text": "Something went wrong on our side. Your run wasn’t used.",
+      "source": "onpaper-site/index.html:999,2119"
+    },
+    {
+      "id": "modal.fail.try",
+      "category": "modal",
+      "surface": "Failure",
+      "trigger": "button",
+      "text": "Try again",
+      "source": "onpaper-site/index.html:1001"
+    },
+    {
+      "id": "modal.jdsearch.title",
+      "category": "modal",
+      "surface": "JD blocked · searching",
+      "trigger": "Direct JD fetch blocked; auto-searching alternate source",
+      "text": "We can’t access this job directly",
+      "source": "onpaper-site/index.html:1009"
+    },
+    {
+      "id": "modal.jdsearch.note",
+      "category": "modal",
+      "surface": "JD blocked · searching",
+      "trigger": "transient",
+      "text": "Some websites restrict access to their job postings, so we can’t retrieve the full description from this link.",
+      "source": "onpaper-site/index.html:1010"
+    },
+    {
+      "id": "modal.jdsearch.busy",
+      "category": "modal",
+      "surface": "JD blocked · searching",
+      "trigger": "transient",
+      "text": "We’re looking for the same position on another public source.",
+      "source": "onpaper-site/index.html:1011"
+    },
+    {
+      "id": "modal.jdsearch.foot",
+      "category": "modal",
+      "surface": "JD blocked · searching",
+      "trigger": "transient",
+      "text": "No run has been used.",
+      "source": "onpaper-site/index.html:1012"
+    },
+    {
+      "id": "modal.jdfail.title",
+      "category": "modal",
+      "surface": "JD unrecoverable",
+      "trigger": "Direct fetch AND alternate search both failed",
+      "text": "We couldn’t retrieve the job description",
+      "source": "onpaper-site/index.html:1019"
+    },
+    {
+      "id": "modal.jdfail.note1",
+      "category": "modal",
+      "surface": "JD unrecoverable",
+      "trigger": "",
+      "text": "We couldn’t access the full description from this link or find the position on another public source.",
+      "source": "onpaper-site/index.html:1020"
+    },
+    {
+      "id": "modal.jdfail.note2",
+      "category": "modal",
+      "surface": "JD unrecoverable",
+      "trigger": "",
+      "text": "To continue, copy the full job description from the job posting and paste it into OnPaper.",
+      "source": "onpaper-site/index.html:1021"
+    },
+    {
+      "id": "modal.jdfail.foot",
+      "category": "modal",
+      "surface": "JD unrecoverable",
+      "trigger": "",
+      "text": "No run has been used.",
+      "source": "onpaper-site/index.html:1022"
+    },
+    {
+      "id": "modal.jdfail.paste",
+      "category": "modal",
+      "surface": "JD unrecoverable",
+      "trigger": "button",
+      "text": "I’ll paste the JD text",
+      "source": "onpaper-site/index.html:1024"
+    },
+    {
+      "id": "modal.rerun.title",
+      "category": "modal",
+      "surface": "Confirm · identical rerun",
+      "trigger": "Same CV+JD as last successful run",
+      "text": "CV and job description are the same as your last fit check. Running it again will use 1 run.",
+      "source": "onpaper-site/index.html:1032"
+    },
+    {
+      "id": "modal.rerun.back",
+      "category": "modal",
+      "surface": "Confirm · identical rerun",
+      "trigger": "button",
+      "text": "back",
+      "source": "onpaper-site/index.html:1034"
+    },
+    {
+      "id": "modal.rerun.run",
+      "category": "modal",
+      "surface": "Confirm · identical rerun",
+      "trigger": "button",
+      "text": "Run again",
+      "source": "onpaper-site/index.html:1035"
+    },
+    {
+      "id": "modal.pay.title",
+      "category": "modal",
+      "surface": "Pay / get runs",
+      "trigger": "Open pay modal",
+      "text": "Get more runs",
+      "source": "onpaper-site/index.html:888"
+    },
+    {
+      "id": "modal.pay.sub",
+      "category": "modal",
+      "surface": "Pay / get runs",
+      "trigger": "",
+      "text": "One run = one CV × job comparison",
+      "source": "onpaper-site/index.html:889"
+    },
+    {
+      "id": "modal.pay.buy",
+      "category": "modal",
+      "surface": "Pay / get runs",
+      "trigger": "",
+      "text": "Buy runs",
+      "source": "onpaper-site/index.html:895"
+    },
+    {
+      "id": "modal.pay.soon",
+      "category": "modal",
+      "surface": "Pay / get runs",
+      "trigger": "",
+      "text": "coming soon",
+      "source": "onpaper-site/index.html:896"
+    },
+    {
+      "id": "modal.pay.coupon.kick",
+      "category": "label",
+      "surface": "Pay / get runs",
+      "trigger": "",
+      "text": "USE COUPON",
+      "source": "onpaper-site/index.html:901"
+    },
+    {
+      "id": "modal.pay.coupon.redeem",
+      "category": "button",
+      "surface": "Pay / get runs",
+      "trigger": "button",
+      "text": "redeem",
+      "source": "onpaper-site/index.html:904"
+    },
+    {
+      "id": "err.cv.type",
+      "category": "error",
+      "surface": "Input · CV",
+      "trigger": "Not PDF/DOCX",
+      "text": "Please upload a PDF or DOCX file.",
+      "source": "onpaper-site/index.html:1318"
+    },
+    {
+      "id": "err.cv.size",
+      "category": "error",
+      "surface": "Input · CV",
+      "trigger": "File > 10 MB",
+      "text": "That file is over 10 MB. Please upload a smaller CV.",
+      "source": "onpaper-site/index.html:1319"
+    },
+    {
+      "id": "err.cv.pdf_empty",
+      "category": "error",
+      "surface": "Input · CV",
+      "trigger": "PDF parsed to (near-)empty text",
+      "text": "We couldn’t pull readable text from that PDF, it may be a scan, or an export this reader can’t decode. Paste your CV text below to continue.",
+      "source": "onpaper-site/index.html:1337"
+    },
+    {
+      "id": "err.cv.docx_empty",
+      "category": "error",
+      "surface": "Input · CV",
+      "trigger": "DOCX parsed to empty text",
+      "text": "We couldn’t read text from that file. Paste your CV text below to continue.",
+      "source": "onpaper-site/index.html:1338"
+    },
+    {
+      "id": "err.cv.reader_load",
+      "category": "error",
+      "surface": "Input · CV",
+      "trigger": "Parser library failed to load",
+      "text": "Couldn’t load the file reader. You can paste your CV text below instead.",
+      "source": "onpaper-site/index.html:1350"
+    },
+    {
+      "id": "err.cv.pdf_parse",
+      "category": "error",
+      "surface": "Input · CV",
+      "trigger": "PDF parse threw",
+      "text": "We couldn’t read that PDF. Paste your CV text below to continue.",
+      "source": "onpaper-site/index.html:1352"
+    },
+    {
+      "id": "err.cv.docx_parse",
+      "category": "error",
+      "surface": "Input · CV",
+      "trigger": "DOCX parse threw",
+      "text": "We couldn’t read that file. Make sure it’s a valid PDF or DOCX, or paste your CV text below.",
+      "source": "onpaper-site/index.html:1353"
+    },
+    {
+      "id": "err.cv.paste_short",
+      "category": "error",
+      "surface": "Input · CV paste",
+      "trigger": "Pasted CV text too short",
+      "text": "That looks too short. Paste the full text of your CV.",
+      "source": "onpaper-site/index.html:1388"
+    },
+    {
+      "id": "err.run.no_cv",
+      "category": "error",
+      "surface": "Input · run",
+      "trigger": "No CV on run",
+      "text": "Add your CV to run a fit check.",
+      "source": "onpaper-site/index.html:1977"
+    },
+    {
+      "id": "err.run.no_jd",
+      "category": "error",
+      "surface": "Input · run",
+      "trigger": "No JD on run",
+      "text": "Paste a link to the job posting, or the full job description text.",
+      "source": "onpaper-site/index.html:1978"
+    },
+    {
+      "id": "err.jd.search_url",
+      "category": "error",
+      "surface": "Input · JD",
+      "trigger": "URL is a search/listing page",
+      "text": "That’s a job-search results page, not a single posting. Open the specific job and paste its link (for LinkedIn, one like linkedin.com/jobs/view/…) or its full text.",
+      "source": "onpaper-site/index.html:1981"
+    },
+    {
+      "id": "err.jd.not_jd",
+      "category": "error",
+      "surface": "Input · JD",
+      "trigger": "Pasted text doesn't read like a JD",
+      "text": "That doesn't read like a job description. Paste the full posting text, or a link to it.",
+      "source": "onpaper-site/index.html:1988"
+    },
+    {
+      "id": "err.jd.too_short",
+      "category": "error",
+      "surface": "Input · JD",
+      "trigger": "Pasted JD below min chars",
+      "text": "That job description is too short for us to work with, and probably for talent acquisition too. At the moment we process between {HARD_MIN} and {JD_MAX} characters. Paste the full posting, or a link to it.",
+      "source": "onpaper-site/index.html:1994"
+    },
+    {
+      "id": "err.jd.too_long",
+      "category": "error",
+      "surface": "Input · JD",
+      "trigger": "Pasted JD above max chars",
+      "text": "That job description is too long for us to work with, and probably for talent acquisition too. At the moment we process between {HARD_MIN} and {JD_MAX} characters.",
+      "source": "onpaper-site/index.html:1999"
+    },
+    {
+      "id": "err.cv.too_long",
+      "category": "error",
+      "surface": "Input · CV",
+      "trigger": "CV above max chars",
+      "text": "That CV is too long for us to work with, and probably for talent acquisition too. At the moment we process CVs between {HARD_MIN} and {HARD_MAX} characters (yours is {len}).",
+      "source": "onpaper-site/index.html:2006"
+    },
+    {
+      "id": "err.cv.too_short",
+      "category": "error",
+      "surface": "Input · CV",
+      "trigger": "CV below min chars",
+      "text": "That CV is too short for us to work with, and probably for talent acquisition too. At the moment we process CVs between {HARD_MIN} and {HARD_MAX} characters. Try a text-based PDF or DOCX.",
+      "source": "onpaper-site/index.html:2011"
+    },
+    {
+      "id": "toast.copy_ok",
+      "category": "toast",
+      "surface": "Results",
+      "trigger": "Copy report succeeded",
+      "text": "Report text copied to clipboard",
+      "source": "onpaper-site/index.html:2396"
+    },
+    {
+      "id": "toast.copy_fail",
+      "category": "toast",
+      "surface": "Results",
+      "trigger": "Copy report failed",
+      "text": "Copy failed",
+      "source": "onpaper-site/index.html:2397"
+    },
+    {
+      "id": "toast.pdf_fail",
+      "category": "toast",
+      "surface": "Results",
+      "trigger": "jsPDF failed to load",
+      "text": "Couldn’t load the PDF tool",
+      "source": "onpaper-site/index.html:2401"
+    },
+    {
+      "id": "coupon.empty",
+      "category": "error",
+      "surface": "Coupon",
+      "trigger": "Redeem with empty code",
+      "text": "Enter your coupon.",
+      "source": "onpaper-site/index.html:2495"
+    },
+    {
+      "id": "coupon.redeeming",
+      "category": "status",
+      "surface": "Coupon",
+      "trigger": "Redeem in flight",
+      "text": "Redeeming…",
+      "source": "onpaper-site/index.html:2497"
+    },
+    {
+      "id": "coupon.already",
+      "category": "status",
+      "surface": "Coupon",
+      "trigger": "Code already applied on this device",
+      "text": "Coupon already used",
+      "source": "onpaper-site/index.html:2507"
+    },
+    {
+      "id": "coupon.added",
+      "category": "status",
+      "surface": "Coupon",
+      "trigger": "Redeem succeeded",
+      "text": "Added {granted} runs.",
+      "source": "onpaper-site/index.html:2507"
+    },
+    {
+      "id": "fb.sending",
+      "category": "status",
+      "surface": "Feedback",
+      "trigger": "Send in flight",
+      "text": "Sending…",
+      "source": "onpaper-site/index.html:2362"
+    },
+    {
+      "id": "fb.sent",
+      "category": "status",
+      "surface": "Feedback",
+      "trigger": "Send succeeded",
+      "text": "Sent, thanks!",
+      "source": "onpaper-site/index.html:2375"
+    },
+    {
+      "id": "fb.fail",
+      "category": "status",
+      "surface": "Feedback",
+      "trigger": "Send failed",
+      "text": "Couldn’t send. Please email us",
+      "source": "onpaper-site/index.html:2381"
+    },
+    {
+      "id": "fb.send",
+      "category": "button",
+      "surface": "Feedback",
+      "trigger": "button",
+      "text": "Send feedback",
+      "source": "onpaper-site/index.html:965"
+    },
+    {
+      "id": "fb.contact",
+      "category": "hint",
+      "surface": "Feedback",
+      "trigger": "",
+      "text": "Contact: hello@onpaper.fit",
+      "source": "onpaper-site/index.html:966"
+    },
+    {
+      "id": "rate.q",
+      "category": "label",
+      "surface": "Results · rating",
+      "trigger": "",
+      "text": "Was this fit check useful?",
+      "source": "onpaper-site/index.html:821"
+    },
+    {
+      "id": "rate.up",
+      "category": "button",
+      "surface": "Results · rating",
+      "trigger": "button",
+      "text": "Useful",
+      "source": "onpaper-site/index.html:825"
+    },
+    {
+      "id": "rate.down",
+      "category": "button",
+      "surface": "Results · rating",
+      "trigger": "button",
+      "text": "Not useful",
+      "source": "onpaper-site/index.html:829"
+    },
+    {
+      "id": "rate.reason",
+      "category": "label",
+      "surface": "Results · rating",
+      "trigger": "",
+      "text": "What was off? (optional)",
+      "source": "onpaper-site/index.html:833"
+    },
+    {
+      "id": "rate.chip.wrong",
+      "category": "button",
+      "surface": "Results · rating",
+      "trigger": "chip",
+      "text": "Wrong gaps",
+      "source": "onpaper-site/index.html:835"
+    },
+    {
+      "id": "rate.chip.missed",
+      "category": "button",
+      "surface": "Results · rating",
+      "trigger": "chip",
+      "text": "Missed something",
+      "source": "onpaper-site/index.html:836"
+    },
+    {
+      "id": "rate.chip.harsh",
+      "category": "button",
+      "surface": "Results · rating",
+      "trigger": "chip",
+      "text": "Too harsh",
+      "source": "onpaper-site/index.html:837"
+    },
+    {
+      "id": "rate.chip.generic",
+      "category": "button",
+      "surface": "Results · rating",
+      "trigger": "chip",
+      "text": "Too generic",
+      "source": "onpaper-site/index.html:838"
+    },
+    {
+      "id": "rate.thanks",
+      "category": "status",
+      "surface": "Results · rating",
+      "trigger": "Rating submitted",
+      "text": "Thank you for your feedback!",
+      "source": "onpaper-site/index.html:845"
+    },
+    {
+      "id": "bar.check",
+      "category": "button",
+      "surface": "Action bar",
+      "trigger": "Idle, runs available",
+      "text": "Check fit",
+      "source": "onpaper-site/index.html:1693"
+    },
+    {
+      "id": "bar.check_last",
+      "category": "button",
+      "surface": "Action bar",
+      "trigger": "Exactly 1 run left",
+      "text": "Check fit · last run",
+      "source": "onpaper-site/index.html:1693"
+    },
+    {
+      "id": "bar.thinking",
+      "category": "button",
+      "surface": "Action bar",
+      "trigger": "Run in flight",
+      "text": "Thinking…",
+      "source": "onpaper-site/index.html:1692"
+    },
+    {
+      "id": "bar.remaining",
+      "category": "label",
+      "surface": "Action bar",
+      "trigger": "Balance known",
+      "text": "{n} run(s) left · ",
+      "source": "onpaper-site/index.html:1706"
+    },
+    {
+      "id": "bar.getmore1",
+      "category": "button",
+      "surface": "Action bar",
+      "trigger": "Has runs",
+      "text": "Get more runs",
+      "source": "onpaper-site/index.html:866"
+    },
+    {
+      "id": "bar.getmore2",
+      "category": "button",
+      "surface": "Action bar",
+      "trigger": "Out of runs (primary)",
+      "text": "Get more runs",
+      "source": "onpaper-site/index.html:871"
+    },
+    {
+      "id": "bar.out_line",
+      "category": "label",
+      "surface": "Action bar",
+      "trigger": "Out of runs",
+      "text": "0 runs left · ",
+      "source": "onpaper-site/index.html:872"
+    },
+    {
+      "id": "bar.havecode",
+      "category": "button",
+      "surface": "Action bar",
+      "trigger": "Out of runs",
+      "text": "Have a code?",
+      "source": "onpaper-site/index.html:872"
+    },
+    {
+      "id": "bar.new",
+      "category": "button",
+      "surface": "Action bar · results",
+      "trigger": "Results view",
+      "text": "New fit check",
+      "source": "onpaper-site/index.html:876"
+    },
+    {
+      "id": "res.kicker",
+      "category": "label",
+      "surface": "Results",
+      "trigger": "",
+      "text": "Gap report",
+      "source": "onpaper-site/index.html:810"
+    },
+    {
+      "id": "res.title.gaps",
+      "category": "label",
+      "surface": "Results",
+      "trigger": "Report with N gaps",
+      "text": "{n} gap(s) found",
+      "source": "onpaper-site/index.html:1852"
+    },
+    {
+      "id": "res.title.unread",
+      "category": "label",
+      "surface": "Results",
+      "trigger": "Posting unreadable",
+      "text": "Couldn’t read that posting",
+      "source": "onpaper-site/index.html:1853"
+    },
+    {
+      "id": "res.stamp",
+      "category": "label",
+      "surface": "Results",
+      "trigger": "",
+      "text": "Generated {timestamp}",
+      "source": "onpaper-site/index.html:1858"
+    },
+    {
+      "id": "res.match",
+      "category": "label",
+      "surface": "Results",
+      "trigger": "",
+      "text": "Match · {value}",
+      "source": "onpaper-site/index.html:813"
+    },
+    {
+      "id": "res.deal",
+      "category": "label",
+      "surface": "Results",
+      "trigger": "",
+      "text": "Dealbreakers",
+      "source": "onpaper-site/index.html:814"
+    },
+    {
+      "id": "res.intro",
+      "category": "content",
+      "surface": "Results",
+      "trigger": "",
+      "text": "What the role asks for that your CV doesn’t yet show, with one concrete fix each.",
+      "source": "onpaper-site/index.html:815"
+    },
+    {
+      "id": "res.sample",
+      "category": "label",
+      "surface": "Results",
+      "trigger": "Sample preview",
+      "text": "Sample",
+      "source": "onpaper-site/index.html:809"
+    },
+    {
+      "id": "ph.cv_paste",
+      "category": "placeholder",
+      "surface": "Input · CV paste",
+      "trigger": "",
+      "text": "Paste the full text of your CV here…",
+      "source": "onpaper-site/index.html:727"
+    },
+    {
+      "id": "ph.jd_url",
+      "category": "placeholder",
+      "surface": "Input · JD",
+      "trigger": "",
+      "text": "https://…  or paste the full job description",
+      "source": "onpaper-site/index.html:747"
+    },
+    {
+      "id": "ph.jd_paste",
+      "category": "placeholder",
+      "surface": "Input · JD paste",
+      "trigger": "",
+      "text": "Paste the full job description here…",
+      "source": "onpaper-site/index.html:754"
+    },
+    {
+      "id": "ph.rate",
+      "category": "placeholder",
+      "surface": "Results · rating",
+      "trigger": "",
+      "text": "One line, if you like…",
+      "source": "onpaper-site/index.html:841"
+    },
+    {
+      "id": "ph.fb_email",
+      "category": "placeholder",
+      "surface": "Feedback",
+      "trigger": "",
+      "text": "Your email (optional)",
+      "source": "onpaper-site/index.html:962"
+    },
+    {
+      "id": "ph.fb_text",
+      "category": "placeholder",
+      "surface": "Feedback",
+      "trigger": "",
+      "text": "Tell us what you think.",
+      "source": "onpaper-site/index.html:963"
+    },
+    {
+      "id": "ph.coupon",
+      "category": "placeholder",
+      "surface": "Pay / get runs",
+      "trigger": "",
+      "text": "Paste coupon here",
+      "source": "onpaper-site/index.html:903"
+    },
+    {
+      "id": "label.cv",
+      "category": "label",
+      "surface": "Input · CV",
+      "trigger": "",
+      "text": "Your CV",
+      "source": "onpaper-site/index.html:705"
+    },
+    {
+      "id": "label.jd",
+      "category": "label",
+      "surface": "Input · JD",
+      "trigger": "",
+      "text": "Job description",
+      "source": "onpaper-site/index.html:737"
+    },
+    {
+      "id": "upload.main",
+      "category": "label",
+      "surface": "Input · CV",
+      "trigger": "",
+      "text": "Add your CV",
+      "source": "onpaper-site/index.html:711"
+    },
+    {
+      "id": "upload.sub",
+      "category": "hint",
+      "surface": "Input · CV",
+      "trigger": "",
+      "text": "PDF · DOCX · Raw text",
+      "source": "onpaper-site/index.html:712"
+    },
+    {
+      "id": "jd.card.main",
+      "category": "label",
+      "surface": "Input · JD",
+      "trigger": "",
+      "text": "Paste the job link",
+      "source": "onpaper-site/index.html:743"
+    },
+    {
+      "id": "jd.card.formats",
+      "category": "hint",
+      "surface": "Input · JD",
+      "trigger": "",
+      "text": "Link · Raw text",
+      "source": "onpaper-site/index.html:751"
+    },
+    {
+      "id": "chip.read",
+      "category": "label",
+      "surface": "Input · CV chip",
+      "trigger": "CV parsed",
+      "text": "{n} characters read",
+      "source": "onpaper-site/index.html:1190"
+    },
+    {
+      "id": "hint.privacy",
+      "category": "hint",
+      "surface": "Input",
+      "trigger": "",
+      "text": "We use the data once to run your check. Nothing is saved.",
+      "source": "onpaper-site/index.html:764"
+    },
+    {
+      "id": "notice.desktop",
+      "category": "hint",
+      "surface": "Header notice",
+      "trigger": "Mobile / small screen",
+      "text": "Best experienced on desktop. OnPaper is designed for desktop, where working with your CV and job description is easiest.",
+      "source": "onpaper-site/index.html:686"
+    },
+    {
+      "id": "hero.h1",
+      "category": "content",
+      "surface": "Hero",
+      "trigger": "",
+      "text": "Match your CV to the Job Description",
+      "source": "onpaper-site/index.html:697"
+    },
+    {
+      "id": "hero.sub",
+      "category": "content",
+      "surface": "Hero",
+      "trigger": "",
+      "text": "Upload your CV and paste the job link › check the fit and close the gaps",
+      "source": "onpaper-site/index.html:698"
+    },
+    {
+      "id": "how.1.h",
+      "category": "content",
+      "surface": "How it works",
+      "trigger": "",
+      "text": "Actionable",
+      "source": "onpaper-site/index.html:780"
+    },
+    {
+      "id": "how.1.p",
+      "category": "content",
+      "surface": "How it works",
+      "trigger": "",
+      "text": "No vague percentages or automated filler. Just clear and concrete recommendations you can apply immediately.",
+      "source": "onpaper-site/index.html:781"
+    },
+    {
+      "id": "how.2.h",
+      "category": "content",
+      "surface": "How it works",
+      "trigger": "",
+      "text": "Context-Aware",
+      "source": "onpaper-site/index.html:785"
+    },
+    {
+      "id": "how.2.p",
+      "category": "content",
+      "surface": "How it works",
+      "trigger": "",
+      "text": "OnPaper reads both sides simultaneously to isolate only the gaps that matter for this specific role.",
+      "source": "onpaper-site/index.html:786"
+    },
+    {
+      "id": "how.3.h",
+      "category": "content",
+      "surface": "How it works",
+      "trigger": "",
+      "text": "Frictionless",
+      "source": "onpaper-site/index.html:790"
+    },
+    {
+      "id": "how.3.p",
+      "category": "content",
+      "surface": "How it works",
+      "trigger": "",
+      "text": "Upload your CV and drop in the job link. No templates to fight with, smoothing the way to your first interview",
+      "source": "onpaper-site/index.html:791"
+    },
+    {
+      "id": "footer.tag",
+      "category": "content",
+      "surface": "Footer",
+      "trigger": "",
+      "text": "Gaps, not scores.",
+      "source": "onpaper-site/index.html:852"
+    },
+    {
+      "id": "menu.about",
+      "category": "content",
+      "surface": "Menu · About",
+      "trigger": "",
+      "text": "OnPaper helps you answer one simple question: Does my CV fit this job description? … OnPaper compares your CV with a specific job description and shows you where you’re a strong fit, where you might be missing something, and what deserves your attention. OnPaper gives you recommendations, not guarantees.",
+      "source": "onpaper-site/index.html:920-924"
+    },
+    {
+      "id": "menu.how",
+      "category": "content",
+      "surface": "Menu · How it works",
+      "trigger": "",
+      "text": "Upload your CV as a PDF or DOCX, and paste the link to the job posting. Get your Fit Check: Gaps & concerns, and What to consider. Decide what to do.",
+      "source": "onpaper-site/index.html:931-935"
+    },
+    {
+      "id": "menu.privacy",
+      "category": "content",
+      "surface": "Menu · Privacy",
+      "trigger": "",
+      "text": "Your job search is personal. We don’t keep your CV or the job text. Your CV file never leaves your browser. The job link is read once. No account, no sign-up, no email, no name. In short: your CV stays yours.",
+      "source": "onpaper-site/index.html:942-949"
+    },
+    {
+      "id": "menu.fb.intro",
+      "category": "content",
+      "surface": "Menu · Feedback",
+      "trigger": "",
+      "text": "OnPaper is a work in progress, and your input shapes it.",
+      "source": "onpaper-site/index.html:956"
+    },
+    {
+      "id": "menu.fb.tabs",
+      "category": "label",
+      "surface": "Menu · Feedback",
+      "trigger": "",
+      "text": "General feedback / Bug report / Feature request",
+      "source": "onpaper-site/index.html:958-960"
+    },
+    {
+      "id": "api.method",
+      "category": "api-error",
+      "surface": "Backend",
+      "trigger": "Non-POST method",
+      "text": "Method not allowed",
+      "source": "onpaper-api/api/analyze.js:49"
+    },
+    {
+      "id": "api.no_env",
+      "category": "api-error",
+      "surface": "Backend · analyze",
+      "trigger": "Missing API key env",
+      "text": "Server not configured (missing env vars).",
+      "source": "onpaper-api/api/analyze.js:52"
+    },
+    {
+      "id": "api.no_storage",
+      "category": "api-error",
+      "surface": "Backend",
+      "trigger": "Redis unavailable",
+      "text": "Storage not configured.",
+      "source": "onpaper-api/api/analyze.js:53"
+    },
+    {
+      "id": "api.bad_token",
+      "category": "api-error",
+      "surface": "Backend",
+      "trigger": "Invalid browser token",
+      "text": "Invalid token.",
+      "source": "onpaper-api/api/analyze.js:56"
+    },
+    {
+      "id": "api.no_runs",
+      "category": "api-error",
+      "surface": "Backend · analyze",
+      "trigger": "Balance < 1",
+      "text": "No analyses left.",
+      "source": "onpaper-api/api/analyze.js:67,181"
+    },
+    {
+      "id": "api.search_notfound",
+      "category": "api-error",
+      "surface": "Backend · analyze",
+      "trigger": "Alternate-source search found nothing",
+      "text": "We couldn’t find this position on another public source.",
+      "source": "onpaper-api/api/analyze.js:96,102"
+    },
+    {
+      "id": "api.both_required",
+      "category": "api-error",
+      "surface": "Backend · analyze",
+      "trigger": "Missing CV or JD",
+      "text": "Both a CV and a job description are required.",
+      "source": "onpaper-api/api/analyze.js:124"
+    },
+    {
+      "id": "api.cv_short",
+      "category": "api-error",
+      "surface": "Backend · analyze",
+      "trigger": "CV below min",
+      "text": "That CV is too short for us to work with, and probably for talent acquisition too. At the moment we process CVs between {MIN} and {MAX} characters.",
+      "source": "onpaper-api/api/analyze.js:126"
+    },
+    {
+      "id": "api.jd_thin",
+      "category": "api-error",
+      "surface": "Backend · analyze",
+      "trigger": "Fetched JD too thin",
+      "text": "We couldn’t read enough job text from that link. Some sites block automated reading. Try a different link to the same posting.",
+      "source": "onpaper-api/api/analyze.js:128"
+    },
+    {
+      "id": "api.cv_long",
+      "category": "api-error",
+      "surface": "Backend · analyze",
+      "trigger": "CV above max",
+      "text": "That CV is too long for us to work with, and probably for talent acquisition too. At the moment we process CVs between {MIN} and {MAX} characters.",
+      "source": "onpaper-api/api/analyze.js:130"
+    },
+    {
+      "id": "api.claude",
+      "category": "api-error",
+      "surface": "Backend · analyze",
+      "trigger": "Anthropic API error",
+      "text": "Claude API {status}: {detail}",
+      "source": "onpaper-api/api/analyze.js:152"
+    },
+    {
+      "id": "api.not_posting",
+      "category": "api-error",
+      "surface": "Backend · analyze",
+      "trigger": "Link wasn't a real posting",
+      "text": "We couldn’t read a real job posting from that link. Paste the full job description text instead.",
+      "source": "onpaper-api/api/analyze.js:173"
+    },
+    {
+      "id": "api.request_failed",
+      "category": "api-error",
+      "surface": "Backend · analyze",
+      "trigger": "Unhandled exception",
+      "text": "Request failed: {message}",
+      "source": "onpaper-api/api/analyze.js:193"
+    },
+    {
+      "id": "api.redeem.bad_coupon",
+      "category": "api-error",
+      "surface": "Backend · redeem",
+      "trigger": "Unknown/invalid coupon",
+      "text": "Invalid coupon.",
+      "source": "onpaper-api/api/redeem.js:20,24"
+    },
+    {
+      "id": "api.redeem.used",
+      "category": "api-error",
+      "surface": "Backend · redeem",
+      "trigger": "Single-use coupon already claimed",
+      "text": "This coupon has already been used.",
+      "source": "onpaper-api/api/redeem.js:48"
+    },
+    {
+      "id": "jd.err.login_wall",
+      "category": "api-error",
+      "surface": "Backend · fetchjd",
+      "trigger": "LinkedIn/Indeed login wall",
+      "text": "Sites like LinkedIn or Indeed hide the full job post behind a login, so we can’t read it. Paste the link from the company’s own careers page instead.",
+      "source": "onpaper-api/lib/fetchjd.js:223"
+    },
+    {
+      "id": "jd.err.bad_url",
+      "category": "api-error",
+      "surface": "Backend · fetchjd",
+      "trigger": "Malformed URL / bad scheme",
+      "text": "That job link doesn’t look like a valid web address.",
+      "source": "onpaper-api/lib/fetchjd.js:226"
+    },
+    {
+      "id": "jd.err.blocked",
+      "category": "api-error",
+      "surface": "Backend · fetchjd",
+      "trigger": "Private / blocked address",
+      "text": "That link points somewhere we can’t fetch. Use a public job-posting URL.",
+      "source": "onpaper-api/lib/fetchjd.js:228"
+    },
+    {
+      "id": "jd.err.unreachable",
+      "category": "api-error",
+      "surface": "Backend · fetchjd",
+      "trigger": "DNS / fetch / redirect failure",
+      "text": "We couldn’t reach that job link. Check the URL and try again.",
+      "source": "onpaper-api/lib/fetchjd.js:232"
+    },
+    {
+      "id": "jd.err.empty",
+      "category": "api-error",
+      "surface": "Backend · fetchjd",
+      "trigger": "No readable text at link",
+      "text": "We couldn’t read the job text from that link. Some sites block automated reading. Try a different link to the same posting.",
+      "source": "onpaper-api/lib/fetchjd.js:234"
+    },
+    {
+      "id": "jd.err.http",
+      "category": "api-error",
+      "surface": "Backend · fetchjd",
+      "trigger": "HTTP status error",
+      "text": "That job link returned an error ({status}). Check the URL and try again.",
+      "source": "onpaper-api/lib/fetchjd.js:237"
+    },
+    {
+      "id": "jd.err.generic",
+      "category": "api-error",
+      "surface": "Backend · fetchjd",
+      "trigger": "Fallback",
+      "text": "We couldn’t read that job posting from the link.",
+      "source": "onpaper-api/lib/fetchjd.js:238"
+    }
+  ]
+}

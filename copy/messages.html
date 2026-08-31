@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>OnPaper — Messaging catalog</title>
+<style>
+  :root {
+    --bg:#F0F4F7; --paper:#fff; --ink:#111A28; --ink-3:#384A66; --muted:#5E7089;
+    --line:rgba(17,26,40,.12); --red:#ed2c0a; --ok:#4F9E6E; --amber:#b5670c;
+    --mono:'IBM Plex Mono',ui-monospace,'SF Mono',Menlo,monospace;
+    --serif:Georgia,'Times New Roman',serif;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--serif);padding:28px 20px 120px}
+  .wrap{max-width:1120px;margin:0 auto}
+  h1{font-size:30px;margin:0 0 4px}
+  .sub{color:var(--ink-3);font-size:15px;margin:0}
+  .warn{font-family:var(--mono);font-size:11px;color:var(--muted);background:#fff;border:1px solid var(--line);border-left:3px solid var(--red);border-radius:4px;padding:10px 14px;margin:14px 0 18px;line-height:1.5}
+  .bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:14px}
+  input[type=search]{flex:1;min-width:200px;font-family:var(--mono);font-size:13px;padding:10px 14px;border:1px solid var(--line);border-radius:6px;background:#fff;color:var(--ink)}
+  .filters{display:flex;flex-wrap:wrap;gap:6px}
+  .f{font-family:var(--mono);font-size:11px;letter-spacing:.02em;padding:6px 11px;border:1px solid var(--line);border-radius:999px;background:#fff;color:var(--ink-3);cursor:pointer}
+  .f.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+  .count{font-family:var(--mono);font-size:11px;color:var(--muted);margin-left:auto}
+  table{width:100%;border-collapse:collapse;background:#fff;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+  th,td{text-align:left;padding:11px 14px;border-bottom:1px solid var(--line);vertical-align:top;font-size:14px}
+  th{font-family:var(--mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);background:#F7FAFC;position:sticky;top:0;z-index:1}
+  tr:last-child td{border-bottom:none}
+  tr.edited td{background:#FFFBF0}
+  .cat{font-family:var(--mono);font-size:10px;letter-spacing:.06em;text-transform:uppercase;padding:3px 8px;border-radius:3px;white-space:nowrap;display:inline-block}
+  .cat.modal{background:#EAE2F5;color:#5B3E8E}
+  .cat.error{background:#FBE3DE;color:#B02A0E}
+  .cat.api-error{background:#FBE9DE;color:#9A5410}
+  .cat.toast{background:#E3EFF7;color:#1F5E85}
+  .cat.status{background:#E1F0E7;color:#2E7A4E}
+  .cat.button{background:#E7EAF0;color:#384A66}
+  .cat.label,.cat.placeholder,.cat.hint{background:#EEF1F5;color:#5E7089}
+  .cat.content{background:#F0ECE3;color:#7A6A45}
+  .text{font-family:var(--serif);font-size:14px;line-height:1.45;color:var(--ink);border-radius:4px;padding:6px 8px;margin:-6px -8px;outline:none;cursor:text}
+  .text:hover{background:#F2F6FA}
+  .text:focus{background:#fff;box-shadow:0 0 0 2px var(--red)}
+  .text.dirty{background:#FFF6E5}
+  .surface{font-family:var(--mono);font-size:11px;color:var(--ink-3);white-space:nowrap}
+  .trig{font-size:12px;color:var(--muted)}
+  .src{font-family:var(--mono);font-size:10px;color:var(--muted);white-space:nowrap}
+  .id{font-family:var(--mono);font-size:10px;color:var(--muted)}
+  .err{font-family:var(--mono);color:var(--red);padding:20px;line-height:1.6}
+  /* sticky save dock */
+  .dock{position:fixed;left:0;right:0;bottom:0;background:#fff;border-top:1px solid var(--line);box-shadow:0 -6px 20px rgba(0,0,0,.12);padding:12px 20px;display:flex;align-items:center;gap:12px;justify-content:center;flex-wrap:wrap;z-index:5}
+  .dock.hidden{display:none}
+  .dock-msg{font-family:var(--mono);font-size:12px;color:var(--amber)}
+  .btn{font-family:var(--mono);font-size:13px;letter-spacing:.03em;padding:11px 20px;border-radius:6px;border:none;background:var(--ink);color:#fff;cursor:pointer}
+  .btn.ghost{background:#fff;color:var(--ink-3);border:1px solid var(--line)}
+  .btn:active{transform:translateY(1px)}
+  .hint{font-family:var(--mono);font-size:11px;color:var(--muted)}
+  @media(max-width:760px){.src,.id{display:none}}
+</style>
+<div class="wrap">
+  <h1>OnPaper — Messaging catalog</h1>
+  <p class="sub" id="metaLine"></p>
+  <div class="warn" id="warn"></div>
+  <div class="bar">
+    <input type="search" id="q" placeholder="Search text, surface, trigger…" autocomplete="off">
+    <span class="count" id="count"></span>
+  </div>
+  <div class="filters" id="filters"></div>
+  <p class="hint" style="margin:12px 0 0">Click any message to edit it. Edited rows are highlighted. When you’re done, <strong>Download messages.json</strong> and replace the file in <code>copy/</code>.</p>
+  <div id="tableHost" style="margin-top:12px"></div>
+</div>
+
+<div class="dock hidden" id="dock">
+  <span class="dock-msg" id="dockMsg"></span>
+  <button class="btn" id="download">Download messages.json</button>
+  <button class="btn ghost" id="copy">Copy JSON</button>
+  <button class="btn ghost" id="revert">Revert all</button>
+</div>
+
+<script>
+(async function(){
+  var host = document.getElementById('tableHost');
+  var data, orig;
+  try {
+    var res = await fetch('messages.json?_=' + Date.now());
+    data = await res.json();
+    orig = JSON.parse(JSON.stringify(data)); // snapshot for revert / dirty check
+  } catch(e){
+    host.innerHTML = '<div class="err">Couldn’t load messages.json — open this page over http (the GitHub Pages URL, or run <code>python3 -m http.server</code> in <code>copy/</code>), not with file://.<br>'+e.message+'</div>';
+    return;
+  }
+  var msgs = data.messages || [];
+  var origById = {}; orig.messages.forEach(function(m){ origById[m.id]=m.text; });
+
+  document.getElementById('metaLine').textContent = data.meta.product + ' · ' + msgs.length + ' messages · updated ' + data.meta.updated;
+  document.getElementById('warn').textContent = data.meta.purpose;
+
+  var cats = {};
+  msgs.forEach(function(m){ cats[m.category]=(cats[m.category]||0)+1; });
+  var active = {};
+  var order = ['modal','error','api-error','toast','status','button','label','placeholder','hint','content'];
+  var fWrap = document.getElementById('filters');
+  order.filter(function(c){return cats[c];}).forEach(function(c){
+    var b=document.createElement('button');
+    b.className='f'; b.textContent=c+' ('+cats[c]+')';
+    b.onclick=function(){ if(active[c])delete active[c]; else active[c]=1; b.classList.toggle('on'); render(); };
+    fWrap.appendChild(b);
+  });
+
+  document.getElementById('q').addEventListener('input', render);
+
+  function dirtyCount(){ var n=0; msgs.forEach(function(m){ if(m.text!==origById[m.id]) n++; }); return n; }
+  function refreshDock(){
+    var n = dirtyCount();
+    var dock = document.getElementById('dock');
+    dock.classList.toggle('hidden', n===0);
+    document.getElementById('dockMsg').textContent = n===0 ? '' : (n + (n===1?' message edited':' messages edited'));
+  }
+
+  function render(){
+    var term = document.getElementById('q').value.trim().toLowerCase();
+    var useCat = Object.keys(active).length>0;
+    var rows = msgs.filter(function(m){
+      if(useCat && !active[m.category]) return false;
+      if(!term) return true;
+      return (m.text+' '+m.surface+' '+(m.trigger||'')+' '+m.id).toLowerCase().indexOf(term)>-1;
+    });
+    document.getElementById('count').textContent = rows.length + ' shown';
+    var tbl = document.createElement('table');
+    tbl.innerHTML = '<thead><tr><th>Category</th><th>Surface</th><th>Message</th><th>Trigger</th><th>ID / Source</th></tr></thead>';
+    var tb = document.createElement('tbody');
+    rows.forEach(function(m){
+      var edited = m.text!==origById[m.id];
+      var tr = document.createElement('tr');
+      if(edited) tr.className='edited';
+      tr.innerHTML =
+          '<td><span class="cat '+m.category+'">'+m.category+'</span></td>'
+        + '<td class="surface">'+esc(m.surface)+'</td>'
+        + '<td></td>'
+        + '<td class="trig">'+esc(m.trigger||'')+'</td>'
+        + '<td><div class="id">'+esc(m.id)+'</div><div class="src">'+esc(m.source)+'</div></td>';
+      var cell = document.createElement('div');
+      cell.className = 'text' + (edited?' dirty':'');
+      cell.contentEditable = 'true';
+      cell.spellcheck = false;
+      cell.textContent = m.text;
+      cell.addEventListener('input', function(){
+        m.text = cell.textContent;
+        var isDirty = m.text!==origById[m.id];
+        cell.classList.toggle('dirty', isDirty);
+        tr.classList.toggle('edited', isDirty);
+        refreshDock();
+      });
+      // plain-text paste only
+      cell.addEventListener('paste', function(ev){
+        ev.preventDefault();
+        var t = (ev.clipboardData||window.clipboardData).getData('text');
+        document.execCommand('insertText', false, t);
+      });
+      tr.children[2].appendChild(cell);
+      tb.appendChild(tr);
+    });
+    tbl.appendChild(tb);
+    if(!rows.length){ host.innerHTML='<div class="err">No messages match.</div>'; return; }
+    host.innerHTML=''; host.appendChild(tbl);
+  }
+
+  function buildJSON(){
+    var out = JSON.parse(JSON.stringify(data));
+    out.meta.updated = new Date().toISOString().slice(0,10);
+    return JSON.stringify(out, null, 2) + '\n';
+  }
+  document.getElementById('download').onclick = function(){
+    var blob = new Blob([buildJSON()], {type:'application/json'});
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'messages.json';
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(function(){ URL.revokeObjectURL(a.href); }, 2000);
+  };
+  document.getElementById('copy').onclick = function(){
+    navigator.clipboard.writeText(buildJSON()).then(function(){
+      var b=document.getElementById('copy'); var t=b.textContent; b.textContent='Copied ✓';
+      setTimeout(function(){ b.textContent=t; }, 1500);
+    });
+  };
+  document.getElementById('revert').onclick = function(){
+    if(!confirm('Discard all edits and reload the original text?')) return;
+    msgs.forEach(function(m){ m.text = origById[m.id]; });
+    render(); refreshDock();
+  };
+
+  function esc(s){ return String(s).replace(/[&<>]/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;'}[c];}); }
+  render(); refreshDock();
+})();
+</script>
+</html>

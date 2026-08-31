@@ -683,7 +683,7 @@
   <!-- desktop-recommended notice -->
   <div class="op-notice" id="deskNotice" role="note" hidden>
     <div class="op-notice-in">
-      <span class="op-notice-t"><strong>Best experienced on desktop</strong> &mdash; OnPaper is designed for desktop, where working with your CV and job description is easiest.</span>
+      <span class="op-notice-t"><strong>Best experienced on desktop</strong>. OnPaper is designed for desktop, where working with your CV and job description is easiest.</span>
     </div>
     <button type="button" class="op-notice-x" id="deskNoticeX" aria-label="Dismiss">&times;</button>
   </div>
@@ -708,7 +708,7 @@
               <input id="fitCvFile" type="file" accept=".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document" hidden>
               <button type="button" class="op-upload" id="cvDrop" aria-label="Upload your CV (PDF or DOCX)">
                 <svg class="op-upload-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4"/><path d="M7 9l5-5 5 5"/><path d="M4 20h16"/></svg>
-                <span class="op-upload-main">Upload your CV</span>
+                <span class="op-upload-main">Add your CV</span>
                 <span class="op-upload-sub">PDF &middot; DOCX &middot; <span class="op-rawlink" id="cvPasteInline" role="button" tabindex="0">Raw text</span></span>
               </button>
               <div class="op-filechip ph-no-capture" id="cvChip" hidden>
@@ -788,7 +788,7 @@
           <div class="op-step">
             <div class="op-stepnum">03</div>
             <h3 class="op-steph">Frictionless</h3>
-            <p class="op-stepp">Upload your CV and drop in the job link &mdash; no templates to fight with, smoothing the way to your first interview</p>
+            <p class="op-stepp">Upload your CV and drop in the job link. No templates to fight with, smoothing the way to your first interview</p>
           </div>
         </div>
       </section>
@@ -812,7 +812,7 @@
         <p class="op-rsource" id="resultSource" hidden></p>
         <span class="op-match" id="resultMatch" hidden>Match &middot; <span class="op-match-val" id="resultMatchVal"></span></span>
         <p class="op-deal" id="resultDeal" hidden><span class="op-deal-label">Dealbreakers</span><span class="op-deal-text" id="resultDealText"></span></p>
-        <p class="op-intro">What the role asks for that your CV doesn&rsquo;t yet show &mdash; with one concrete fix each.</p>
+        <p class="op-intro">What the role asks for that your CV doesn&rsquo;t yet show, with one concrete fix each.</p>
 
         <div id="gapList"></div>
 
@@ -842,7 +842,7 @@
               <button type="button" class="op-rate-send" id="opRateSend">Send</button>
             </div>
           </div>
-          <div class="op-rate-thanks" id="opRateThanks" hidden>Thanks &mdash; that sharpens the beta.</div>
+          <div class="op-rate-thanks" id="opRateThanks" hidden>Thank you for your feedback!</div>
         </div>
       </div>
     </div>
@@ -863,13 +863,13 @@
           <span id="fitRunLabel">Check fit</span>
         </button>
         <div class="op-runline" id="runLine">
-          <span id="runRemaining"></span><button type="button" class="op-getmore" id="getMore1">get more runs</button>
+          <span id="runRemaining"></span><button type="button" class="op-getmore" id="getMore1">Get more runs</button>
         </div>
       </div>
       <!-- out of runs: primary button becomes the "get more runs" action -->
       <div id="barOut" hidden style="display:flex;flex-direction:column;align-items:center;gap:9px">
         <button type="button" class="op-btn" id="getMore2">Get more runs</button>
-        <div class="op-runline"><span>0 runs left &middot; </span><button type="button" class="op-getmore" id="getMore3">have a code?</button></div>
+        <div class="op-runline"><span>0 runs left &middot; </span><button type="button" class="op-getmore" id="getMore3">Have a code?</button></div>
       </div>
       <!-- results view: start another fit check -->
       <div id="barResults" hidden style="display:flex;flex-direction:column;align-items:center;gap:9px">
@@ -959,11 +959,11 @@
           <button type="button" class="op-fb-tab" data-fb="Bug report" aria-selected="false">Bug report</button>
           <button type="button" class="op-fb-tab" data-fb="Feature request" aria-selected="false">Feature request</button>
         </div>
-        <input type="email" class="op-fb-email" id="fbEmail" autocomplete="email" placeholder="Your email (optional, so we can reply)">
+        <input type="email" class="op-fb-email" id="fbEmail" autocomplete="email" placeholder="Your email (optional)">
         <textarea class="op-fb-text" id="fbText" rows="5" maxlength="2000" placeholder="Tell us what you think."></textarea>
         <div class="op-fb-foot">
           <button type="button" class="op-btn op-fb-send" id="fbSend">Send feedback</button>
-          <span class="op-fb-mail">Contact us at <a href="mailto:hello@onpaper.fit">hello@onpaper.fit</a></span>
+          <span class="op-fb-mail">Contact: <a href="mailto:hello@onpaper.fit">hello@onpaper.fit</a></span>
         </div>
       </div>
     </div>
@@ -1029,7 +1029,7 @@
 <!-- Identical re-submission confirm: same CV + JD as the last successful run -->
 <div class="op-confirm-back" id="rerunBack" hidden>
   <div class="op-confirm" role="dialog" aria-modal="true" aria-label="Run the same fit check again">
-    <p class="op-confirm-title">Same CV and job description as your last fit check. Running it again will use 1 run.</p>
+    <p class="op-confirm-title">CV and job description are the same as your last fit check. Running it again will use 1 run.</p>
     <div class="op-confirm-actions">
       <button type="button" class="op-ghost-btn" id="rerunBackBtn">back</button>
       <button type="button" class="op-btn" id="rerunRunBtn">Run again</button>
@@ -1334,7 +1334,7 @@
         // We couldn't pull readable text (scan/image, or an export this reader
         // can't decode). Explain, and let the user paste their CV text instead.
         setError(isPdf
-          ? "We couldn’t pull readable text from that PDF — it may be a scan, or an export this reader can’t decode. Paste your CV text below to continue."
+          ? "We couldn’t pull readable text from that PDF, it may be a scan, or an export this reader can’t decode. Paste your CV text below to continue."
           : "We couldn’t read text from that file. Paste your CV text below to continue.");
         openPaste();
         track("cv_parse_failed", { file_type: isPdf ? "pdf" : "docx", reason: "empty" });
@@ -1385,7 +1385,7 @@
   els.cvPasteCancel.addEventListener("click", function () { setError(""); closePaste(); });
   els.cvPasteUse.addEventListener("click", function () {
     var t = normalizeText(els.cvPasteText.value);
-    if (textWeight(t) < 100) { setError("That looks too short — paste the full text of your CV."); return; }
+    if (textWeight(t) < 100) { setError("That looks too short. Paste the full text of your CV."); return; }
     setError("");
     setCv(t, "Pasted CV", 0);
     els.cvPasteText.value = "";
@@ -1974,7 +1974,7 @@
     var cv = cvText.trim();
     var kind = jdKind(els.jdUrl.value);
     var jd = kind === "url" ? normalizeUrl(els.jdUrl.value) : els.jdUrl.value.trim();
-    if (!cv) { setError("Upload your CV to run a fit check."); return; }
+    if (!cv) { setError("Add your CV to run a fit check."); return; }
     if (!kind) { setError("Paste a link to the job posting, or the full job description text."); return; }
     // A search / listing page has no single posting to read — ask for the specific job.
     if (kind === "url" && isJobSearchUrl(jd)) {
@@ -1991,24 +1991,24 @@
     // Pasted JD text is sent straight to the analysis, so enforce the same lower
     // bound the backend uses. (A link is fetched + bounded server-side instead.)
     if (kind === "text" && jd.length < HARD_MIN) {
-      setError("That job description is too short for us to work with — and probably for talent acquisition too. At the moment we process between " +
+      setError("That job description is too short for us to work with, and probably for talent acquisition too. At the moment we process between " +
         HARD_MIN.toLocaleString() + " and " + JD_MAX.toLocaleString() + " characters. Paste the full posting, or a link to it.");
       return;
     }
     if (kind === "text" && jd.length > JD_MAX) {
-      setError("That job description is too long for us to work with — and probably for talent acquisition too. At the moment we process between " +
+      setError("That job description is too long for us to work with, and probably for talent acquisition too. At the moment we process between " +
         HARD_MIN.toLocaleString() + " and " + JD_MAX.toLocaleString() + " characters.");
       return;
     }
     setError("");
     // CV length bounds (the job text is fetched + bounded server-side).
     if (cv.length > HARD_MAX) {
-      setError("That CV is too long for us to work with — and probably for talent acquisition too. At the moment we process CVs between " +
+      setError("That CV is too long for us to work with, and probably for talent acquisition too. At the moment we process CVs between " +
         HARD_MIN.toLocaleString() + " and " + HARD_MAX.toLocaleString() + " characters (yours is " + cv.length.toLocaleString() + ").");
       return;
     }
     if (cv.length < HARD_MIN) {
-      setError("That CV is too short for us to work with — and probably for talent acquisition too. At the moment we process CVs between " +
+      setError("That CV is too short for us to work with, and probably for talent acquisition too. At the moment we process CVs between " +
         HARD_MIN.toLocaleString() + " and " + HARD_MAX.toLocaleString() + " characters. Try a text-based PDF or DOCX.");
       return;
     }
@@ -2372,13 +2372,13 @@
         })
       }).then(function (r) { return r.json(); }).then(function (d) {
         if (d && d.success) {
-          send.textContent = "Thanks — sent";
+          send.textContent = "Sent, thanks!";
           txt.value = "";
           if (email) email.value = "";
           setTimeout(function () { send.disabled = false; send.textContent = orig; }, 2500);
         } else { throw new Error((d && d.message) || "send failed"); }
       }).catch(function () {
-        send.textContent = "Couldn’t send — email us";
+        send.textContent = "Couldn’t send. Please email us";
         send.disabled = false;
         var href = "mailto:hello@onpaper.fit?subject=" + encodeURIComponent("OnPaper — " + kind)
           + "&body=" + encodeURIComponent(from ? (body + "\n\n— from: " + from) : body);
@@ -2393,7 +2393,7 @@
   els.fitNew.addEventListener("click", function () { backToInput(); });
   els.copy.addEventListener("click", function () {
     navigator.clipboard.writeText(plainText()).then(function () {
-      toast("Report copied to clipboard");
+      toast("Report text copied to clipboard");
     }, function () { toast("Copy failed"); });
   });
   // Build a clean, text-based PDF of the report (not a screenshot of the page).
@@ -2492,7 +2492,7 @@
   }
   els.couponBtn.addEventListener("click", async function () {
     var code = (els.coupon.value || "").trim();
-    if (!code) { couponMsg("Enter a coupon.", true); return; }
+    if (!code) { couponMsg("Enter your coupon.", true); return; }
     els.couponBtn.disabled = true;
     couponMsg("Redeeming…", false);
     try {
@@ -2504,7 +2504,7 @@
       var data = {};
       try { data = await res.json(); } catch (e) {}
       if (!res.ok) throw new Error(data.error || ("Redeem failed (" + res.status + ")"));
-      couponMsg(data.already ? "Coupon already applied." : "Added " + data.granted + " runs.", false);
+      couponMsg(data.already ? "Coupon already used" : "Added " + data.granted + " runs.", false);
       els.coupon.value = "";
       updateRemaining(data.remaining);
       refreshRunDisabled();
