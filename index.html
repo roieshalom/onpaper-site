@@ -1049,6 +1049,7 @@
   var LS_CVNM = "triage_fit_cv_name"; // uploaded CV filename, to restore the chip on reload
   var LS_JD   = "triage_fit_jd";     // last job-posting URL you entered
   var LS_UID  = "onpaper_uid";       // anonymous browser token (usage balance lives server-side)
+  var LS_CPN  = "onpaper_coupon";    // last redeemed coupon — the PostHog identity, re-applied each visit
 
   // Client-side CV parsing libraries, pinned + SRI-locked. They run only in the
   // browser and never send the CV anywhere — the extracted text follows the same
@@ -1080,6 +1081,19 @@
   var uid = "";
   try { uid = localStorage.getItem(LS_UID) || ""; if (!uid) { uid = uuid(); localStorage.setItem(LS_UID, uid); } }
   catch (e) { uid = uuid(); }
+
+  // If this browser has already redeemed a coupon, re-establish it as the PostHog
+  // identity on every load. PostHog runs with persistence:'memory' (no tracking
+  // cookies), so its distinct_id resets each visit — re-identifying here is what
+  // keeps a tester's activity grouped under their coupon across sessions.
+  (function () {
+    try {
+      var cpn = localStorage.getItem(LS_CPN) || "";
+      if (cpn && window.posthog && posthog.identify) {
+        posthog.identify(cpn, { user_type: "beta", acquisition: "coupon", coupon_code: cpn });
+      }
+    } catch (e) {}
+  })();
 
   var $ = function (id) { return document.getElementById(id); };
   var els = {
@@ -2498,8 +2512,13 @@
       // `already` re-submit so properties/event fire exactly once per redemption.
       if (!data.already) {
         try {
-          if (window.posthog && posthog.setPersonProperties) {
-            posthog.setPersonProperties({ user_type: "beta", acquisition: "coupon", coupon_code: code });
+          // Make the coupon this person's PostHog identity: merges the prior
+          // anonymous browsing on this device into the coupon and groups all
+          // future runs (and survey responses) under it. Persist so we can
+          // re-identify on later visits (see the load-time block above).
+          set(LS_CPN, code);
+          if (window.posthog && posthog.identify) {
+            posthog.identify(code, { user_type: "beta", acquisition: "coupon", coupon_code: code });
           }
         } catch (e) {}
         track("coupon_redeemed", { coupon_code: code, granted: data.granted || 0 });
