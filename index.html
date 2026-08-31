@@ -1045,9 +1045,9 @@
   var REDEEM_URL  = API_BASE + "/redeem";
   var BALANCE_URL = API_BASE + "/balance";
 
-  var LS_CV   = "triage_fit_cv";     // text extracted from your uploaded CV (client-side only)
-  var LS_CVNM = "triage_fit_cv_name"; // uploaded CV filename, to restore the chip on reload
-  var LS_JD   = "triage_fit_jd";     // last job-posting URL you entered
+  var LS_CV   = "triage_fit_cv";     // text extracted from your uploaded CV (client-side only; per-tab)
+  var LS_CVNM = "triage_fit_cv_name"; // uploaded CV filename, to restore the chip on reload (per-tab)
+  var LS_JD   = "triage_fit_jd";     // last job-posting URL you entered (per-tab)
   var LS_UID  = "onpaper_uid";       // anonymous browser token (usage balance lives server-side)
   var LS_CPN  = "onpaper_coupon";    // last redeemed coupon — the PostHog identity, re-applied each visit
 
@@ -1131,6 +1131,11 @@
 
   function get(k) { try { return localStorage.getItem(k) || ""; } catch (e) { return ""; } }
   function set(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
+  // Per-tab storage: survives reload/in-tab navigation, cleared when the tab
+  // closes. Used for the CV text and JD so "Nothing is saved" holds after you
+  // leave (localStorage stays for the anonymous token + coupon identity).
+  function sget(k) { try { return sessionStorage.getItem(k) || ""; } catch (e) { return ""; } }
+  function sset(k, v) { try { sessionStorage.setItem(k, v); } catch (e) {} }
 
   // desktop-recommended notice: subtle, non-blocking, dismissable (remembered)
   (function () {
@@ -1161,8 +1166,13 @@
 
   // ---- CV (uploaded file → extracted text) + JD (job URL) state ----
   // The CV lives as extracted text; the file itself never leaves the browser.
-  var cvText = get(LS_CV);
-  var cvName = get(LS_CVNM);
+  // One-time migration: these three used to live in localStorage. Now they're
+  // per-tab (sessionStorage), so drop any leftover copies so old CV/JD text
+  // doesn't persist on the device after this change ships.
+  try { localStorage.removeItem(LS_CV); localStorage.removeItem(LS_CVNM); localStorage.removeItem(LS_JD); } catch (e) {}
+
+  var cvText = sget(LS_CV);
+  var cvName = sget(LS_CVNM);
 
   function fmtBytes(n) {
     if (!n && n !== 0) return "";
@@ -1201,14 +1211,14 @@
     pasteOpen = false;
     cvText = text || "";
     cvName = name || "CV";
-    set(LS_CV, cvText); set(LS_CVNM, cvName);
+    sset(LS_CV, cvText); sset(LS_CVNM, cvName);
     els.cvChipMeta && (els.cvChipMeta.dataset.size = sizeBytes || "");
     renderCv();
     onEdit();
   }
   function removeCv() {
     cvText = ""; cvName = "";
-    set(LS_CV, ""); set(LS_CVNM, "");
+    sset(LS_CV, ""); sset(LS_CVNM, "");
     els.cvFile.value = "";
     els.cvParsing.hidden = true;
     pasteOpen = false;
@@ -1462,16 +1472,16 @@
   function closeJdPaste() { jdPasteOpen = false; renderJd(); }
 
   // Restore whatever was last in the field — a link or pasted JD text both persist.
-  var savedJd = get(LS_JD);
+  var savedJd = sget(LS_JD);
   els.jdUrl.value = savedJd;
   els.jdUrl.addEventListener("input", function () {
-    set(LS_JD, els.jdUrl.value);
+    sset(LS_JD, els.jdUrl.value);
     renderJd();
     onEdit();
   });
   els.jdUrlX.addEventListener("click", function () {
     els.jdUrl.value = "";
-    set(LS_JD, "");
+    sset(LS_JD, "");
     renderJd();
     onEdit();
     try { els.jdUrl.focus(); } catch (e) {}
@@ -1486,7 +1496,7 @@
   els.jdPasteUse.addEventListener("click", function () {
     var t = (els.jdPasteText.value || "").trim();
     els.jdUrl.value = t;
-    set(LS_JD, t);
+    sset(LS_JD, t);
     jdPasteOpen = false;
     renderJd();
     onEdit();
