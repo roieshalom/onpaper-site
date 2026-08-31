@@ -2201,6 +2201,7 @@
       rating: rating, match: rateCtx.match, gaps_count: rateCtx.gaps_count,
       has_dealbreakers: rateCtx.has_dealbreakers, run_id: rateCtx.run_id
     });
+    rtrack(rating === "up" ? "opRateUp" : "opRateDown");
     set("op_rate_" + rateCtx.run_id, rating);
     lockRate(rating);
     if (rating === "down") { rEl("opRateReason").hidden = false; try { rEl("opRateText").focus(); } catch (e) {} }
