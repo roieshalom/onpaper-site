@@ -797,6 +797,11 @@
     <!-- ============ RESULTS VIEW ============ -->
     <div id="viewResults" hidden>
       <div class="op-results">
+        <!-- Free-tier only: disclaimer + upsell banner (shown by showResults for free runs) -->
+        <div id="freeBanner" hidden style="display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px;justify-content:space-between;margin:0 0 18px;padding:12px 16px;border:1px solid #ecdcb8;background:#fbf5e7;border-radius:12px;font-size:13px;line-height:1.45;color:#6d5a2c">
+          <span>This is a <strong>free check</strong> &mdash; AI suggestions, not guarantees. Free checks are limited and shared across everyone each day.</span>
+          <button type="button" class="op-getmore" id="freeBannerCta" style="white-space:nowrap">Get runs that are always yours &rarr;</button>
+        </div>
         <div class="op-rtools">
           <span class="op-rstamp" id="resultStamp"></span>
           <button type="button" class="op-icon-btn" id="fitDownload" aria-label="Download fit check" title="Download PDF">
@@ -1124,6 +1129,7 @@
     resultTitle: $("resultTitle"), resultMatch: $("resultMatch"), resultMatchVal: $("resultMatchVal"),
     resultStamp: $("resultStamp"), resultSource: $("resultSource"), resultDeal: $("resultDeal"), resultDealText: $("resultDealText"),
     gapList: $("gapList"),
+    freeBanner: $("freeBanner"), freeBannerCta: $("freeBannerCta"),
     payBack: $("payBack"), payModal: $("payModal"), payClose: $("payClose"),
     getMore1: $("getMore1"), getMore2: $("getMore2"), getMore3: $("getMore3"),
     coupon: $("fitCoupon"), couponBtn: $("fitCouponBtn"), couponMsg: $("fitCouponMsg"),
@@ -1717,6 +1723,8 @@
       freeExhausted = true;
     }
   } catch (e) {}
+  // Whether the run just shown was a free-tier run (drives the result banner).
+  var lastRunWasFree = false;
   function updateRunLabel() {
     if (loading) { els.runLabel.textContent = "Thinking…"; return; }
     els.runLabel.textContent = (remaining === 1) ? "Check fit · last run" : "Check fit";
@@ -1873,6 +1881,8 @@
     var stamp = now.toLocaleString(undefined, { day: "numeric", month: "short", year: "numeric", hour: "numeric", minute: "2-digit" });
 
     els.sampleBadge.hidden = !isSample;
+    // Free runs carry a disclaimer + upsell banner at the top of the report.
+    els.freeBanner.hidden = !(lastRunWasFree && !isSample);
 
     // A real report carries the header block (role/company/match/deal) or at
     // least one parsed gap. Anything else is an off-format / refusal body we
@@ -2069,6 +2079,7 @@
     // No paid balance → this is a free run, drawing on the shared daily pool.
     var freeRun = (remaining === 0);
     if (freeRun) payload.free = true;
+    lastRunWasFree = freeRun;
     var jdSource;
     if (kind === "url") {
       payload.jdUrl = jd;
@@ -2527,6 +2538,7 @@
   els.getMore1.addEventListener("click", openPay);
   els.getMore2.addEventListener("click", openPay);
   els.getMore3.addEventListener("click", openPay);
+  els.freeBannerCta.addEventListener("click", openPay);
   els.payClose.addEventListener("click", closePay);
   els.payBack.addEventListener("click", function (e) { if (e.target === els.payBack) closePay(); });
   document.addEventListener("keydown", function (e) {
