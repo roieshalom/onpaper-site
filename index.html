@@ -869,7 +869,7 @@
       <!-- out of runs: primary button becomes the "get more runs" action -->
       <div id="barOut" hidden style="display:flex;flex-direction:column;align-items:center;gap:9px">
         <button type="button" class="op-btn" id="getMore2">Get more runs</button>
-        <div class="op-runline"><span>0 runs left &middot; </span><button type="button" class="op-getmore" id="getMore3">Have a code?</button></div>
+        <div class="op-runline"><span>Free checks used up today &middot; </span><button type="button" class="op-getmore" id="getMore3">Have a code?</button></div>
       </div>
       <!-- results view: start another fit check -->
       <div id="barResults" hidden style="display:flex;flex-direction:column;align-items:center;gap:9px">
@@ -1041,6 +1041,14 @@
 (function () {
   // The deployed Vercel function (private onpaper-api repo) that holds the key + prompt.
   var API_BASE   = "https://onpaper-api.vercel.app/api";
+  // Local testing only: on localhost, ?api=<base> can point at a preview backend
+  // (e.g. the free-tier PR preview). Ignored on the live site, so it's safe to ship.
+  try {
+    if (/^(localhost|127\.0\.0\.1)$/.test(location.hostname)) {
+      var apiOverride = new URLSearchParams(location.search).get("api");
+      if (apiOverride) API_BASE = apiOverride.replace(/\/+$/, "");
+    }
+  } catch (e) {}
   var API_URL     = API_BASE + "/analyze";
   var REDEEM_URL  = API_BASE + "/redeem";
   var BALANCE_URL = API_BASE + "/balance";
@@ -1698,22 +1706,30 @@
 
   // Remaining analyses (server-authoritative; null = unknown until first action).
   var remaining = null;
+  // True once today's shared free pool is spent (a free run returned "exhausted").
+  // Distinct from remaining === 0, which just means "no paid balance → use the free pool".
+  var freeExhausted = false;
   function updateRunLabel() {
     if (loading) { els.runLabel.textContent = "Thinking…"; return; }
     els.runLabel.textContent = (remaining === 1) ? "Check fit · last run" : "Check fit";
   }
   function renderBalance() {
     updateRunLabel();
-    // resting line: show remaining (when known) + always-available "get more runs" so a
-    // coupon can be redeemed even with runs left. (Small addition beyond the mock — flagged.)
-    if (remaining === 0) {
+    // Three resting states:
+    //   • paid balance (remaining > 0, or unknown/null before load): "Check fit", show count.
+    //   • no paid balance (remaining === 0): free tier — "Check fit" still runs, drawing on
+    //     the shared daily pool. Labelled "Free check", with "Get more runs" still available.
+    //   • free pool spent for the day (freeExhausted): fall back to the get-more/coupon bar.
+    if (remaining === 0 && freeExhausted) {
       els.barRun.hidden = true;
       els.barOut.hidden = false;
     } else {
       els.barRun.hidden = false;
       els.barOut.hidden = true;
-      if (typeof remaining === "number") {
+      if (typeof remaining === "number" && remaining > 0) {
         els.runRemaining.textContent = remaining + (remaining === 1 ? " run left · " : " runs left · ");
+      } else if (remaining === 0) {
+        els.runRemaining.textContent = "Free check · ";
       } else {
         els.runRemaining.textContent = "";
       }
@@ -1723,16 +1739,16 @@
     if (typeof n !== "number" || isNaN(n)) return;
     remaining = n;
     renderBalance();
-    if (n <= 0) els.run.disabled = true;
+    refreshRunDisabled();   // at 0 the free tier keeps the button live (unless the pool is spent)
   }
   function findDisabled() {
-    return loading || !cvText.trim() || !jdKind(els.jdUrl.value) || remaining === 0;
+    return loading || !cvText.trim() || !jdKind(els.jdUrl.value) || freeExhausted;
   }
   function refreshRunDisabled() { els.run.disabled = findDisabled(); }
   function onEdit() {
     setError("");
     rerunConfirmed = false;   // editing either input means the next run isn't a blind re-run
-    if (!loading && remaining !== 0) els.run.disabled = findDisabled();
+    if (!loading && !freeExhausted) els.run.disabled = findDisabled();
   }
 
   // ---- report parsing ----
@@ -1956,6 +1972,7 @@
       var err = new Error(data.error || ("Request failed (" + res.status + ")"));
       if (typeof data.remaining === "number") err.remaining = data.remaining;
       if (data.stage) err.stage = data.stage;   // "blocked" | "search_failed"
+      if (data.exhausted) err.exhausted = true;  // free pool spent for the day (HTTP 429)
       throw err;
     }
     return { text: (data.text || "").trim(), remaining: data.remaining };
@@ -2041,6 +2058,9 @@
     // A link is resolved server-side (fetched, or searched on the retry); pasted
     // text is sent straight through as the job description.
     var payload = { cv: cv, token: uid };
+    // No paid balance → this is a free run, drawing on the shared daily pool.
+    var freeRun = (remaining === 0);
+    if (freeRun) payload.free = true;
     var jdSource;
     if (kind === "url") {
       payload.jdUrl = jd;
@@ -2054,7 +2074,7 @@
     if (!opts.search) {
       runStartMs = t0;   // measure the min-think floor from the original run, not the search retry
       analysisRuns++;
-      track(analysisRuns > 1 ? "analysis_rerun" : "analysis_started", { cv_chars: cv.length, jd_source: jdSource });
+      track(analysisRuns > 1 ? "analysis_rerun" : "analysis_started", { cv_chars: cv.length, jd_source: jdSource, tier: freeRun ? "free" : "paid" });
     }
 
     setLoading(true);
@@ -2089,6 +2109,19 @@
       // (above), a generic error (below), or when the user dismisses the fail
       // modal (closeConfirm → stopLoaderOverlay). Stopping+restarting it here is
       // what made the card contour replay and the cards drop + re-lift.
+
+      // Free pool spent for today (HTTP 429). Not a real failure — stop cleanly
+      // and switch the resting bar to the get-more/coupon state.
+      if (err.exhausted) {
+        setLoading(false);
+        freeExhausted = true;
+        closeConfirm(els.jdSearchBack);
+        renderBalance();
+        refreshRunDisabled();
+        track("free_pool_exhausted", {});
+        toast("Today’s free checks are all used up. Come back tomorrow.");
+        return;
+      }
 
       // The website blocked the direct fetch. Don't treat this as a final
       // failure: keep the animation running and automatically look for the same
