@@ -1709,6 +1709,14 @@
   // True once today's shared free pool is spent (a free run returned "exhausted").
   // Distinct from remaining === 0, which just means "no paid balance → use the free pool".
   var freeExhausted = false;
+  // Local QA only: ?state=exhausted previews the "free pool spent" state without
+  // needing to drain the real pool. Ignored on the live site.
+  try {
+    if (/^(localhost|127\.0\.0\.1)$/.test(location.hostname) &&
+        new URLSearchParams(location.search).get("state") === "exhausted") {
+      freeExhausted = true;
+    }
+  } catch (e) {}
   function updateRunLabel() {
     if (loading) { els.runLabel.textContent = "Thinking…"; return; }
     els.runLabel.textContent = (remaining === 1) ? "Check fit · last run" : "Check fit";
