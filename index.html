@@ -571,10 +571,10 @@
   /* Once the field has a value: a slight fade OVER the text at the right edge,
      so a long value rolls off under it (not truncated with an ellipsis). Fades
      to the field's own colour (--paper-lt). */
-  .op-url-wrap.has-value .op-url-input { padding-right: 4px; }
+  .op-url-wrap.has-value .op-url-input { padding-right: 4px; border-top-right-radius: 0; border-bottom-right-radius: 0; }
   .op-url-wrap.has-value .op-url-box::after {
     content: ""; position: absolute; top: 1px; bottom: 1px; right: 1px; width: 16px;
-    pointer-events: none; border-radius: 0 3px 3px 0;
+    pointer-events: none; border-radius: 0;
     /* translucent so the text stays visible, continuing behind the shadow */
     background: linear-gradient(to right, rgba(140,140,140,0), rgba(140,140,140,0.55));
   }
@@ -1040,7 +1040,8 @@
 <script>
 (function () {
   // The deployed Vercel function (private onpaper-api repo) that holds the key + prompt.
-  var API_BASE   = "https://onpaper-api.vercel.app/api";
+  // LOCAL DEMO OVERRIDE: pointed at the free-tier PREVIEW backend (uncommitted).
+  var API_BASE   = "https://onpaper-api-git-free-tier-roys-projects-48041b7f.vercel.app/api";
   var API_URL     = API_BASE + "/analyze";
   var REDEEM_URL  = API_BASE + "/redeem";
   var BALANCE_URL = API_BASE + "/balance";
@@ -1141,7 +1142,10 @@
   (function () {
     var n = $("deskNotice"), x = $("deskNoticeX");
     if (!n || !x) return;
-    if (get("op_desk_notice") !== "dismissed") n.hidden = false;
+    // Only relevant on narrow / mobile screens, and only until dismissed once.
+    var isNarrow = false;
+    try { isNarrow = window.matchMedia("(max-width: 768px)").matches; } catch (e) {}
+    if (isNarrow && get("op_desk_notice") !== "dismissed") n.hidden = false;
     x.addEventListener("click", function () { n.hidden = true; set("op_desk_notice", "dismissed"); });
   })();
 
@@ -2040,7 +2044,7 @@
 
     // A link is resolved server-side (fetched, or searched on the retry); pasted
     // text is sent straight through as the job description.
-    var payload = { cv: cv, token: uid };
+    var payload = { cv: cv, token: uid, free: true }; // LOCAL DEMO: free-tier pool (uncommitted)
     var jdSource;
     if (kind === "url") {
       payload.jdUrl = jd;
@@ -2404,6 +2408,7 @@
   els.fitNew.addEventListener("click", function () { backToInput(); });
   els.copy.addEventListener("click", function () {
     navigator.clipboard.writeText(plainText()).then(function () {
+      track("report_downloaded", { format: "text" });
       toast("Report text copied to clipboard");
     }, function () { toast("Copy failed"); });
   });
@@ -2477,6 +2482,7 @@
     }
 
     out.doc.save("onpaper-fit-report-" + new Date().toISOString().slice(0, 10) + ".pdf");
+    track("report_downloaded", { format: "pdf" });
   }
   els.download.addEventListener("click", function () { downloadPdf(); });
 
@@ -2567,7 +2573,8 @@
   // init
   renderBalance();
   refreshRunDisabled();
-  fetchBalance();
+  // LOCAL DEMO: skip the balance gate so free-tier runs are clickable (uncommitted).
+  // fetchBalance();
   track("onpaper_opened", { entry: "load" });
 })();
 </script>
