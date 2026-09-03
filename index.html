@@ -64,6 +64,46 @@
   });
 </script>
 
+<!-- Cloudflare Turnstile (Step 5a wiring). Managed mode + interaction-only appearance
+     → invisible for most users. The token is captured here and read by the analyze
+     call as body.turnstileToken. The site key is public by design; the secret half
+     lives server-side (onpaper-api TURNSTILE_SECRET_KEY). Enforcement stays inert
+     until cfg:turnstile_enabled is flipped on the backend. -->
+<script>
+  // Token plumbing lives on window because Turnstile invokes its callbacks by name
+  // from global scope, while the app logic runs inside an IIFE further down.
+  window.__opTS = (function () {
+    var token = "";       // current unused token ("" = none available yet)
+    var waiters = [];     // resolvers waiting for the next token
+    return {
+      set: function (t) {
+        token = t || "";
+        if (token) { var w = waiters; waiters = []; w.forEach(function (fn) { fn(token); }); }
+      },
+      clear: function () { token = ""; },
+      get: function () { return token; },
+      // Resolve to the current token, or wait for the widget to produce one.
+      // Falls back to "" after timeoutMs so a broken/blocked widget can't hang
+      // the click forever (that yields a clean turnstile_failed deny once enabled).
+      wait: function (timeoutMs) {
+        if (token) return Promise.resolve(token);
+        return new Promise(function (resolve) {
+          var done = false;
+          var to = setTimeout(function () { if (!done) { done = true; resolve(token || ""); } }, timeoutMs);
+          waiters.push(function (t) { if (!done) { done = true; clearTimeout(to); resolve(t); } });
+        });
+      }
+    };
+  })();
+  window.onpTurnstileOk      = function (t) { window.__opTS.set(t); };
+  window.onpTurnstileExpired = function () {
+    window.__opTS.clear();
+    try { if (window.turnstile) window.turnstile.reset(); } catch (e) {}
+  };
+  window.onpTurnstileError   = function () { window.__opTS.clear(); };
+</script>
+<script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+
 <style>
   /* ================================================================
      OnPaper — "proofreader's desk". Design tokens from the handoff.
@@ -881,6 +921,14 @@
         <button type="button" class="op-btn" id="fitNew">New fit check</button>
       </div>
       <span class="op-barmsg" id="barMsg" hidden></span>
+      <!-- Turnstile (Managed, interaction-only → invisible for most users). Step 5a:
+           token wiring only, no visible UX. Rendered once; token read at run time. -->
+      <div id="opTurnstile" class="cf-turnstile"
+           data-sitekey="0x4AAAAAAEmFFKg-jn6sXMSs"
+           data-callback="onpTurnstileOk"
+           data-expired-callback="onpTurnstileExpired"
+           data-error-callback="onpTurnstileError"
+           data-appearance="interaction-only"></div>
     </div>
   </div>
 </div>
@@ -1094,6 +1142,55 @@
   var uid = "";
   try { uid = localStorage.getItem(LS_UID) || ""; if (!uid) { uid = uuid(); localStorage.setItem(LS_UID, uid); } }
   catch (e) { uid = uuid(); }
+
+  // Device signal hash (Step 5a, Part 2). Coarse, non-PII browser signals hashed
+  // into one value for the backend's per-device daily limit. Only the hash is
+  // sent as body.device — never the raw signals. Computed ONCE, now, on load, so
+  // the click-to-request path just reads a resolved promise (no visible delay).
+  var deviceHashPromise = (function computeDeviceHash() {
+    function collectSignals() {
+      var parts = [];
+      try { parts.push(navigator.userAgent || ""); } catch (e) {}
+      try { parts.push(Intl.DateTimeFormat().resolvedOptions().timeZone || ""); } catch (e) {}
+      try { parts.push((new Date()).getTimezoneOffset()); } catch (e) {}
+      try { parts.push([screen.width, screen.height, screen.colorDepth, (window.devicePixelRatio || 1)].join("x")); } catch (e) {}
+      try { parts.push((navigator.language || "") + "|" + ((navigator.languages || []).join(","))); } catch (e) {}
+      try { parts.push((navigator.hardwareConcurrency || 0) + "|" + (navigator.maxTouchPoints || 0)); } catch (e) {}
+      // A small canvas fingerprint: rendering differs by GPU/font stack/AA.
+      try {
+        var c = document.createElement("canvas");
+        c.width = 200; c.height = 40;
+        var ctx = c.getContext("2d");
+        ctx.textBaseline = "top";
+        ctx.font = "14px 'Arial'";
+        ctx.fillStyle = "#f60"; ctx.fillRect(0, 0, 100, 20);
+        ctx.fillStyle = "#069"; ctx.fillText("OnPaper ✈ device", 2, 2);
+        ctx.strokeStyle = "rgba(120,60,200,0.6)"; ctx.beginPath();
+        ctx.arc(50, 20, 15, 0, Math.PI * 2); ctx.stroke();
+        parts.push(c.toDataURL());
+      } catch (e) {}
+      return parts.join("␟"); // unit separator, unlikely in any signal
+    }
+    function fallbackHash(str) {
+      // FNV-1a 32-bit, only if SubtleCrypto is unavailable (insecure context).
+      var h = 0x811c9dc5;
+      for (var i = 0; i < str.length; i++) { h ^= str.charCodeAt(i); h = (h + ((h << 1) + (h << 4) + (h << 7) + (h << 8) + (h << 24))) >>> 0; }
+      return ("00000000" + h.toString(16)).slice(-8);
+    }
+    var raw;
+    try { raw = collectSignals(); } catch (e) { raw = String(Date.now()); }
+    try {
+      if (window.crypto && crypto.subtle && crypto.subtle.digest) {
+        var buf = new TextEncoder().encode(raw);
+        return crypto.subtle.digest("SHA-256", buf).then(function (digest) {
+          var b = new Uint8Array(digest), hex = "";
+          for (var i = 0; i < b.length; i++) hex += ("0" + b[i].toString(16)).slice(-2);
+          return hex;
+        }).catch(function () { return fallbackHash(raw); });
+      }
+    } catch (e) {}
+    return Promise.resolve(fallbackHash(raw));
+  })();
 
   // If this browser has already redeemed a coupon, re-establish it as the PostHog
   // identity on every load. PostHog runs with persistence:'memory' (no tracking
@@ -1984,6 +2081,13 @@
       headers: { "content-type": "application/json" },
       body: JSON.stringify(payload)
     });
+    // Turnstile tokens are single-use. Once the backend has seen this one, drop it
+    // and refresh the widget so the next request (the blocked→search retry, or the
+    // next run) has a fresh token ready instead of re-sending a spent one.
+    try {
+      if (window.__opTS) window.__opTS.clear();
+      if (window.turnstile) window.turnstile.reset();
+    } catch (e) {}
     var data = {};
     try { data = await res.json(); } catch (e) {}
     if (!res.ok) {
@@ -2088,6 +2192,13 @@
     } else {
       payload.jd = jd; jdSource = "paste";
     }
+
+    // Abuse signals (Step 5a). Device hash resolves instantly (computed on load).
+    // For the Turnstile token we WAIT for the widget rather than fire token-less
+    // (a token-less request is a guaranteed turnstile_failed deny once enabled);
+    // the wait is bounded and normally ~0 since Managed mode resolves on load.
+    try { payload.device = await deviceHashPromise; } catch (e) {}
+    payload.turnstileToken = window.__opTS ? await window.__opTS.wait(10000) : "";
 
     var t0 = Date.now();
     if (!opts.search) {
