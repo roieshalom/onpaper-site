@@ -729,6 +729,30 @@
   .op-free-line b { font-weight: 500; color: var(--ink-2); }
   .op-close-note { font-family: var(--serif-b); font-size: 14px; line-height: 1.6; color: var(--ink-3); margin: 24px 0 0; padding-top: 18px; border-top: 1px dashed var(--dash); text-wrap: pretty; }
 
+  /* ---- v2 refinements ---- */
+  /* Wall: a slow breathing dot + a rotating "while you wait" line so the wait
+     reads as alive, not as a frozen error. The number itself stays steady. */
+  .op-wall-dot { flex: none; width: 7px; height: 7px; border-radius: 50%; background: var(--ink-4); animation: op-breathe 2.6s ease-in-out infinite; }
+  @keyframes op-breathe { 0%, 100% { opacity: 0.25; transform: scale(0.85); } 50% { opacity: 1; transform: scale(1); } }
+  .op-wall-tip { font-family: var(--serif-b); font-style: italic; font-size: 13px; line-height: 1.5; color: var(--ink-4); margin: 2px 0 0; min-height: 1.5em; max-width: 460px; transition: opacity .5s ease; text-wrap: pretty; }
+  @media (prefers-reduced-motion: reduce) { .op-wall-dot { animation: none; opacity: 0.7; } .op-wall-tip { transition: none; } }
+
+  /* Inline "do this instead" notice — the light-weight counterpart to the modal,
+     living where the inline validation line lives (under the inputs). Calm/neutral,
+     not the red error tone: this isn't a mistake, it's a redirect. */
+  .op-inline-note { display: flex; align-items: flex-start; gap: 9px; font-family: var(--mono); font-size: 12px; line-height: 1.55; letter-spacing: 0.01em; color: var(--ink-3); background: var(--best-bg); border: 1px solid var(--line-in); border-radius: 4px; padding: 10px 14px; text-align: left; }
+  .op-inline-note svg { flex: none; width: 14px; height: 14px; margin-top: 1px; color: var(--ink-4); }
+  .op-inline-note b { font-weight: 500; color: var(--ink-2); }
+  .op-inline-note .op-inline-foot { color: var(--faint); }
+
+  /* Email capture v2 — two honest, separate permissions under one field. Submit is
+     disabled until at least one is ticked (no error copy needed). */
+  .op-email-perms { display: flex; flex-direction: column; gap: 8px; margin: 12px 0 0; }
+  .op-perm { display: flex; align-items: flex-start; gap: 9px; font-family: var(--mono); font-size: 12px; line-height: 1.4; color: var(--ink-3); cursor: pointer; }
+  .op-perm input { flex: none; width: 15px; height: 15px; margin: 1px 0 0; accent-color: var(--ink); cursor: pointer; }
+  .op-email--wall .op-perm { color: var(--ink-3); }
+  .op-email-btn:disabled { background: #C7D0DA; color: #8793A3; cursor: not-allowed; }
+
   /* ---- "coming soon" diagonal stamp over the packs ---- */
   .op-packs-wrap { position: relative; }
   .op-soon-stamp { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; pointer-events: none; }
@@ -865,6 +889,13 @@
             <span id="availText"></span>
           </div>
           <div class="op-error" id="fitError" hidden></div>
+          <!-- Inline blocked-link redirect (the light-weight alternative to the
+               modal). Shown here, with the JD paste box already opened, so the fix
+               is right below it. No scrim, no button. -->
+          <div class="op-inline-note" id="blockedInline" hidden>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1 1"/><path d="M14 11a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1-1"/><path d="M4 4l16 16"/></svg>
+            <span>That job link is behind a login, so I can&rsquo;t read it. <b>Paste the job text instead</b> and you&rsquo;re good. <span class="op-inline-foot">This didn&rsquo;t use one of your checks.</span></span>
+          </div>
           <!-- Sample-result preview hidden for now. Restore by un-commenting; the
                handler + SAMPLE data below are kept intact and simply unreferenced.
           <a href="#" class="op-sample" id="fitSample">preview a sample result &rarr;</a>
@@ -953,15 +984,21 @@
              calibration, not a pre-emptive hedge. -->
         <p id="closeNote" class="op-close-note" hidden>OnPaper reads your CV against the posting and names what&rsquo;s missing. It&rsquo;s confident and it can still be wrong, so check anything that surprises you. Free checks reset continuously through the day.</p>
 
-        <!-- Primary email capture — value has already landed. One field, no account. -->
+        <!-- Primary email capture — value has already landed. One field, no account.
+             Two separate, honest permissions; at least one required to submit. -->
         <div id="emailReport" class="op-email" hidden>
-          <p class="op-email-lead">Want a heads-up when your own runs are ready?</p>
-          <form class="op-email-row" id="emailReportForm" novalidate>
-            <input type="email" class="op-email-in" id="emailReportIn" placeholder="you@example.com" autocomplete="email" inputmode="email" spellcheck="false" />
-            <button type="submit" class="op-email-btn" id="emailReportBtn">Notify me</button>
+          <p class="op-email-lead">Want a heads-up? Tell me what for.</p>
+          <form id="emailReportForm" novalidate>
+            <div class="op-email-perms">
+              <label class="op-perm"><input type="checkbox" class="op-perm-free" /><span>Tell me if more free runs open up</span></label>
+              <label class="op-perm"><input type="checkbox" class="op-perm-paid" /><span>Tell me when paid runs launch</span></label>
+            </div>
+            <div class="op-email-row" style="margin-top:12px">
+              <input type="email" class="op-email-in" id="emailReportIn" placeholder="you@example.com" autocomplete="email" inputmode="email" spellcheck="false" />
+              <button type="submit" class="op-email-btn" id="emailReportBtn" disabled>Notify me</button>
+            </div>
           </form>
-          <p class="op-email-fine">Just for this. No spam, unsubscribe anytime.</p>
-          <p class="op-email-done" id="emailReportDone" hidden>Got it &mdash; I&rsquo;ll use this when free runs are ready.</p>
+          <p class="op-email-done" id="emailReportDone" hidden>Got it &mdash; I&rsquo;ll only use your email for what you ticked.</p>
         </div>
       </div>
     </div>
@@ -991,19 +1028,27 @@
       <div id="barOut" hidden></div>
       <div id="barWall" hidden>
         <div class="op-wall">
-          <span class="op-wall-kicker"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg><span id="wallKicker">All checks in use</span></span>
+          <span class="op-wall-kicker"><span class="op-wall-dot" aria-hidden="true"></span><span id="wallKicker">All checks in use</span></span>
           <p class="op-wall-lead" id="wallLead"></p>
           <div class="op-wall-count-row">Next one frees up in <span class="op-wall-count" id="wallCount">—</span></div>
           <p class="op-wall-keep">Your CV and job description are still here.</p>
-          <!-- Secondary email capture — smaller, optional, framed as a notification. -->
+          <!-- Rotating calm line so the wait reads as alive, not frozen. -->
+          <p class="op-wall-tip" id="wallTip" aria-live="off"></p>
+          <!-- Secondary email capture — smaller, optional, framed as a notification.
+               Two separate permissions; at least one required to submit. -->
           <div id="emailWall" class="op-email op-email--wall">
-            <p class="op-email-lead">Or: tell me where to send it when the pool refills.</p>
-            <form class="op-email-row" id="emailWallForm" novalidate>
-              <input type="email" class="op-email-in" id="emailWallIn" placeholder="you@example.com" autocomplete="email" inputmode="email" spellcheck="false" />
-              <button type="submit" class="op-email-btn" id="emailWallBtn">Notify me</button>
+            <p class="op-email-lead">Or leave your email &mdash; tell me what to send:</p>
+            <form id="emailWallForm" novalidate>
+              <div class="op-email-perms">
+                <label class="op-perm"><input type="checkbox" class="op-perm-free" /><span>Tell me if more free runs open up</span></label>
+                <label class="op-perm"><input type="checkbox" class="op-perm-paid" /><span>Tell me when paid runs launch</span></label>
+              </div>
+              <div class="op-email-row" style="margin-top:10px">
+                <input type="email" class="op-email-in" id="emailWallIn" placeholder="you@example.com" autocomplete="email" inputmode="email" spellcheck="false" />
+                <button type="submit" class="op-email-btn" id="emailWallBtn" disabled>Notify me</button>
+              </div>
             </form>
-            <p class="op-email-fine">Just for this. No spam, unsubscribe anytime.</p>
-            <p class="op-email-done" id="emailWallDone" hidden>Got it &mdash; I&rsquo;ll use this when free runs are ready.</p>
+            <p class="op-email-done" id="emailWallDone" hidden>Got it &mdash; I&rsquo;ll only use your email for what you ticked.</p>
           </div>
           <div class="op-wall-tools">
             <button type="button" class="op-getmore" id="wallCode">Have a code?</button>
@@ -1190,17 +1235,18 @@
   </div>
 </div>
 
-<!-- Turnstile verification failed (Step 5b, Part 6). Momentary + retry-able.
-     UNTESTED against a live deny until cfg:turnstile_enabled flips — preview it
-     on localhost with ?deny=turnstile_failed. -->
+<!-- Verification couldn't complete — retry-able (turnstile_failed). Copy states the
+     outcome only, never the mechanism: no mention of browser checks / verification
+     challenges, which would hint at how to game them. UNTESTED against a live deny
+     until cfg:turnstile_enabled flips — preview on localhost with ?deny=turnstile_failed. -->
 <div class="op-confirm-back op-deny op-deny--turnstile" id="denyTurnstileBack" hidden>
-  <div class="op-confirm" role="dialog" aria-modal="true" aria-label="Quick browser check">
+  <div class="op-confirm" role="dialog" aria-modal="true" aria-label="Couldn't verify this run">
     <div class="op-deny-head">
-      <span class="op-deny-ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l7 3v6c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6z"/><path d="M9 12l2 2 4-4"/></svg></span>
-      <span class="op-deny-kicker">Quick check</span>
+      <span class="op-deny-ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/><path d="M3 21v-5h5"/></svg></span>
+      <span class="op-deny-kicker">One more step</span>
     </div>
-    <p class="op-confirm-title">Let&rsquo;s make sure you&rsquo;re human &mdash; one quick check.</p>
-    <p class="op-confirm-note">Your browser didn&rsquo;t clear a quick verification. Give it a second, then try again.</p>
+    <p class="op-confirm-title">We couldn&rsquo;t verify this run the usual way.</p>
+    <p class="op-confirm-note">Give it a second, then try again.</p>
     <p class="op-confirm-foot">This didn&rsquo;t use one of your checks.</p>
     <div class="op-confirm-actions">
       <button type="button" class="op-btn" id="denyTurnstileRetry">Try again</button>
@@ -1208,18 +1254,18 @@
   </div>
 </div>
 
-<!-- Per-browser / per-network daily limit (Step 5b, Part 6). NOT retry-able —
-     retrying won't help — so no "try again", just an honest come-back. UNTESTED
-     against a live deny until the abuse layer is enabled — preview on localhost
-     with ?deny=device_limit (or ?deny=ip_limit). -->
+<!-- Verification couldn't complete — try later (device_limit / ip_limit share this
+     ONE screen; distinguishing per-browser vs per-network would leak the mechanism).
+     Same vague reason line as above; differs only in guidance + no retry. UNTESTED
+     against a live deny until the abuse layer is enabled — preview with ?deny=device_limit. -->
 <div class="op-confirm-back op-deny op-deny--limit" id="denyLimitBack" hidden>
-  <div class="op-confirm" role="dialog" aria-modal="true" aria-label="Daily limit reached">
+  <div class="op-confirm" role="dialog" aria-modal="true" aria-label="Couldn't verify this run">
     <div class="op-deny-head">
       <span class="op-deny-ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 1.5"/><path d="M9 2h6"/></svg></span>
-      <span class="op-deny-kicker" id="denyLimitKicker">Easy does it</span>
+      <span class="op-deny-kicker">Try again later</span>
     </div>
-    <p class="op-confirm-title" id="denyLimitTitle">You&rsquo;ve run a lot of checks from here today.</p>
-    <p class="op-confirm-note">To keep OnPaper free for everyone, there&rsquo;s a daily limit per browser. It eases up through the day &mdash; try again a bit later, or come back tomorrow.</p>
+    <p class="op-confirm-title">We couldn&rsquo;t verify this run the usual way.</p>
+    <p class="op-confirm-note">This can happen for a few reasons. Try again a little later.</p>
     <p class="op-confirm-foot">This didn&rsquo;t use one of your checks.</p>
     <div class="op-confirm-actions">
       <button type="button" class="op-ghost-btn" id="denyLimitOk">Got it</button>
@@ -1376,17 +1422,16 @@
     gapList: $("gapList"),
     freeBanner: $("freeBanner"),
     barWall: $("barWall"), wallLead: $("wallLead"), wallCount: $("wallCount"),
-    wallKicker: $("wallKicker"), wallCode: $("wallCode"),
+    wallKicker: $("wallKicker"), wallCode: $("wallCode"), wallTip: $("wallTip"),
     availLine: $("availLine"), availText: $("availText"),
-    closeNote: $("closeNote"),
+    closeNote: $("closeNote"), blockedInline: $("blockedInline"),
     emailReport: $("emailReport"), emailReportForm: $("emailReportForm"),
-    emailReportIn: $("emailReportIn"), emailReportDone: $("emailReportDone"),
+    emailReportIn: $("emailReportIn"), emailReportDone: $("emailReportDone"), emailReportBtn: $("emailReportBtn"),
     emailWall: $("emailWall"), emailWallForm: $("emailWallForm"),
-    emailWallIn: $("emailWallIn"), emailWallDone: $("emailWallDone"),
+    emailWallIn: $("emailWallIn"), emailWallDone: $("emailWallDone"), emailWallBtn: $("emailWallBtn"),
     blockedLinkBack: $("blockedLinkBack"), blockedPasteBtn: $("blockedPasteBtn"),
     denyTurnstileBack: $("denyTurnstileBack"), denyTurnstileRetry: $("denyTurnstileRetry"),
     denyLimitBack: $("denyLimitBack"), denyLimitOk: $("denyLimitOk"),
-    denyLimitTitle: $("denyLimitTitle"), denyLimitKicker: $("denyLimitKicker"),
     payBack: $("payBack"), payModal: $("payModal"), payClose: $("payClose"),
     getMore1: $("getMore1"),
     coupon: $("fitCoupon"), couponBtn: $("fitCouponBtn"), couponMsg: $("fitCouponMsg"),
@@ -2009,6 +2054,32 @@
     if (els.wallCount) els.wallCount.textContent = txt;
     if (els.availText) els.availText.innerHTML = "Free checks are all in use · next one in <b>" + txt + "</b>";
   }
+  // A rotating calm line under the countdown — turns dead-wait into something with
+  // a pulse (and a little use), without touching the number or implying scarcity.
+  var WALL_TIPS = [
+    "While you wait — reread the posting and note the words it repeats.",
+    "The strongest CVs echo the job’s own language. A good moment to check yours.",
+    "Most postings name what matters most in the first third. Worth a second read.",
+    "A gap is only worth fixing if the role actually asks for it — reread with that lens."
+  ];
+  var wallTipTimer = null, wallTipIdx = 0;
+  function showWallTip(i) {
+    if (!els.wallTip) return;
+    els.wallTip.style.opacity = "0";
+    setTimeout(function () {
+      els.wallTip.textContent = WALL_TIPS[i % WALL_TIPS.length];
+      els.wallTip.style.opacity = "1";
+    }, 260);
+  }
+  function startWallTips() {
+    if (wallTipTimer || !els.wallTip) return;
+    wallTipIdx = 0;
+    els.wallTip.textContent = WALL_TIPS[0];
+    els.wallTip.style.opacity = "1";
+    wallTipTimer = setInterval(function () { showWallTip(++wallTipIdx); }, 7000);
+  }
+  function stopWallTips() { if (wallTipTimer) { clearInterval(wallTipTimer); wallTipTimer = null; } }
+
   // Paint the whole wall + availability line (called on state change).
   function renderWall() {
     if (pool.exhausted) {
@@ -2047,6 +2118,7 @@
     renderWall();
     refreshRunDisabled();
     startWallTicker();
+    startWallTips();
   }
   // Pool is free again — tear the wall down, revive the button, no manual refresh.
   function revivePool() {
@@ -2054,6 +2126,7 @@
     pool.exhausted = false; pool.reason = ""; pool.midFlow = false;
     freeExhausted = false;
     stopWallTicker();
+    stopWallTips();
     resetEmail(els.emailWall, els.emailWallForm, els.emailWallDone, els.emailWallIn);
     renderBalance();
     renderWall();
@@ -2079,7 +2152,7 @@
         pool.secondsLeft = Math.max(0, Number(data.seconds_until_next_run) || 0);
         pool.anchorAt = Date.now();
         freeExhausted = true;
-        renderBalance(); renderWall(); refreshRunDisabled(); startWallTicker();
+        renderBalance(); renderWall(); refreshRunDisabled(); startWallTicker(); startWallTips();
       } else {
         revivePool();
       }
@@ -2094,7 +2167,8 @@
   // real pool or waiting for the abuse flag to flip.
   //   ?state=exhausted        → passive wall (daily), demo countdown
   //   ?wall=rate_limited&secs=90 → bucket wall, short countdown
-  //   ?deny=turnstile_failed | device_limit | ip_limit | blocked → the denial UI
+  //   ?deny=turnstile_failed | device_limit | ip_limit → the denial modals
+  //   ?deny=blocked (modal)  |  ?deny=blocked-inline (inline notice)  → blocked link
   var MOCK_DENY = "";
   try {
     if (/^(localhost|127\.0\.0\.1)$/.test(location.hostname)) {
@@ -2152,6 +2226,7 @@
   function refreshRunDisabled() { els.run.disabled = findDisabled(); }
   function onEdit() {
     setError("");
+    if (els.blockedInline) els.blockedInline.hidden = true;   // they're acting on the redirect
     rerunConfirmed = false;   // editing either input means the next run isn't a blind re-run
     if (!loading && !freeExhausted) els.run.disabled = findDisabled();
   }
@@ -2551,7 +2626,7 @@
         setLoading(false);
         closeConfirm(els.jdSearchBack);
         track("jd_link_blocked", { fallback: "off" });
-        showBlockedLink();
+        showBlockedLinkInline();
         return;
       }
 
@@ -2733,54 +2808,74 @@
   }
 
   // ===== Step 5b denial UIs + email capture =====
-  // Blocked job link → friendly modal that drops the user into paste mode.
+  // Blocked job link, INLINE variant (the light-weight "do this instead" pattern,
+  // same slot as the inline validation line). Opens the JD paste box and shows a
+  // calm notice right above it — no scrim, no button. This is the live path.
+  function showBlockedLinkInline() {
+    setError("");                        // clear any red validation line first
+    openJdPaste();                       // paste box open + focused, fix is right there
+    if (els.blockedInline) els.blockedInline.hidden = false;
+  }
+  // Blocked job link, MODAL variant. Kept for side-by-side comparison (?deny=blocked).
   function showBlockedLink() {
     openConfirm(els.blockedLinkBack);
   }
-  // Per-browser / per-network daily limit → non-technical, no retry.
+  // Verification couldn't complete. Copy reveals no mechanism (see the modals); the
+  // two 429 limit reasons (device_limit / ip_limit) share this ONE screen so we
+  // never hint at per-browser vs per-network. `reason` kept only for analytics.
   function showDenyLimit(reason) {
-    if (reason === "ip_limit") {
-      els.denyLimitKicker.textContent = "Busy network";
-      els.denyLimitTitle.textContent = "A lot of checks have come from your network today.";
-    } else {
-      els.denyLimitKicker.textContent = "Easy does it";
-      els.denyLimitTitle.textContent = "You’ve run a lot of checks from here today.";
-    }
     openConfirm(els.denyLimitBack);
   }
 
   // Email capture — STUB. /api/notify isn't built yet, so this stores nothing and
   // makes no network call; a follow-up PR flips it to a real POST once the endpoint
-  // ships. The success copy promises no timeline ("Got it"), so it stays honest
-  // with no send pipeline behind it. No email is ever sent to analytics (PII).
+  // ships. Two separate, honest permissions (free-runs / paid-launch); at least one
+  // must be ticked (the submit button is disabled otherwise — no error copy needed).
+  // No email is ever sent to analytics (PII) — only which permissions were chosen.
   var EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  function permsOf(formEl) {
+    if (!formEl) return { free: false, paid: false };
+    var f = formEl.querySelector(".op-perm-free"), p = formEl.querySelector(".op-perm-paid");
+    return { free: !!(f && f.checked), paid: !!(p && p.checked) };
+  }
+  function syncEmailBtn(formEl, btnEl) {
+    if (!btnEl) return;
+    var perms = permsOf(formEl);
+    btnEl.disabled = !(perms.free || perms.paid);   // ≥1 permission required
+  }
   function submitEmail(inputEl, ctx, formEl, doneEl) {
     var v = (inputEl && inputEl.value || "").trim();
+    var perms = permsOf(formEl);
+    if (!(perms.free || perms.paid)) return false;        // guarded by the disabled button too
     if (!EMAIL_RE.test(v)) { try { inputEl.focus(); } catch (e) {} return false; }
-    try { console.log("[notify stub]", JSON.stringify({ email: v, context: ctx })); } catch (e) {}
-    track("notify_signup", { context: ctx });   // context only — never the address
+    // STUB: real endpoint sends { email, context, notify_free, notify_paid }.
+    try { console.log("[notify stub]", JSON.stringify({ email: v, context: ctx, notify_free: perms.free, notify_paid: perms.paid })); } catch (e) {}
+    track("notify_signup", { context: ctx, notify_free: perms.free, notify_paid: perms.paid });  // never the address
     if (formEl) formEl.hidden = true;
     if (doneEl) doneEl.hidden = false;
     return true;
   }
   function resetEmail(wrapEl, formEl, doneEl, inputEl) {
-    if (formEl) formEl.hidden = false;
+    if (formEl) {
+      formEl.hidden = false;
+      Array.prototype.forEach.call(formEl.querySelectorAll("input[type=checkbox]"), function (c) { c.checked = false; });
+    }
     if (doneEl) doneEl.hidden = true;
     if (inputEl) inputEl.value = "";
+    if (wrapEl) { var b = wrapEl.querySelector(".op-email-btn"); if (b) b.disabled = true; }
   }
-  if (els.emailReportForm) els.emailReportForm.addEventListener("submit", function (e) {
-    e.preventDefault();
-    submitEmail(els.emailReportIn, "report", els.emailReportForm, els.emailReportDone);
-  });
-  if (els.emailWallForm) els.emailWallForm.addEventListener("submit", function (e) {
-    e.preventDefault();
-    submitEmail(els.emailWallIn, "wall", els.emailWallForm, els.emailWallDone);
-  });
+  function wireEmail(formEl, inputEl, ctx, doneEl, btnEl) {
+    if (!formEl) return;
+    formEl.addEventListener("submit", function (e) { e.preventDefault(); submitEmail(inputEl, ctx, formEl, doneEl); });
+    formEl.addEventListener("change", function () { syncEmailBtn(formEl, btnEl); });
+  }
+  wireEmail(els.emailReportForm, els.emailReportIn, "report", els.emailReportDone, els.emailReportBtn);
+  wireEmail(els.emailWallForm, els.emailWallIn, "wall", els.emailWallDone, els.emailWallBtn);
 
-  // Denial modal buttons.
+  // Blocked-link modal button (comparison variant): drop into the paste field.
   if (els.blockedPasteBtn) els.blockedPasteBtn.addEventListener("click", function () {
     closeConfirm(els.blockedLinkBack);
-    openJdPaste();                     // straight into the JD paste field
+    openJdPaste();
   });
   if (els.denyTurnstileRetry) els.denyTurnstileRetry.addEventListener("click", function () {
     closeConfirm(els.denyTurnstileBack);
@@ -3130,7 +3225,8 @@
     if (!MOCK_DENY) return;
     if (MOCK_DENY === "turnstile_failed") openConfirm(els.denyTurnstileBack);
     else if (MOCK_DENY === "device_limit" || MOCK_DENY === "ip_limit") showDenyLimit(MOCK_DENY);
-    else if (MOCK_DENY === "blocked") showBlockedLink();
+    else if (MOCK_DENY === "blocked") showBlockedLink();                 // modal (comparison)
+    else if (MOCK_DENY === "blocked-inline") showBlockedLinkInline();    // inline (live path)
   }
 
   // init
