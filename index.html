@@ -62,6 +62,22 @@
     autocapture: false,
     disable_session_recording: true
   });
+  // Internal-traffic marker (Roie's own dev/testing). Visit any page once with
+  // ?internal=1 to stamp this browser; the flag persists in localStorage (PostHog
+  // persistence is 'memory', so we re-register it on every load). It rides on every
+  // client event as a super property, and is threaded into the /analyze payload so
+  // the server run-cost event carries it too — letting PostHog's "internal & test
+  // accounts" filter drop ALL of Roie's traffic, anonymous or coupon-identified.
+  // Analytics-only: it never affects authorization, the pool, or spend.
+  try {
+    if (/[?&]internal=1(?:&|$)/.test(location.search || "")) {
+      try { localStorage.setItem("onpaper_internal", "1"); } catch (e) {}
+    }
+    var __opInternal = false;
+    try { __opInternal = localStorage.getItem("onpaper_internal") === "1"; } catch (e) {}
+    window.__opInternal = __opInternal;
+    if (__opInternal && window.posthog && posthog.register) posthog.register({ internal: true });
+  } catch (e) {}
 </script>
 
 <!-- Cloudflare Turnstile (Step 5a wiring). Managed mode + interaction-only appearance
@@ -2602,6 +2618,7 @@
     // the wait is bounded and normally ~0 since Managed mode resolves on load.
     try { payload.device = await deviceHashPromise; } catch (e) {}
     payload.turnstileToken = window.__opTS ? await window.__opTS.wait(10000) : "";
+    if (window.__opInternal) payload.internal = true;   // tag the server run-cost event as Roie's own testing
 
     var t0 = Date.now();
     if (!opts.search) {
