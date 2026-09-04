@@ -1288,6 +1288,17 @@
 (function () {
   // The deployed Vercel function (private onpaper-api repo) that holds the key + prompt.
   var API_BASE   = "https://onpaper-api.vercel.app/api";
+  // Friend-test preview only: the Vercel preview of the free-tier branch talks to
+  // the preview API TWIN (its own pool + the enabled abuse layer), never prod. The
+  // match is deliberately narrow — the stable free-tier branch alias
+  // (onpaper-site-git-free-tier-…vercel.app) — so production (onpaper.fit, GitHub
+  // Pages) and any other host stay on the production API untouched. Safe to ship:
+  // onpaper.fit never matches this pattern.
+  try {
+    if (/^onpaper-site-git-free-tier/i.test(location.hostname)) {
+      API_BASE = "https://onpaper-api-git-free-tier-roys-projects-48041b7f.vercel.app/api";
+    }
+  } catch (e) {}
   // Local testing only: on localhost, ?api=<base> can point at a preview backend
   // (e.g. the free-tier PR preview). Ignored on the live site, so it's safe to ship.
   try {
