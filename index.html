@@ -1295,7 +1295,7 @@
   // Pages) and any other host stay on the production API untouched. Safe to ship:
   // onpaper.fit never matches this pattern.
   try {
-    if (/^onpaper-site-git-free-tier/i.test(location.hostname)) {
+    if (/^onpaper-site.*-git-free-tier/i.test(location.hostname)) {
       API_BASE = "https://onpaper-api-git-free-tier-roys-projects-48041b7f.vercel.app/api";
     }
   } catch (e) {}
