@@ -1426,6 +1426,13 @@
     return Promise.resolve(fallbackHash(raw));
   })();
 
+  // Debug hook: surface this browser's computed device hash for the operator
+  // allowlist (onpaper-api admin → Device allowlist). Read it from the console
+  // with `await window.__onpaperDeviceHash`, or just `__onpaperDeviceHash` once
+  // resolved. Exposing it changes nothing — the same hash already rides on
+  // body.device — it just saves digging it out of the network tab.
+  try { deviceHashPromise.then(function (h) { window.__onpaperDeviceHash = h; }); } catch (e) {}
+
   // If this browser has already redeemed a coupon, re-establish it as the PostHog
   // identity on every load. PostHog runs with persistence:'memory' (no tracking
   // cookies), so its distinct_id resets each visit — re-identifying here is what
