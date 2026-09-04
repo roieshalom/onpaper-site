@@ -676,6 +676,83 @@
   .op-confirm-actions:empty + .op-confirm-foot, .op-confirm-foot:last-child { margin-bottom: 0; }
   .op-mini-spin { flex: none; width: 13px; height: 13px; align-self: center; border: 2px solid var(--line-in); border-top-color: var(--red); border-radius: 50%; animation: op-spin 0.7s linear infinite; }
 
+  /* ===== Step 5b: free-pool wall + denial states ===== */
+  /* The wall is an inline bar state (not a scrim): a calm blue panel whose focal
+     element is a large live countdown. Deliberately different in form from the
+     modal denials so the two never read as the same grey box. */
+  .op-wall { display: flex; flex-direction: column; align-items: center; gap: 10px; width: 100%; max-width: 620px; margin: 0 auto; padding: 16px 20px; background: var(--best-bg); border: 1px solid var(--line-in); border-radius: 8px; text-align: center; }
+  .op-wall-kicker { font-family: var(--mono); font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--ink-4); display: inline-flex; align-items: center; gap: 7px; }
+  .op-wall-kicker svg { width: 13px; height: 13px; }
+  .op-wall-lead { font-family: var(--serif-b); font-size: 15px; line-height: 1.5; color: var(--ink-2); margin: 0; text-wrap: pretty; }
+  .op-wall-count-row { font-family: var(--mono); font-size: 12px; letter-spacing: 0.04em; color: var(--ink-3); }
+  .op-wall-count { font-family: var(--mono); font-weight: 500; font-size: 22px; letter-spacing: 0.02em; color: var(--ink); font-variant-numeric: tabular-nums; }
+  .op-wall-keep { font-family: var(--mono); font-size: 11px; letter-spacing: 0.02em; color: var(--faint); margin: 0; }
+  .op-wall-tools { display: flex; flex-wrap: wrap; gap: 4px 14px; justify-content: center; align-items: baseline; margin-top: 2px; }
+  /* Availability line near the inputs — so the wall isn't discovered only after
+     both fields are filled. Same information, compact. */
+  .op-avail { display: flex; align-items: center; justify-content: center; gap: 8px; font-family: var(--mono); font-size: 12px; letter-spacing: 0.02em; color: var(--ink-3); background: var(--best-bg); border: 1px solid var(--line-in); border-radius: 4px; padding: 9px 15px; text-align: center; }
+  .op-avail svg { width: 13px; height: 13px; flex: none; color: var(--ink-4); }
+  .op-avail b { font-weight: 500; color: var(--ink); font-variant-numeric: tabular-nums; }
+
+  /* Denial modals reuse .op-confirm, but each carries a distinct icon + kicker so
+     turnstile / device-limit / blocked-link are never confused for one another. */
+  .op-deny-head { display: flex; align-items: center; gap: 10px; margin: 0 0 14px; }
+  .op-deny-ic { flex: none; width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; border-radius: 50%; border: 1px solid var(--line-in); }
+  .op-deny-ic svg { width: 18px; height: 18px; }
+  .op-deny-kicker { font-family: var(--mono); font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase; }
+  /* per-state accents */
+  .op-deny--link .op-deny-ic { color: var(--red); border-color: var(--tag-border); }
+  .op-deny--link .op-deny-kicker { color: var(--red); }
+  .op-deny--turnstile .op-deny-ic { color: var(--ink-3); }
+  .op-deny--turnstile .op-deny-kicker { color: var(--ink-4); }
+  .op-deny--limit .op-deny-ic { color: var(--amber); border-color: rgba(181,103,12,0.4); }
+  .op-deny--limit .op-deny-kicker { color: var(--amber); }
+  .op-deny--limit .op-confirm { border-left: 3px solid var(--amber); }
+
+  /* Email capture — one field, single purpose. Used below the report (primary)
+     and, smaller, on the wall (secondary). Never adjacent to the privacy note. */
+  .op-email { margin: 26px 0 0; padding: 18px 20px; border: 1px solid var(--card-line); border-radius: 8px; background: var(--paper); }
+  .op-email--wall { margin: 4px 0 0; padding: 0; border: none; background: transparent; max-width: 420px; }
+  .op-email-lead { font-family: var(--serif-b); font-size: 15px; line-height: 1.45; color: var(--ink-2); margin: 0 0 12px; text-wrap: pretty; }
+  .op-email--wall .op-email-lead { font-family: var(--mono); font-size: 12px; color: var(--ink-3); margin-bottom: 9px; }
+  .op-email-row { display: flex; flex-wrap: wrap; gap: 9px; }
+  .op-email-in { flex: 1; min-width: 180px; font-family: var(--serif-b); font-size: 14px; padding: 11px 14px; border: 1px solid var(--line-in); border-radius: 3px; background: var(--paper); color: var(--ink); }
+  .op-email--wall .op-email-in { background: var(--paper); }
+  .op-email-in:focus { outline: none; border-color: var(--red-focus); box-shadow: 0 0 0 3px rgba(224,112,92,0.16); }
+  .op-email-btn { font-family: var(--mono); font-size: 13px; letter-spacing: 0.04em; font-weight: 500; padding: 11px 20px; border: none; border-radius: 3px; background: var(--ink); color: var(--paper-bg); cursor: pointer; white-space: nowrap; }
+  .op-email-btn:active { transform: translateY(1px); }
+  .op-email-fine { font-family: var(--mono); font-size: 10px; letter-spacing: 0.02em; color: var(--faint); margin: 9px 0 0; }
+  .op-email-done { font-family: var(--mono); font-size: 12px; letter-spacing: 0.02em; color: var(--ok); margin: 0; }
+
+  /* Top-of-report line (rewritten) + the closing note below the last gap. */
+  .op-free-line { font-family: var(--mono); font-size: 12px; letter-spacing: 0.03em; color: var(--ink-4); margin: 0 0 18px; }
+  .op-free-line b { font-weight: 500; color: var(--ink-2); }
+  .op-close-note { font-family: var(--serif-b); font-size: 14px; line-height: 1.6; color: var(--ink-3); margin: 24px 0 0; padding-top: 18px; border-top: 1px dashed var(--dash); text-wrap: pretty; }
+
+  /* ---- v2 refinements ---- */
+  /* Wall: a slow breathing dot + a rotating "while you wait" line so the wait
+     reads as alive, not as a frozen error. The number itself stays steady. */
+  .op-wall-dot { flex: none; width: 7px; height: 7px; border-radius: 50%; background: var(--ink-4); animation: op-breathe 2.6s ease-in-out infinite; }
+  @keyframes op-breathe { 0%, 100% { opacity: 0.25; transform: scale(0.85); } 50% { opacity: 1; transform: scale(1); } }
+  .op-wall-tip { font-family: var(--serif-b); font-style: italic; font-size: 13px; line-height: 1.5; color: var(--ink-4); margin: 2px 0 0; min-height: 1.5em; max-width: 460px; transition: opacity .5s ease; text-wrap: pretty; }
+  @media (prefers-reduced-motion: reduce) { .op-wall-dot { animation: none; opacity: 0.7; } .op-wall-tip { transition: none; } }
+
+  /* Inline "do this instead" notice — the light-weight counterpart to the modal,
+     living where the inline validation line lives (under the inputs). Calm/neutral,
+     not the red error tone: this isn't a mistake, it's a redirect. */
+  .op-inline-note { display: flex; align-items: flex-start; gap: 9px; font-family: var(--mono); font-size: 12px; line-height: 1.55; letter-spacing: 0.01em; color: var(--ink-3); background: var(--best-bg); border: 1px solid var(--line-in); border-radius: 4px; padding: 10px 14px; text-align: left; }
+  .op-inline-note svg { flex: none; width: 14px; height: 14px; margin-top: 1px; color: var(--ink-4); }
+  .op-inline-note b { font-weight: 500; color: var(--ink-2); }
+  .op-inline-note .op-inline-foot { color: var(--faint); }
+
+  /* Email capture v2 — two honest, separate permissions under one field. Submit is
+     disabled until at least one is ticked (no error copy needed). */
+  .op-email-perms { display: flex; flex-direction: column; gap: 8px; margin: 12px 0 0; }
+  .op-perm { display: flex; align-items: flex-start; gap: 9px; font-family: var(--mono); font-size: 12px; line-height: 1.4; color: var(--ink-3); cursor: pointer; }
+  .op-perm input { flex: none; width: 15px; height: 15px; margin: 1px 0 0; accent-color: var(--ink); cursor: pointer; }
+  .op-email--wall .op-perm { color: var(--ink-3); }
+  .op-email-btn:disabled { background: #C7D0DA; color: #8793A3; cursor: not-allowed; }
+
   /* ---- "coming soon" diagonal stamp over the packs ---- */
   .op-packs-wrap { position: relative; }
   .op-soon-stamp { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; pointer-events: none; }
@@ -804,7 +881,21 @@
         <p class="op-field-hint op-privacy-note"><svg class="op-privacy-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg><span>We use the data once to run your check. Nothing is saved.</span></p>
 
         <div class="op-tools">
+          <!-- Free-pool availability, shown near the inputs so the wall isn't only
+               discovered after both fields are filled. Driven by the same state as
+               the docked wall; updated live by the countdown ticker. -->
+          <div class="op-avail" id="availLine" hidden>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+            <span id="availText"></span>
+          </div>
           <div class="op-error" id="fitError" hidden></div>
+          <!-- Inline blocked-link redirect (the light-weight alternative to the
+               modal). Shown here, with the JD paste box already opened, so the fix
+               is right below it. No scrim, no button. -->
+          <div class="op-inline-note" id="blockedInline" hidden>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1 1"/><path d="M14 11a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1-1"/><path d="M4 4l16 16"/></svg>
+            <span>That job link is behind a login, so I can&rsquo;t read it. <b>Paste the job text instead</b> and you&rsquo;re good. <span class="op-inline-foot">This didn&rsquo;t use one of your checks.</span></span>
+          </div>
           <!-- Sample-result preview hidden for now. Restore by un-commenting; the
                handler + SAMPLE data below are kept intact and simply unreferenced.
           <a href="#" class="op-sample" id="fitSample">preview a sample result &rarr;</a>
@@ -837,11 +928,10 @@
     <!-- ============ RESULTS VIEW ============ -->
     <div id="viewResults" hidden>
       <div class="op-results">
-        <!-- Free-tier only: disclaimer + upsell banner (shown by showResults for free runs) -->
-        <div id="freeBanner" hidden style="display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px;justify-content:space-between;margin:0 0 18px;padding:12px 16px;border:1px solid #ecdcb8;background:#fbf5e7;border-radius:12px;font-size:13px;line-height:1.45;color:#6d5a2c">
-          <span>This is a <strong>free check</strong> &mdash; AI suggestions, not guarantees. Free checks are limited and shared across everyone each day.</span>
-          <button type="button" class="op-getmore" id="freeBannerCta" style="white-space:nowrap">Get runs that are always yours &rarr;</button>
-        </div>
+        <!-- Free-tier only: one calm line above the title (shown by showResults for
+             free runs). No hedge, no scarcity, no purchase nudge — the fallback is
+             off, so it's the same model as everything else. -->
+        <p id="freeBanner" class="op-free-line" hidden><b>Free check</b> &middot; top gaps &middot; a second opinion, not a verdict.</p>
         <div class="op-rtools">
           <span class="op-rstamp" id="resultStamp"></span>
           <button type="button" class="op-icon-btn" id="fitDownload" aria-label="Download fit check" title="Download PDF">
@@ -889,6 +979,27 @@
           </div>
           <div class="op-rate-thanks" id="opRateThanks" hidden>Thank you for your feedback!</div>
         </div>
+
+        <!-- Closing note (free runs only) — read AFTER the findings, so it lands as
+             calibration, not a pre-emptive hedge. -->
+        <p id="closeNote" class="op-close-note" hidden>OnPaper reads your CV against the posting and names what&rsquo;s missing. It&rsquo;s confident and it can still be wrong, so check anything that surprises you. Free checks reset continuously through the day.</p>
+
+        <!-- Primary email capture — value has already landed. One field, no account.
+             Two separate, honest permissions; at least one required to submit. -->
+        <div id="emailReport" class="op-email" hidden>
+          <p class="op-email-lead">Want a heads-up? Tell me what for.</p>
+          <form id="emailReportForm" novalidate>
+            <div class="op-email-perms">
+              <label class="op-perm"><input type="checkbox" class="op-perm-free" /><span>Tell me if more free runs open up</span></label>
+              <label class="op-perm"><input type="checkbox" class="op-perm-paid" /><span>Tell me when paid runs launch</span></label>
+            </div>
+            <div class="op-email-row" style="margin-top:12px">
+              <input type="email" class="op-email-in" id="emailReportIn" placeholder="you@example.com" autocomplete="email" inputmode="email" spellcheck="false" />
+              <button type="submit" class="op-email-btn" id="emailReportBtn" disabled>Notify me</button>
+            </div>
+          </form>
+          <p class="op-email-done" id="emailReportDone" hidden>Got it &mdash; I&rsquo;ll only use your email for what you ticked.</p>
+        </div>
       </div>
     </div>
 
@@ -911,10 +1022,38 @@
           <span id="runRemaining"></span><button type="button" class="op-getmore" id="getMore1">Get more runs</button>
         </div>
       </div>
-      <!-- out of runs: primary button becomes the "get more runs" action -->
-      <div id="barOut" hidden style="display:flex;flex-direction:column;align-items:center;gap:9px">
-        <button type="button" class="op-btn" id="getMore2">Get more runs</button>
-        <div class="op-runline"><span>Free checks used up today &middot; </span><button type="button" class="op-getmore" id="getMore3">Have a code?</button></div>
+      <!-- shared pool spent (or hourly bucket empty): the wall. A calm panel with a
+           live countdown; inputs are untouched behind it. Replaces the old "out of
+           runs" bar. barOut is kept in the map for back-compat but no longer shown. -->
+      <div id="barOut" hidden></div>
+      <div id="barWall" hidden>
+        <div class="op-wall">
+          <span class="op-wall-kicker"><span class="op-wall-dot" aria-hidden="true"></span><span id="wallKicker">All checks in use</span></span>
+          <p class="op-wall-lead" id="wallLead"></p>
+          <div class="op-wall-count-row">Next one frees up in <span class="op-wall-count" id="wallCount">—</span></div>
+          <p class="op-wall-keep">Your CV and job description are still here.</p>
+          <!-- Rotating calm line so the wait reads as alive, not frozen. -->
+          <p class="op-wall-tip" id="wallTip" aria-live="off"></p>
+          <!-- Secondary email capture — smaller, optional, framed as a notification.
+               Two separate permissions; at least one required to submit. -->
+          <div id="emailWall" class="op-email op-email--wall">
+            <p class="op-email-lead">Or leave your email &mdash; tell me what to send:</p>
+            <form id="emailWallForm" novalidate>
+              <div class="op-email-perms">
+                <label class="op-perm"><input type="checkbox" class="op-perm-free" /><span>Tell me if more free runs open up</span></label>
+                <label class="op-perm"><input type="checkbox" class="op-perm-paid" /><span>Tell me when paid runs launch</span></label>
+              </div>
+              <div class="op-email-row" style="margin-top:10px">
+                <input type="email" class="op-email-in" id="emailWallIn" placeholder="you@example.com" autocomplete="email" inputmode="email" spellcheck="false" />
+                <button type="submit" class="op-email-btn" id="emailWallBtn" disabled>Notify me</button>
+              </div>
+            </form>
+            <p class="op-email-done" id="emailWallDone" hidden>Got it &mdash; I&rsquo;ll only use your email for what you ticked.</p>
+          </div>
+          <div class="op-wall-tools">
+            <button type="button" class="op-getmore" id="wallCode">Have a code?</button>
+          </div>
+        </div>
       </div>
       <!-- results view: start another fit check -->
       <div id="barResults" hidden style="display:flex;flex-direction:column;align-items:center;gap:9px">
@@ -1079,6 +1218,61 @@
   </div>
 </div>
 
+<!-- JD link behind a login (backend fallback is off → fails fast). A friendly
+     redirect into paste mode, not an error. Consumes nothing. -->
+<div class="op-confirm-back op-deny op-deny--link" id="blockedLinkBack" hidden>
+  <div class="op-confirm" role="dialog" aria-modal="true" aria-label="That job link is behind a login">
+    <div class="op-deny-head">
+      <span class="op-deny-ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1 1"/><path d="M14 11a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1-1"/><path d="M4 4l16 16"/></svg></span>
+      <span class="op-deny-kicker">Link behind a login</span>
+    </div>
+    <p class="op-confirm-title">That job link is behind a login, so I can&rsquo;t read it.</p>
+    <p class="op-confirm-note">Paste the job text instead and you&rsquo;re good.</p>
+    <p class="op-confirm-foot">This didn&rsquo;t use one of your checks.</p>
+    <div class="op-confirm-actions">
+      <button type="button" class="op-btn" id="blockedPasteBtn">Paste the job text</button>
+    </div>
+  </div>
+</div>
+
+<!-- Verification couldn't complete — retry-able (turnstile_failed). Copy states the
+     outcome only, never the mechanism: no mention of browser checks / verification
+     challenges, which would hint at how to game them. UNTESTED against a live deny
+     until cfg:turnstile_enabled flips — preview on localhost with ?deny=turnstile_failed. -->
+<div class="op-confirm-back op-deny op-deny--turnstile" id="denyTurnstileBack" hidden>
+  <div class="op-confirm" role="dialog" aria-modal="true" aria-label="Couldn't verify this run">
+    <div class="op-deny-head">
+      <span class="op-deny-ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/><path d="M3 21v-5h5"/></svg></span>
+      <span class="op-deny-kicker">One more step</span>
+    </div>
+    <p class="op-confirm-title">We couldn&rsquo;t verify this run the usual way.</p>
+    <p class="op-confirm-note">Give it a second, then try again.</p>
+    <p class="op-confirm-foot">This didn&rsquo;t use one of your checks.</p>
+    <div class="op-confirm-actions">
+      <button type="button" class="op-btn" id="denyTurnstileRetry">Try again</button>
+    </div>
+  </div>
+</div>
+
+<!-- Verification couldn't complete — try later (device_limit / ip_limit share this
+     ONE screen; distinguishing per-browser vs per-network would leak the mechanism).
+     Same vague reason line as above; differs only in guidance + no retry. UNTESTED
+     against a live deny until the abuse layer is enabled — preview with ?deny=device_limit. -->
+<div class="op-confirm-back op-deny op-deny--limit" id="denyLimitBack" hidden>
+  <div class="op-confirm" role="dialog" aria-modal="true" aria-label="Couldn't verify this run">
+    <div class="op-deny-head">
+      <span class="op-deny-ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 1.5"/><path d="M9 2h6"/></svg></span>
+      <span class="op-deny-kicker">Try again later</span>
+    </div>
+    <p class="op-confirm-title">We couldn&rsquo;t verify this run the usual way.</p>
+    <p class="op-confirm-note">This can happen for a few reasons. Try again a little later.</p>
+    <p class="op-confirm-foot">This didn&rsquo;t use one of your checks.</p>
+    <div class="op-confirm-actions">
+      <button type="button" class="op-ghost-btn" id="denyLimitOk">Got it</button>
+    </div>
+  </div>
+</div>
+
 <!-- Identical re-submission confirm: same CV + JD as the last successful run -->
 <div class="op-confirm-back" id="rerunBack" hidden>
   <div class="op-confirm" role="dialog" aria-modal="true" aria-label="Run the same fit check again">
@@ -1226,9 +1420,20 @@
     resultTitle: $("resultTitle"), resultMatch: $("resultMatch"), resultMatchVal: $("resultMatchVal"),
     resultStamp: $("resultStamp"), resultSource: $("resultSource"), resultDeal: $("resultDeal"), resultDealText: $("resultDealText"),
     gapList: $("gapList"),
-    freeBanner: $("freeBanner"), freeBannerCta: $("freeBannerCta"),
+    freeBanner: $("freeBanner"),
+    barWall: $("barWall"), wallLead: $("wallLead"), wallCount: $("wallCount"),
+    wallKicker: $("wallKicker"), wallCode: $("wallCode"), wallTip: $("wallTip"),
+    availLine: $("availLine"), availText: $("availText"),
+    closeNote: $("closeNote"), blockedInline: $("blockedInline"),
+    emailReport: $("emailReport"), emailReportForm: $("emailReportForm"),
+    emailReportIn: $("emailReportIn"), emailReportDone: $("emailReportDone"), emailReportBtn: $("emailReportBtn"),
+    emailWall: $("emailWall"), emailWallForm: $("emailWallForm"),
+    emailWallIn: $("emailWallIn"), emailWallDone: $("emailWallDone"), emailWallBtn: $("emailWallBtn"),
+    blockedLinkBack: $("blockedLinkBack"), blockedPasteBtn: $("blockedPasteBtn"),
+    denyTurnstileBack: $("denyTurnstileBack"), denyTurnstileRetry: $("denyTurnstileRetry"),
+    denyLimitBack: $("denyLimitBack"), denyLimitOk: $("denyLimitOk"),
     payBack: $("payBack"), payModal: $("payModal"), payClose: $("payClose"),
-    getMore1: $("getMore1"), getMore2: $("getMore2"), getMore3: $("getMore3"),
+    getMore1: $("getMore1"),
     coupon: $("fitCoupon"), couponBtn: $("fitCouponBtn"), couponMsg: $("fitCouponMsg"),
     menuBtn: $("menuBtn"), menuBack: $("menuBack"), menuClose: $("menuClose"),
     shortBack: $("shortBack"), shortBackBtn: $("shortBackBtn"), shortYesBtn: $("shortYesBtn"),
@@ -1809,17 +2014,176 @@
 
   // Remaining analyses (server-authoritative; null = unknown until first action).
   var remaining = null;
-  // True once today's shared free pool is spent (a free run returned "exhausted").
-  // Distinct from remaining === 0, which just means "no paid balance → use the free pool".
+  // True while the shared free pool is spent (daily cap) or the hourly bucket is
+  // empty — i.e. the wall is up. Distinct from remaining === 0, which just means
+  // "no paid balance → draw on the free pool". This gates the run button.
   var freeExhausted = false;
-  // Local QA only: ?state=exhausted previews the "free pool spent" state without
-  // needing to drain the real pool. Ignored on the live site.
+
+  // ===== Free-pool wall state machine (Step 5b, Part 1) =====
+  // Single source of truth for the shared pool. The countdown is DERIVED locally
+  // from an anchor (secondsLeft captured at anchorAt), so the display ticks every
+  // second without a per-second network poll. The server is re-read only at
+  // meaningful moments: page load, tab refocus, the countdown reaching zero, and
+  // a slow drift-correction while waiting. On any read that says the pool is free
+  // again, the wall tears itself down and the run button revives on its own.
+  var pool = { exhausted: false, secondsLeft: 0, anchorAt: 0, reason: "", midFlow: false };
+  var wallTicker = null, wallInFlight = false, wallLastPoll = 0;
+
+  function poolRemaining() {
+    if (!pool.exhausted) return 0;
+    var elapsed = (Date.now() - pool.anchorAt) / 1000;
+    return Math.max(0, Math.ceil(pool.secondsLeft - elapsed));
+  }
+  function fmtCountdown(secs) {
+    secs = Math.max(0, secs | 0);
+    var h = Math.floor(secs / 3600), m = Math.floor((secs % 3600) / 60), s = secs % 60;
+    function p(n) { return (n < 10 ? "0" : "") + n; }
+    if (h > 0) return h + ":" + p(m) + ":" + p(s);
+    if (m > 0) return m + ":" + p(s);
+    return s + (s === 1 ? " second" : " seconds");
+  }
+  function wallLeadText() {
+    if (pool.midFlow) return "Free checks are all in use right now.";
+    if (pool.reason === "rate_limited")
+      return "Free checks come through a few at a time to keep this fair for everyone.";
+    return "OnPaper is free and unmetered by design, so there’s a fixed number of checks each day.";
+  }
+  // Paint just the live numbers (called by the 1s ticker — cheap, no layout thrash).
+  function renderWallCountdown() {
+    var txt = fmtCountdown(poolRemaining());
+    if (els.wallCount) els.wallCount.textContent = txt;
+    if (els.availText) els.availText.innerHTML = "Free checks are all in use · next one in <b>" + txt + "</b>";
+  }
+  // A rotating calm line under the countdown — turns dead-wait into something with
+  // a pulse (and a little use), without touching the number or implying scarcity.
+  var WALL_TIPS = [
+    "While you wait — reread the posting and note the words it repeats.",
+    "The strongest CVs echo the job’s own language. A good moment to check yours.",
+    "Most postings name what matters most in the first third. Worth a second read.",
+    "A gap is only worth fixing if the role actually asks for it — reread with that lens."
+  ];
+  var wallTipTimer = null, wallTipIdx = 0;
+  function showWallTip(i) {
+    if (!els.wallTip) return;
+    els.wallTip.style.opacity = "0";
+    setTimeout(function () {
+      els.wallTip.textContent = WALL_TIPS[i % WALL_TIPS.length];
+      els.wallTip.style.opacity = "1";
+    }, 260);
+  }
+  function startWallTips() {
+    if (wallTipTimer || !els.wallTip) return;
+    wallTipIdx = 0;
+    els.wallTip.textContent = WALL_TIPS[0];
+    els.wallTip.style.opacity = "1";
+    wallTipTimer = setInterval(function () { showWallTip(++wallTipIdx); }, 7000);
+  }
+  function stopWallTips() { if (wallTipTimer) { clearInterval(wallTipTimer); wallTipTimer = null; } }
+
+  // Paint the whole wall + availability line (called on state change).
+  function renderWall() {
+    if (pool.exhausted) {
+      if (els.wallKicker) els.wallKicker.textContent = (pool.reason === "rate_limited") ? "Just a moment" : "All checks in use";
+      if (els.wallLead) els.wallLead.textContent = wallLeadText();
+    }
+    if (els.availLine) els.availLine.hidden = !pool.exhausted;
+    renderWallCountdown();
+  }
+  function startWallTicker() {
+    if (wallTicker) return;
+    wallTicker = setInterval(function () {
+      renderWallCountdown();
+      var left = poolRemaining();
+      if (left <= 0) {
+        pollFreeStatus("countdown");            // local clock says a slot should be free — confirm
+      } else if (Date.now() - wallLastPoll > 30000) {
+        pollFreeStatus("drift");                // slow re-anchor against server clock
+      }
+    }, 1000);
+  }
+  function stopWallTicker() { if (wallTicker) { clearInterval(wallTicker); wallTicker = null; } }
+
+  // Enter the wall. `seconds` seeds the countdown; midFlow=true means the user just
+  // submitted into an empty pool (vs. discovering the wall passively on load/refocus).
+  // Never touches cvText or the JD field — the paste stays exactly where it is.
+  function enterWall(opts) {
+    opts = opts || {};
+    pool.exhausted = true;
+    pool.reason = opts.reason || "pool_exhausted";
+    pool.midFlow = !!opts.midFlow;
+    pool.secondsLeft = Math.max(0, Number(opts.seconds) || 0);
+    pool.anchorAt = Date.now();
+    freeExhausted = true;
+    renderBalance();          // swaps the docked bar to the wall
+    renderWall();
+    refreshRunDisabled();
+    startWallTicker();
+    startWallTips();
+  }
+  // Pool is free again — tear the wall down, revive the button, no manual refresh.
+  function revivePool() {
+    if (!pool.exhausted && !freeExhausted) return;
+    pool.exhausted = false; pool.reason = ""; pool.midFlow = false;
+    freeExhausted = false;
+    stopWallTicker();
+    stopWallTips();
+    resetEmail(els.emailWall, els.emailWallForm, els.emailWallDone, els.emailWallIn);
+    renderBalance();
+    renderWall();
+    refreshRunDisabled();
+    track("free_pool_available", {});
+  }
+  // Read the shared-pool status (read-only, no token, no mutation). Only the daily
+  // cap surfaces here as `exhausted`; the hourly bucket only appears via a 429 on a
+  // real run. Guarded so polls never overlap.
+  async function pollFreeStatus(why) {
+    if (wallInFlight) return;
+    wallInFlight = true; wallLastPoll = Date.now();
+    try {
+      var res = await fetch(BALANCE_URL, {
+        method: "POST", headers: { "content-type": "application/json" },
+        body: JSON.stringify({ free: true })
+      });
+      if (!res.ok) return;
+      var data = await res.json();
+      if (data && data.exhausted) {
+        pool.exhausted = true;
+        if (!pool.reason) pool.reason = "pool_exhausted";
+        pool.secondsLeft = Math.max(0, Number(data.seconds_until_next_run) || 0);
+        pool.anchorAt = Date.now();
+        freeExhausted = true;
+        renderBalance(); renderWall(); refreshRunDisabled(); startWallTicker(); startWallTips();
+      } else {
+        revivePool();
+      }
+    } catch (e) {
+      // Network/CORS — keep the wall + ticker up; we'll retry on the next tick.
+    } finally {
+      wallInFlight = false;
+    }
+  }
+
+  // Local QA only (ignored on the live site): preview states without draining the
+  // real pool or waiting for the abuse flag to flip.
+  //   ?state=exhausted        → passive wall (daily), demo countdown
+  //   ?wall=rate_limited&secs=90 → bucket wall, short countdown
+  //   ?deny=turnstile_failed | device_limit | ip_limit → the denial modals
+  //   ?deny=blocked (modal)  |  ?deny=blocked-inline (inline notice)  → blocked link
+  var MOCK_DENY = "";
   try {
-    if (/^(localhost|127\.0\.0\.1)$/.test(location.hostname) &&
-        new URLSearchParams(location.search).get("state") === "exhausted") {
-      freeExhausted = true;
+    if (/^(localhost|127\.0\.0\.1)$/.test(location.hostname)) {
+      var qs = new URLSearchParams(location.search);
+      if (qs.get("state") === "exhausted") {
+        setTimeout(function () { enterWall({ seconds: 3600, reason: "pool_exhausted", midFlow: false }); }, 0);
+      }
+      if (qs.get("wall")) {
+        var secs = parseInt(qs.get("secs"), 10);
+        setTimeout(function () { enterWall({ seconds: isNaN(secs) ? 90 : secs, reason: qs.get("wall"), midFlow: false }); }, 0);
+      }
+      MOCK_DENY = qs.get("deny") || "";
     }
   } catch (e) {}
+
   // Whether the run just shown was a free-tier run (drives the result banner).
   var lastRunWasFree = false;
   function updateRunLabel() {
@@ -1832,13 +2196,15 @@
     //   • paid balance (remaining > 0, or unknown/null before load): "Check fit", show count.
     //   • no paid balance (remaining === 0): free tier — "Check fit" still runs, drawing on
     //     the shared daily pool. Labelled "Free check", with "Get more runs" still available.
-    //   • free pool spent for the day (freeExhausted): fall back to the get-more/coupon bar.
-    if (remaining === 0 && freeExhausted) {
+    //   • free pool spent / bucket empty (freeExhausted): the wall (barWall).
+    if (freeExhausted) {
       els.barRun.hidden = true;
-      els.barOut.hidden = false;
+      els.barOut.hidden = true;
+      if (els.barWall) els.barWall.hidden = false;
     } else {
       els.barRun.hidden = false;
       els.barOut.hidden = true;
+      if (els.barWall) els.barWall.hidden = true;
       if (typeof remaining === "number" && remaining > 0) {
         els.runRemaining.textContent = remaining + (remaining === 1 ? " run left · " : " runs left · ");
       } else if (remaining === 0) {
@@ -1860,6 +2226,7 @@
   function refreshRunDisabled() { els.run.disabled = findDisabled(); }
   function onEdit() {
     setError("");
+    if (els.blockedInline) els.blockedInline.hidden = true;   // they're acting on the redirect
     rerunConfirmed = false;   // editing either input means the next run isn't a blind re-run
     if (!loading && !freeExhausted) els.run.disabled = findDisabled();
   }
@@ -1978,8 +2345,15 @@
     var stamp = now.toLocaleString(undefined, { day: "numeric", month: "short", year: "numeric", hour: "numeric", minute: "2-digit" });
 
     els.sampleBadge.hidden = !isSample;
-    // Free runs carry a disclaimer + upsell banner at the top of the report.
-    els.freeBanner.hidden = !(lastRunWasFree && !isSample);
+    // Free runs carry the one-line note above the title, the calibration note
+    // below the last gap, and the "notify me" capture below the report.
+    var showFree = lastRunWasFree && !isSample;
+    els.freeBanner.hidden = !showFree;
+    if (els.closeNote) els.closeNote.hidden = !showFree;
+    if (els.emailReport) {
+      els.emailReport.hidden = !showFree;
+      if (showFree) resetEmail(els.emailReport, els.emailReportForm, els.emailReportDone, els.emailReportIn);
+    }
 
     // A real report carries the header block (role/company/match/deal) or at
     // least one parsed gap. Anything else is an off-format / refusal body we
@@ -2094,7 +2468,12 @@
       var err = new Error(data.error || ("Request failed (" + res.status + ")"));
       if (typeof data.remaining === "number") err.remaining = data.remaining;
       if (data.stage) err.stage = data.stage;   // "blocked" | "search_failed"
-      if (data.exhausted) err.exhausted = true;  // free pool spent for the day (HTTP 429)
+      if (data.exhausted) err.exhausted = true;  // shared pool / bucket (HTTP 429)
+      // Machine-readable denial reason + live countdown (Step 5b). reason ∈
+      // pool_exhausted | rate_limited | device_limit | ip_limit (429) |
+      // turnstile_failed (403) | fallback_disabled (422, blocked link).
+      if (data.reason) err.reason = data.reason;
+      if (typeof data.seconds_until_next_run === "number") err.seconds = data.seconds_until_next_run;
       throw err;
     }
     return { text: (data.text || "").trim(), remaining: data.remaining };
@@ -2240,22 +2619,45 @@
       // modal (closeConfirm → stopLoaderOverlay). Stopping+restarting it here is
       // what made the card contour replay and the cards drop + re-lift.
 
-      // Free pool spent for today (HTTP 429). Not a real failure — stop cleanly
-      // and switch the resting bar to the get-more/coupon state.
-      if (err.exhausted) {
+      // Blocked job link with the backend fallback off (fails fast, spends
+      // nothing). Not a search retry — redirect straight into paste mode. Check
+      // this BEFORE the legacy blocked→search path below.
+      if (err.stage === "blocked" && err.reason === "fallback_disabled") {
         setLoading(false);
-        freeExhausted = true;
         closeConfirm(els.jdSearchBack);
-        renderBalance();
-        refreshRunDisabled();
-        track("free_pool_exhausted", {});
-        toast("Today’s free checks are all used up. Come back tomorrow.");
+        track("jd_link_blocked", { fallback: "off" });
+        showBlockedLinkInline();
         return;
       }
 
-      // The website blocked the direct fetch. Don't treat this as a final
-      // failure: keep the animation running and automatically look for the same
-      // position on another public source. No run has been used.
+      // Abuse denials (Step 5b). Friendly, non-technical. No run used.
+      if (err.reason === "device_limit" || err.reason === "ip_limit") {
+        setLoading(false);
+        closeConfirm(els.jdSearchBack);
+        track("free_denied", { reason: err.reason });
+        showDenyLimit(err.reason);
+        return;
+      }
+      if (err.reason === "turnstile_failed") {
+        setLoading(false);
+        closeConfirm(els.jdSearchBack);
+        track("free_denied", { reason: err.reason });
+        openConfirm(els.denyTurnstileBack);
+        return;
+      }
+
+      // Shared pool spent (daily) or hourly bucket empty → the wall, with a live
+      // countdown. Not a real failure. Inputs are left exactly as they are.
+      if (err.exhausted || err.reason === "pool_exhausted" || err.reason === "rate_limited") {
+        setLoading(false);
+        closeConfirm(els.jdSearchBack);
+        track("free_pool_exhausted", { reason: err.reason || "pool_exhausted" });
+        enterWall({ seconds: err.seconds, reason: err.reason || "pool_exhausted", midFlow: true });
+        return;
+      }
+
+      // The website blocked the direct fetch (legacy path, fallback ON). Keep the
+      // animation running and look for the same position on another public source.
       if (err.stage === "blocked") {
         track("jd_fetch_blocked", {});
         openConfirm(els.jdSearchBack);
@@ -2405,6 +2807,84 @@
     toastTimer = setTimeout(function () { t.remove(); }, 1800);
   }
 
+  // ===== Step 5b denial UIs + email capture =====
+  // Blocked job link, INLINE variant (the light-weight "do this instead" pattern,
+  // same slot as the inline validation line). Opens the JD paste box and shows a
+  // calm notice right above it — no scrim, no button. This is the live path.
+  function showBlockedLinkInline() {
+    setError("");                        // clear any red validation line first
+    openJdPaste();                       // paste box open + focused, fix is right there
+    if (els.blockedInline) els.blockedInline.hidden = false;
+  }
+  // Blocked job link, MODAL variant. Kept for side-by-side comparison (?deny=blocked).
+  function showBlockedLink() {
+    openConfirm(els.blockedLinkBack);
+  }
+  // Verification couldn't complete. Copy reveals no mechanism (see the modals); the
+  // two 429 limit reasons (device_limit / ip_limit) share this ONE screen so we
+  // never hint at per-browser vs per-network. `reason` kept only for analytics.
+  function showDenyLimit(reason) {
+    openConfirm(els.denyLimitBack);
+  }
+
+  // Email capture — STUB. /api/notify isn't built yet, so this stores nothing and
+  // makes no network call; a follow-up PR flips it to a real POST once the endpoint
+  // ships. Two separate, honest permissions (free-runs / paid-launch); at least one
+  // must be ticked (the submit button is disabled otherwise — no error copy needed).
+  // No email is ever sent to analytics (PII) — only which permissions were chosen.
+  var EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  function permsOf(formEl) {
+    if (!formEl) return { free: false, paid: false };
+    var f = formEl.querySelector(".op-perm-free"), p = formEl.querySelector(".op-perm-paid");
+    return { free: !!(f && f.checked), paid: !!(p && p.checked) };
+  }
+  function syncEmailBtn(formEl, btnEl) {
+    if (!btnEl) return;
+    var perms = permsOf(formEl);
+    btnEl.disabled = !(perms.free || perms.paid);   // ≥1 permission required
+  }
+  function submitEmail(inputEl, ctx, formEl, doneEl) {
+    var v = (inputEl && inputEl.value || "").trim();
+    var perms = permsOf(formEl);
+    if (!(perms.free || perms.paid)) return false;        // guarded by the disabled button too
+    if (!EMAIL_RE.test(v)) { try { inputEl.focus(); } catch (e) {} return false; }
+    // STUB: real endpoint sends { email, context, notify_free, notify_paid }.
+    try { console.log("[notify stub]", JSON.stringify({ email: v, context: ctx, notify_free: perms.free, notify_paid: perms.paid })); } catch (e) {}
+    track("notify_signup", { context: ctx, notify_free: perms.free, notify_paid: perms.paid });  // never the address
+    if (formEl) formEl.hidden = true;
+    if (doneEl) doneEl.hidden = false;
+    return true;
+  }
+  function resetEmail(wrapEl, formEl, doneEl, inputEl) {
+    if (formEl) {
+      formEl.hidden = false;
+      Array.prototype.forEach.call(formEl.querySelectorAll("input[type=checkbox]"), function (c) { c.checked = false; });
+    }
+    if (doneEl) doneEl.hidden = true;
+    if (inputEl) inputEl.value = "";
+    if (wrapEl) { var b = wrapEl.querySelector(".op-email-btn"); if (b) b.disabled = true; }
+  }
+  function wireEmail(formEl, inputEl, ctx, doneEl, btnEl) {
+    if (!formEl) return;
+    formEl.addEventListener("submit", function (e) { e.preventDefault(); submitEmail(inputEl, ctx, formEl, doneEl); });
+    formEl.addEventListener("change", function () { syncEmailBtn(formEl, btnEl); });
+  }
+  wireEmail(els.emailReportForm, els.emailReportIn, "report", els.emailReportDone, els.emailReportBtn);
+  wireEmail(els.emailWallForm, els.emailWallIn, "wall", els.emailWallDone, els.emailWallBtn);
+
+  // Blocked-link modal button (comparison variant): drop into the paste field.
+  if (els.blockedPasteBtn) els.blockedPasteBtn.addEventListener("click", function () {
+    closeConfirm(els.blockedLinkBack);
+    openJdPaste();
+  });
+  if (els.denyTurnstileRetry) els.denyTurnstileRetry.addEventListener("click", function () {
+    closeConfirm(els.denyTurnstileBack);
+    attemptRun(true);                  // momentary — a fresh token is already re-armed
+  });
+  if (els.denyLimitOk) els.denyLimitOk.addEventListener("click", function () {
+    closeConfirm(els.denyLimitBack);
+  });
+
   // ---- generic confirm/overlay helpers (menu + D/E modals) ----
   // Overlays fade in/out (opacity) whenever they come or go. Because
   // [hidden] { display:none } can't transition, we flip hidden first (display
@@ -2430,11 +2910,13 @@
   }
   function anyConfirmOpen() {
     // jdSearchBack is transient (auto-advances) and deliberately not dismissable.
-    return [els.shortBack, els.cvBack, els.failBack, els.jdFailBack, els.rerunBack].filter(function (b) { return !b.hidden; });
+    return [els.shortBack, els.cvBack, els.failBack, els.jdFailBack, els.rerunBack,
+            els.blockedLinkBack, els.denyTurnstileBack, els.denyLimitBack].filter(function (b) { return !b.hidden; });
   }
-  // click-outside to dismiss (fail + short + cv + jd-recovery + rerun). Dismissing
-  // the JD recovery just returns to the input, same as its one button.
-  [els.shortBack, els.cvBack, els.failBack, els.jdFailBack, els.rerunBack].forEach(function (b) {
+  // click-outside to dismiss (fail + short + cv + jd-recovery + rerun + 5b denials).
+  // Dismissing the JD recovery / blocked-link just returns to the input.
+  [els.shortBack, els.cvBack, els.failBack, els.jdFailBack, els.rerunBack,
+   els.blockedLinkBack, els.denyTurnstileBack, els.denyLimitBack].forEach(function (b) {
     b.addEventListener("click", function (e) { if (e.target === b) closeConfirm(b); });
   });
 
@@ -2646,10 +3128,7 @@
   // ---- pay modal (packs "coming soon"; coupon is live) ----
   function openPay() { els.payBack.hidden = false; track("get_more_opened", {}); setTimeout(function () { els.coupon.focus(); }, 30); }
   function closePay() { els.payBack.hidden = true; }
-  els.getMore1.addEventListener("click", openPay);
-  els.getMore2.addEventListener("click", openPay);
-  els.getMore3.addEventListener("click", openPay);
-  els.freeBannerCta.addEventListener("click", openPay);
+  [els.getMore1, els.wallCode].forEach(function (b) { if (b) b.addEventListener("click", openPay); });
   els.payClose.addEventListener("click", closePay);
   els.payBack.addEventListener("click", function (e) { if (e.target === els.payBack) closePay(); });
   document.addEventListener("keydown", function (e) {
@@ -2722,16 +3201,39 @@
       if (typeof data.remaining === "number") {
         updateRemaining(data.remaining); // sets remaining, re-renders, shows the right bar
         refreshRunDisabled();
+        // Free tier (no paid balance): check the shared pool now, so the wall (or
+        // its absence) is correct before the first submit. Skip while a QA mock
+        // has already forced a wall/deny.
+        if (data.remaining === 0 && !pool.exhausted && !MOCK_DENY) pollFreeStatus("load");
       }
     } catch (e) {
       // Network/CORS failure — keep fallback behavior, don't block the user.
     }
   }
 
+  // Re-anchor when the tab regains focus: someone who left OnPaper open for 20
+  // minutes should see the wall — or its absence — without clicking anything. Poll
+  // when free-tier or already walled; the poll itself decides whether to revive.
+  document.addEventListener("visibilitychange", function () {
+    if (document.visibilityState !== "visible") return;
+    if (pool.exhausted || remaining === 0) pollFreeStatus("visible");
+  });
+
+  // QA (localhost only): force a denial UI on load so the abuse states can be seen
+  // before cfg:turnstile_enabled flips. Untested against a live deny until then.
+  function runMockDeny() {
+    if (!MOCK_DENY) return;
+    if (MOCK_DENY === "turnstile_failed") openConfirm(els.denyTurnstileBack);
+    else if (MOCK_DENY === "device_limit" || MOCK_DENY === "ip_limit") showDenyLimit(MOCK_DENY);
+    else if (MOCK_DENY === "blocked") showBlockedLink();                 // modal (comparison)
+    else if (MOCK_DENY === "blocked-inline") showBlockedLinkInline();    // inline (live path)
+  }
+
   // init
   renderBalance();
   refreshRunDisabled();
   fetchBalance();
+  runMockDeny();
   track("onpaper_opened", { entry: "load" });
 })();
 </script>
