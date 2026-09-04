@@ -1774,7 +1774,14 @@
     return s;
   }
   function isProbablyUrl(v) {
-    var s = normalizeUrl(v);
+    var raw = (v || "").trim();
+    if (!raw) return false;
+    // A real web address never contains whitespace; pasted job-description text
+    // always does. Bail out early so a pasted posting (whose sentences end in
+    // ".", which the URL parser otherwise reads as a valid dotted host by
+    // percent-encoding the spaces) is treated as text, not a link to fetch.
+    if (/\s/.test(raw)) return false;
+    var s = normalizeUrl(raw);
     if (!s) return false;
     try { var u = new URL(s); return !!u.hostname && u.hostname.indexOf(".") > 0; }
     catch (e) { return false; }
