@@ -724,6 +724,9 @@
   .op-email-btn { font-family: var(--mono); font-size: 13px; letter-spacing: 0.04em; font-weight: 500; padding: 11px 20px; border: none; border-radius: 3px; background: var(--ink); color: var(--paper-bg); cursor: pointer; white-space: nowrap; }
   .op-email-btn:active { transform: translateY(1px); }
   .op-email-fine { font-family: var(--mono); font-size: 10px; letter-spacing: 0.02em; color: var(--faint); margin: 9px 0 0; }
+  /* TEMPORARY BETA SCAFFOLDING — the honest "no automation yet" note; retire it
+     alongside NOTIFY_FORM once a real notify backend ships. */
+  .op-email-note { font-family: var(--mono); font-size: 11px; line-height: 1.5; color: var(--ink-3); margin: 10px 0 0; text-wrap: pretty; }
   .op-email-done { font-family: var(--mono); font-size: 12px; letter-spacing: 0.02em; color: var(--ok); margin: 0; }
 
   /* Top-of-report line (rewritten) + the closing note below the last gap. */
@@ -1003,8 +1006,9 @@
               <input type="email" class="op-email-in" id="emailReportIn" placeholder="you@example.com" autocomplete="email" inputmode="email" spellcheck="false" />
               <button type="submit" class="op-email-btn" id="emailReportBtn" disabled>Notify me</button>
             </div>
+            <p class="op-email-note">Beta note: there&rsquo;s no reminder yet &mdash; leave your email and I&rsquo;ll follow up directly.</p>
           </form>
-          <p class="op-email-done" id="emailReportDone" hidden>Got it &mdash; I&rsquo;ll only use your email for what you ticked.</p>
+          <p class="op-email-done" id="emailReportDone" hidden>Got it &mdash; noted.</p>
         </div>
       </div>
     </div>
@@ -1053,8 +1057,9 @@
                 <input type="email" class="op-email-in" id="emailWallIn" placeholder="you@example.com" autocomplete="email" inputmode="email" spellcheck="false" />
                 <button type="submit" class="op-email-btn" id="emailWallBtn" disabled>Notify me</button>
               </div>
+              <p class="op-email-note">Beta note: there&rsquo;s no reminder yet &mdash; leave your email and I&rsquo;ll follow up directly.</p>
             </form>
-            <p class="op-email-done" id="emailWallDone" hidden>Got it &mdash; I&rsquo;ll only use your email for what you ticked.</p>
+            <p class="op-email-done" id="emailWallDone" hidden>Got it &mdash; noted.</p>
           </div>
           <div class="op-wall-tools">
             <button type="button" class="op-getmore" id="wallCode">Have a code?</button>
@@ -2846,11 +2851,23 @@
     openConfirm(els.denyLimitBack);
   }
 
-  // Email capture — STUB. /api/notify isn't built yet, so this stores nothing and
-  // makes no network call; a follow-up PR flips it to a real POST once the endpoint
-  // ships. Two separate, honest permissions (free-runs / paid-launch); at least one
-  // must be ticked (the submit button is disabled otherwise — no error copy needed).
-  // No email is ever sent to analytics (PII) — only which permissions were chosen.
+  // Email capture. Two separate, honest permissions (free-runs / paid-launch); at
+  // least one must be ticked (the submit button is disabled otherwise — no error
+  // copy needed). No email is ever sent to analytics (PII) — only which permissions
+  // were chosen.
+  //
+  // TEMPORARY BETA SCAFFOLDING — there is no /api/notify backend (deliberately, for a
+  // friends-only beta). Submissions POST into a Google Form that acts as the data
+  // sink; responses land in its linked sheet, and the owner follows up by hand. When
+  // a real notify endpoint exists, replace NOTIFY_FORM + the fetch in submitEmail()
+  // with a POST to it and drop this comment.
+  var NOTIFY_FORM = {
+    action: "https://docs.google.com/forms/d/e/1FAIpQLScNKPGKqXP3X32YDcM6dajdG1NxXVgUc2rrfYf8ks0u5tLIuA/formResponse",
+    email:   "entry.1334173261",
+    free:    "entry.1229492431",   // "yes" / "no"
+    paid:    "entry.1530041921",   // "yes" / "no"
+    context: "entry.108639631"     // "report" / "wall"
+  };
   var EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   function permsOf(formEl) {
     if (!formEl) return { free: false, paid: false };
@@ -2867,8 +2884,18 @@
     var perms = permsOf(formEl);
     if (!(perms.free || perms.paid)) return false;        // guarded by the disabled button too
     if (!EMAIL_RE.test(v)) { try { inputEl.focus(); } catch (e) {} return false; }
-    // STUB: real endpoint sends { email, context, notify_free, notify_paid }.
-    try { console.log("[notify stub]", JSON.stringify({ email: v, context: ctx, notify_free: perms.free, notify_paid: perms.paid })); } catch (e) {}
+    // Fire-and-forget POST into the Google Form (see NOTIFY_FORM above). Forms sends
+    // no CORS headers, so mode:"no-cors" yields an opaque response we can't read —
+    // we assume the send succeeded and show the confirmation regardless. Good enough
+    // for a beta sink; a real backend would let us confirm and surface failures.
+    try {
+      var body = new URLSearchParams();
+      body.append(NOTIFY_FORM.email, v);
+      body.append(NOTIFY_FORM.free, perms.free ? "yes" : "no");
+      body.append(NOTIFY_FORM.paid, perms.paid ? "yes" : "no");
+      body.append(NOTIFY_FORM.context, ctx);
+      fetch(NOTIFY_FORM.action, { method: "POST", mode: "no-cors", body: body });
+    } catch (e) {}
     track("notify_signup", { context: ctx, notify_free: perms.free, notify_paid: perms.paid });  // never the address
     if (formEl) formEl.hidden = true;
     if (doneEl) doneEl.hidden = false;
