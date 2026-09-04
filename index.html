@@ -232,6 +232,8 @@
   .op-header { flex-shrink: 0; position: relative; z-index: 2; background: var(--paper-bg); border-bottom: 1px solid var(--line); padding-top: env(safe-area-inset-top, 0px); }
   .op-header-in { max-width: 1000px; margin: 0 auto; padding: 22px 32px; display: flex; align-items: center; justify-content: space-between; gap: 16px; }
   .op-wordmark { font-family: var(--serif-d); font-size: 26px; letter-spacing: -0.01em; }
+  .op-brand { display: flex; align-items: center; gap: 12px; }
+  .op-beta-tag { font-family: var(--mono); font-size: 10px; font-weight: 500; letter-spacing: 0.12em; text-transform: uppercase; color: var(--red); border: 1px solid var(--tag-border); border-radius: 3px; padding: 3px 7px; white-space: nowrap; }
   .op-wordmark .op-red, .op-red { color: var(--red); }
   .op-logo { display: block; height: 30px; width: auto; }
   .op-foot-mark .op-logo { height: 20px; }
@@ -787,6 +789,10 @@
     <div class="op-header-in">
       <div class="op-brand">
         <img src="logo.svg" alt="OnPaper" class="op-logo op-wordmark" width="116" height="30" />
+        <!-- Beta marker — shown by JS only on the onpaper-site*.vercel.app test
+             build, never on production (onpaper.fit). Makes the staging build
+             unmistakable and pairs with the noindex header in vercel.json. -->
+        <span class="op-beta-tag" id="betaTag" hidden>BETA · test build</span>
       </div>
       <div class="op-nav">
         <span class="op-meta">CV <span class="op-red" id="headerHeart">&hearts;</span> JD</span>
@@ -1286,19 +1292,21 @@
 
 <script>
 (function () {
+  // The beta/staging build: the onpaper-site Vercel project (any onpaper-site*.
+  // vercel.app host — preview OR production). It is a SEPARATE project from the
+  // production website, which is GitHub Pages at onpaper.fit and never starts with
+  // "onpaper-site", so it never matches this and is completely untouched.
+  var IS_BETA = false;
+  try { IS_BETA = /^onpaper-site/i.test(location.hostname); } catch (e) {}
+
   // The deployed Vercel function (private onpaper-api repo) that holds the key + prompt.
-  var API_BASE   = "https://onpaper-api.vercel.app/api";
-  // Friend-test preview only: the Vercel preview of the free-tier branch talks to
-  // the preview API TWIN (its own pool + the enabled abuse layer), never prod. The
-  // match is deliberately narrow — the stable free-tier branch alias
-  // (onpaper-site-git-free-tier-…vercel.app) — so production (onpaper.fit, GitHub
-  // Pages) and any other host stay on the production API untouched. Safe to ship:
-  // onpaper.fit never matches this pattern.
-  try {
-    if (/^onpaper-site.*-git-free-tier/i.test(location.hostname)) {
-      API_BASE = "https://onpaper-api-git-free-tier-roys-projects-48041b7f.vercel.app/api";
-    }
-  } catch (e) {}
+  var API_BASE = "https://onpaper-api.vercel.app/api";
+  // On the beta build, talk to the preview API TWIN (its own pool + the enabled
+  // abuse layer), so friend-testing is cost-isolated from production — the same
+  // twin everything else in this project has used. Production stays on prod.
+  if (IS_BETA) {
+    API_BASE = "https://onpaper-api-git-free-tier-roys-projects-48041b7f.vercel.app/api";
+  }
   // Local testing only: on localhost, ?api=<base> can point at a preview backend
   // (e.g. the free-tier PR preview). Ignored on the live site, so it's safe to ship.
   try {
@@ -3241,10 +3249,11 @@
   }
 
   // init
+  if (IS_BETA) { try { var bt = document.getElementById("betaTag"); if (bt) bt.hidden = false; } catch (e) {} }
   renderBalance();
   refreshRunDisabled();
   fetchBalance();
   runMockDeny();
-  track("onpaper_opened", { entry: "load" });
+  track("onpaper_opened", { entry: "load", build: IS_BETA ? "beta" : "prod" });
 })();
 </script>
