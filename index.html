@@ -1493,12 +1493,20 @@
   function sget(k) { try { return sessionStorage.getItem(k) || ""; } catch (e) { return ""; } }
   function sset(k, v) { try { sessionStorage.setItem(k, v); } catch (e) {} }
 
-  // desktop-recommended notice: subtle, non-blocking, dismissable (remembered)
+  // desktop-recommended notice: shown only on narrow/mobile viewports, subtle,
+  // non-blocking, dismissable (remembered). Hides live if the viewport widens
+  // past the breakpoint, and stays gone once dismissed.
   (function () {
     var n = $("deskNotice"), x = $("deskNoticeX");
     if (!n || !x) return;
-    if (get("op_desk_notice") !== "dismissed") n.hidden = false;
-    x.addEventListener("click", function () { n.hidden = true; set("op_desk_notice", "dismissed"); });
+    var mq = window.matchMedia("(max-width: 900px)");
+    function sync() {
+      n.hidden = !(mq.matches && get("op_desk_notice") !== "dismissed");
+    }
+    x.addEventListener("click", function () { set("op_desk_notice", "dismissed"); sync(); });
+    if (mq.addEventListener) mq.addEventListener("change", sync);
+    else if (mq.addListener) mq.addListener(sync); // older Safari
+    sync();
   })();
 
   // analytics: fire a PostHog event with non-sensitive metadata only (no CV/JD/passcode/PII).
