@@ -78,6 +78,23 @@
     window.__opInternal = __opInternal;
     if (__opInternal && window.posthog && posthog.register) posthog.register({ internal: true });
   } catch (e) {}
+
+  // Operator abuse-gate bypass token (Roie's own testing). Visit once with
+  // ?bypass=<token> to stamp this browser; it persists in localStorage and rides
+  // on the /analyze payload (body.bypassToken). The backend compares it to
+  // cfg:free_bypass_token and, on a match, skips the device + IP gates ONLY (pool
+  // + dollar cap still apply). Unlike the device hash, this survives browsers that
+  // randomize their fingerprint. To clear it: ?bypass= (empty). Testing-only.
+  try {
+    var __bpMatch = /[?&]bypass=([^&]*)/.exec(location.search || "");
+    if (__bpMatch) {
+      var __bp = decodeURIComponent(__bpMatch[1] || "");
+      try { if (__bp) localStorage.setItem("onpaper_bypass", __bp); else localStorage.removeItem("onpaper_bypass"); } catch (e) {}
+    }
+    var __opBypass = "";
+    try { __opBypass = localStorage.getItem("onpaper_bypass") || ""; } catch (e) {}
+    window.__opBypass = __opBypass;
+  } catch (e) {}
 </script>
 
 <!-- Cloudflare Turnstile (Step 5a wiring). Managed mode + interaction-only appearance
@@ -2641,6 +2658,7 @@
     try { payload.device = await deviceHashPromise; } catch (e) {}
     payload.turnstileToken = window.__opTS ? await window.__opTS.wait(10000) : "";
     if (window.__opInternal) payload.internal = true;   // tag the server run-cost event as Roie's own testing
+    if (window.__opBypass) payload.bypassToken = window.__opBypass;   // operator abuse-gate bypass (device+IP only)
 
     var t0 = Date.now();
     if (!opts.search) {
