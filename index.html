@@ -2107,6 +2107,12 @@
   // again, the wall tears itself down and the run button revives on its own.
   var pool = { exhausted: false, secondsLeft: 0, anchorAt: 0, reason: "", midFlow: false };
   var wallTicker = null, wallInFlight = false, wallLastPoll = 0;
+  // After a free run completes we KNOW a token was just spent. If the bucket is
+  // now empty and won't refill within the time a user could plausibly re-prep and
+  // retry, we put the wall up right away instead of offering a Run that can only
+  // bounce off a 429. Below this many seconds we stay quiet — a token will be back
+  // before they're ready, so a wall would be needless friction.
+  var WALL_PREDICT_SECS = 60;
 
   function poolRemaining() {
     if (!pool.exhausted) return 0;
@@ -2239,6 +2245,35 @@
       // Network/CORS — keep the wall + ticker up; we'll retry on the next tick.
     } finally {
       wallInFlight = false;
+    }
+  }
+
+  // Called right after a FREE run succeeds. This is the one moment we can predict
+  // the wall with high confidence: a token was just consumed, and the bucket only
+  // refills over time, so an "empty now, next token >= WALL_PREDICT_SECS away"
+  // reading is stable enough to act on — another user can only drain it further,
+  // never top it up. So we peek the shared pool (read-only) and, if it's spent for
+  // longer than a re-prep-and-retry would take, raise the wall immediately instead
+  // of leaving a Run button that would only 429. A near-full bucket (short wait)
+  // is left alone. The reactive 429 stays the authoritative fallback either way.
+  async function maybeWallAfterFreeRun() {
+    try {
+      var res = await fetch(BALANCE_URL, {
+        method: "POST", headers: { "content-type": "application/json" },
+        body: JSON.stringify({ free: true })
+      });
+      if (!res.ok) return;
+      var data = await res.json();
+      var secs = Math.max(0, Number(data && data.seconds_until_next_run) || 0);
+      if (data && data.exhausted) {
+        // Daily/dollar cap hit — hard wall until the UTC reset.
+        enterWall({ seconds: secs, reason: "pool_exhausted", midFlow: true });
+      } else if (secs >= WALL_PREDICT_SECS) {
+        // Hourly bucket spent and won't refill within the retry window.
+        enterWall({ seconds: secs, reason: "rate_limited", midFlow: true });
+      }
+    } catch (e) {
+      // Network/CORS — leave Run enabled; a real retry still hits the 429 guard.
     }
   }
 
@@ -2692,6 +2727,10 @@
       lastRunCv = cv; lastRunJd = jd; haveLastRun = true;   // remember for identical-resubmission guard
       reportCvName = cvName; reportJdUrl = (kind === "url") ? jd : ""; // link behind this report (none for pasted text)
       showResults(out || "", false);
+      // A token was just spent on this free run — if the bucket is now empty for
+      // longer than a re-prep-and-retry would take, raise the wall now rather than
+      // let the user discover it by bouncing off a 429 on their next click.
+      if (freeRun) maybeWallAfterFreeRun();
     } catch (err) {
       // NOTE: deliberately no setLoading(false) here. The blocked→search retry
       // and the "couldn't retrieve" modal both keep the loader waves + lifted
