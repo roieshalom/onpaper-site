@@ -500,6 +500,7 @@
     width: min(440px, 90vw); height: 100%; background: var(--paper);
     border-left: 1px solid var(--line-in); box-shadow: -18px 0 50px rgba(0,0,0,0.45);
     padding: 84px 34px 34px; overflow-y: auto;
+    display: flex; flex-direction: column;
     animation: op-menu-slide .28s ease both;
   }
   @keyframes op-menu-slide { from { transform: translateX(30px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
@@ -531,8 +532,13 @@
      the internal management platform in a new tab. Intentionally understated. */
   .op-menu-admin {
     display: inline-flex; align-items: center; gap: 8px;
+    align-self: flex-start;
+    margin-top: auto;
+    position: sticky; bottom: 0;
+    background: var(--paper);
     font-family: var(--mono); font-size: 12px; letter-spacing: 0.14em; text-transform: uppercase;
-    color: var(--faint); text-decoration: none; padding: 20px 0 4px;
+    color: var(--faint); text-decoration: none;
+    padding: 20px 0 calc(env(safe-area-inset-bottom, 0px) + 4px);
     transition: color .18s ease;
   }
   .op-menu-admin:hover { color: var(--ink-3); }
