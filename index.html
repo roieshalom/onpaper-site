@@ -2293,7 +2293,11 @@
   // meaningful moments: page load, tab refocus, the countdown reaching zero, and
   // a slow drift-correction while waiting. On any read that says the pool is free
   // again, the wall tears itself down and the run button revives on its own.
-  var pool = { exhausted: false, secondsLeft: 0, anchorAt: 0, reason: "", midFlow: false, dismissed: false };
+  // hold=true → a per-user cap (device/IP) with no pollable "freed" signal: it
+  // resets at UTC midnight, not when the shared pool frees, so the wall must NOT
+  // auto-revive off /balance (which only reports the shared pool). No ticker, and
+  // pollFreeStatus short-circuits while it's up.
+  var pool = { exhausted: false, secondsLeft: 0, anchorAt: 0, reason: "", midFlow: false, dismissed: false, hold: false };
   var wallTicker = null, wallInFlight = false, wallLastPoll = 0;
   var wallCollapseTimer = null, wallCollapsed = false;
   // After a free run completes we KNOW a token was just spent. If the bucket is
@@ -2469,6 +2473,7 @@
     freeExhausted = true;
     resetWallCollapse();
     pool.dismissed = false;
+    pool.hold = !!opts.hold;
     var isState2 = (pool.reason === "pool_exhausted");
     if (isState2) {
       // State 2 — personal daily limit: title + reset line + email capture (left), quote (right).
@@ -2491,13 +2496,15 @@
     renderBalance();
     renderWall();
     refreshRunDisabled();
-    startWallTicker();
+    // A held (device/IP) wall has no live signal to poll — leave it static (it
+    // clears on reload / next day). All other walls run the revive ticker.
+    if (!pool.hold) startWallTicker();
     startWallTips(isState2);
   }
   // Pool is free again — tear the wall down, revive the button, no manual refresh.
   function revivePool() {
     if (!pool.exhausted && !freeExhausted) return;
-    pool.exhausted = false; pool.reason = ""; pool.midFlow = false; pool.dismissed = false;
+    pool.exhausted = false; pool.reason = ""; pool.midFlow = false; pool.dismissed = false; pool.hold = false;
     freeExhausted = false;
     stopWallTicker();
     stopWallTips();
@@ -2512,6 +2519,9 @@
   // cap surfaces here as `exhausted`; the hourly bucket only appears via a 429 on a
   // real run. Guarded so polls never overlap.
   async function pollFreeStatus(why) {
+    // A held (device/IP) wall is up: /balance only sees the shared pool, which is
+    // healthy, so polling it would wrongly revive the wall. Leave it until reload.
+    if (pool.hold) return;
     if (wallInFlight) return;
     wallInFlight = true; wallLastPoll = Date.now();
     try {
@@ -3062,7 +3072,7 @@
         setLoading(false);
         closeConfirm(els.jdSearchBack);
         track("free_denied", { reason: err.reason });
-        enterWall({ reason: "pool_exhausted", midFlow: true });
+        enterWall({ reason: "pool_exhausted", midFlow: true, hold: true });
         return;
       }
       if (err.reason === "turnstile_failed") {
@@ -3675,7 +3685,7 @@
     if (MOCK_DENY === "turnstile_failed") openConfirm(els.denyTurnstileBack);
     // device_limit / ip_limit now render the State 2 personal wall (see the run
     // catch handler). ?deny=legacy-limit still previews the retired modal.
-    else if (MOCK_DENY === "device_limit" || MOCK_DENY === "ip_limit") enterWall({ reason: "pool_exhausted", midFlow: false });
+    else if (MOCK_DENY === "device_limit" || MOCK_DENY === "ip_limit") enterWall({ reason: "pool_exhausted", midFlow: false, hold: true });
     else if (MOCK_DENY === "legacy-limit") showDenyLimit("device_limit");
     else if (MOCK_DENY === "blocked") showBlockedLink();                 // modal (comparison)
     else if (MOCK_DENY === "blocked-inline") showBlockedLinkInline();    // inline (live path)
