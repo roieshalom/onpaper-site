@@ -858,6 +858,14 @@
     font-family: var(--mono); font-size: var(--type-meta); letter-spacing: var(--ls-tiny);
     color: var(--faint); margin: var(--space-4) 0 0; text-wrap: pretty;
   }
+  /* item 6: reassurance line — same slot (left column, under the sub) in both states,
+     so it reads as a persistent status rather than a per-state message. */
+  .op-sheet-reassure {
+    display: flex; align-items: center; gap: var(--space-3);
+    font-family: var(--mono); font-size: var(--type-ui); letter-spacing: var(--ls-tiny);
+    color: var(--ink-3); margin: var(--space-5) 0 0; text-wrap: pretty;
+  }
+  .op-sheet-reassure svg { width: 15px; height: 15px; flex: none; color: var(--ok); }
   /* item 7: state-driven eyebrow over the rotating tip */
   .op-tip-eyebrow {
     display: block; font-family: var(--mono); font-size: var(--type-meta);
@@ -1239,12 +1247,20 @@
         <h3 class="op-sheet-title" id="wallTitle" hidden></h3>
         <!-- State 1 descriptive sub (hidden in State 2) — one line, above the count -->
         <p class="op-sheet-sub" id="wallSub"></p>
+        <!-- item 6: reassurance — same slot in both states, reads as persistent status -->
+        <p class="op-sheet-reassure" id="wallReassure">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg>
+          <span>Your CV and job description are still here.</span>
+        </p>
         <!-- State 1 countdown — the hero (hidden in State 2). The count sits in a
              fixed-width cell so the label never jumps as the digits change width. -->
         <div class="op-sheet-timer" id="wallCountRow">
           <span class="op-sheet-count" id="wallCount">&mdash;</span>
           <span class="op-sheet-timer-label" id="wallTimerLabel">until the next run is released</span>
         </div>
+        <!-- item 3: the wall revives itself (revivePool) — say so, or the timer reads
+             as "come back and retry". State 1 only; hidden in State 2. -->
+        <p class="op-unlock-note" id="wallUnlock">This page unlocks itself &mdash; you don&rsquo;t need to refresh.</p>
         <!-- email capture — State 2: always shown. State 1: revealed after the 30s
              collapse. Two separate permissions; at least one required to submit. -->
         <div id="emailWall" hidden>
@@ -1662,6 +1678,7 @@
     barWall: $("barWall"), wallTitle: $("wallTitle"), wallSub: $("wallSub"), wallCount: $("wallCount"),
     wallCountRow: $("wallCountRow"), wallTimerLabel: $("wallTimerLabel"), wallEmailLead: $("wallEmailLead"),
     wallKicker: $("wallKicker"), wallCode: $("wallCode"), wallTip: $("wallTip"),
+    wallUnlock: $("wallUnlock"), wallReassure: $("wallReassure"),
     availLine: $("availLine"), availText: $("availText"),
     closeNote: $("closeNote"), blockedInline: $("blockedInline"),
     emailReport: $("emailReport"), emailReportForm: $("emailReportForm"),
@@ -2308,6 +2325,23 @@
   function wallSubText() {
     return "Free runs drop a few at a time to keep things fair";
   }
+  // item 5: State 2 (daily limit) — an absolute local time is something a person can
+  // plan around; a 14h countdown is just a discouraging object. Derived from the same
+  // secondsLeft anchor. Falls back to the vague line if the value is missing/implausible.
+  function wallResetText() {
+    var secs = poolRemaining();
+    if (!(secs > 0) || secs > 48 * 3600) return "More are released tomorrow.";
+    var reset = new Date(Date.now() + secs * 1000);
+    var hhmm = reset.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+    var now = new Date();
+    var dayDiff = Math.round(
+      (new Date(reset.getFullYear(), reset.getMonth(), reset.getDate()) -
+       new Date(now.getFullYear(), now.getMonth(), now.getDate())) / 86400000
+    );
+    if (dayDiff <= 0) return "More open up at " + hhmm + ".";
+    if (dayDiff === 1) return "More open up at " + hhmm + " tomorrow.";
+    return "More are released tomorrow.";
+  }
   // Paint just the live numbers (called by the 1s ticker — cheap, no layout thrash).
   function renderWallCountdown() {
     var txt = fmtCountdown(poolRemaining());
@@ -2390,6 +2424,7 @@
       if (isState2) {
         if (els.wallKicker) els.wallKicker.textContent = "That's today's runs";
         if (els.wallTitle) els.wallTitle.textContent = "Today's free runs are all used up.";
+        if (els.wallSub) els.wallSub.textContent = wallResetText();  // item 5
       } else {
         if (els.wallKicker) els.wallKicker.textContent = (pool.reason === "rate_limited") ? "Just a moment" : "All runs in use";
         if (els.wallSub) els.wallSub.textContent = wallSubText();
@@ -2440,16 +2475,18 @@
     pool.dismissed = false;
     var isState2 = (pool.reason === "pool_exhausted");
     if (isState2) {
-      // State 2 — personal daily limit: title + email capture (left), quote (right).
+      // State 2 — personal daily limit: title + reset line + email capture (left), quote (right).
       if (els.wallTitle) els.wallTitle.hidden = false;
       if (els.wallCountRow) els.wallCountRow.hidden = true;
-      if (els.wallSub) els.wallSub.hidden = true;
+      if (els.wallSub) els.wallSub.hidden = false;      // holds the reset line (item 5)
+      if (els.wallUnlock) els.wallUnlock.hidden = true; // no countdown, so no "unlocks itself"
       if (els.emailWall) els.emailWall.hidden = false;
     } else {
       // State 1 — shared pool empty: the countdown is the hero; email hidden until 30s collapse.
       if (els.wallTitle) els.wallTitle.hidden = true;
       if (els.wallCountRow) els.wallCountRow.hidden = false;
       if (els.wallSub) els.wallSub.hidden = false;
+      if (els.wallUnlock) els.wallUnlock.hidden = false; // item 3: promise the auto-revive
       if (els.emailWall) els.emailWall.hidden = true;
       if (pool.secondsLeft > 45) {
         wallCollapseTimer = setTimeout(collapseWallCountdown, 30000);
