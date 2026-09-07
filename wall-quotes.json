@@ -1,0 +1,21 @@
+{
+  "_comment": "Rotating tips shown on the free-tier wall. Edit the eyebrow (the small uppercase label) and the quotes list for each state. The page loads this file at runtime; if it can't be fetched, the built-in defaults in index.html are used instead. Use straight quotes and keep each quote on one line.",
+  "state1_all_runs_in_use": {
+    "eyebrow": "While you wait",
+    "quotes": [
+      "Reread the posting and note the words it repeats.",
+      "The strongest CVs echo the job's own language. A good moment to check yours.",
+      "Most postings name what matters most in the first third. Worth a second read.",
+      "A gap is only worth fixing if the role actually asks for it — reread with that lens."
+    ]
+  },
+  "state2_todays_runs": {
+    "eyebrow": "Before tomorrow",
+    "quotes": [
+      "Line up the two or three roles you want to run first, so tomorrow's runs go where they count.",
+      "Rewrite one bullet per role to mirror the posting's own words.",
+      "Pick your top gap from the last run and draft the fix now — tomorrow you'll just paste and go.",
+      "Compare two postings side by side: the overlapping asks are the skills to lead with."
+    ]
+  }
+}
