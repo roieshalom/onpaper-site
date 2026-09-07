@@ -1488,10 +1488,11 @@
   </div>
 </div>
 
-<!-- Verification couldn't complete — try later (device_limit / ip_limit share this
-     ONE screen; distinguishing per-browser vs per-network would leak the mechanism).
-     Same vague reason line as above; differs only in guidance + no retry. UNTESTED
-     against a live deny until the abuse layer is enabled — preview with ?deny=device_limit. -->
+<!-- RETIRED from the live path (kept for reference/preview). device_limit / ip_limit
+     now render the State 2 "personal daily limit" wall (see the run catch handler) so
+     the per-user cap gets the friendly personal block, not this vague modal. Preview
+     the old screen with ?deny=legacy-limit. Original note: the two 429 limit reasons
+     shared this ONE screen so per-browser vs per-network was never hinted at. -->
 <div class="op-confirm-back op-deny op-deny--limit" id="denyLimitBack" hidden>
   <div class="op-confirm" role="dialog" aria-modal="true" aria-label="Couldn't verify this run">
     <div class="op-deny-head">
@@ -3054,12 +3055,19 @@
         return;
       }
 
-      // Abuse denials (Step 5b). Friendly, non-technical. No run used.
+      // Per-user daily cap (device / IP abuse gate). No run used. Route to the
+      // State 2 "personal daily limit" wall — the friendly personal block with the
+      // reset line + email capture — NOT the old vague "couldn't verify" modal
+      // (denyLimitBack, now retired from the live path). These caps reset at UTC
+      // midnight (backend seconds = -1), so there's no short countdown: State 2
+      // shows the reset line, not a timer. Forced to State 2 via reason
+      // "pool_exhausted" (enterWall keys State 2 off that); the true device_limit/
+      // ip_limit reason is preserved for analytics only.
       if (err.reason === "device_limit" || err.reason === "ip_limit") {
         setLoading(false);
         closeConfirm(els.jdSearchBack);
         track("free_denied", { reason: err.reason });
-        showDenyLimit(err.reason);
+        enterWall({ reason: "pool_exhausted", midFlow: true });
         return;
       }
       if (err.reason === "turnstile_failed") {
@@ -3670,7 +3678,10 @@
   function runMockDeny() {
     if (!MOCK_DENY) return;
     if (MOCK_DENY === "turnstile_failed") openConfirm(els.denyTurnstileBack);
-    else if (MOCK_DENY === "device_limit" || MOCK_DENY === "ip_limit") showDenyLimit(MOCK_DENY);
+    // device_limit / ip_limit now render the State 2 personal wall (see the run
+    // catch handler). ?deny=legacy-limit still previews the retired modal.
+    else if (MOCK_DENY === "device_limit" || MOCK_DENY === "ip_limit") enterWall({ reason: "pool_exhausted", midFlow: false });
+    else if (MOCK_DENY === "legacy-limit") showDenyLimit("device_limit");
     else if (MOCK_DENY === "blocked") showBlockedLink();                 // modal (comparison)
     else if (MOCK_DENY === "blocked-inline") showBlockedLinkInline();    // inline (live path)
   }
