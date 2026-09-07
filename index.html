@@ -290,7 +290,7 @@
   .op-wordmark { font-family: var(--serif-d); font-size: 26px; letter-spacing: -0.01em; }
   .op-brand { display: flex; align-items: center; gap: 12px; }
   .op-beta-tag { font-family: var(--mono); font-size: 10px; font-weight: 500; letter-spacing: 0.12em; text-transform: uppercase; color: var(--red); border: 1px solid var(--tag-border); border-radius: 3px; padding: 3px 7px; white-space: nowrap; }
-  .op-beta-mark { font-family: var(--sans); font-size: 14px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--red); white-space: nowrap; align-self: center; }
+  .op-beta-mark { font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Arial, sans-serif; font-size: 14px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--red); white-space: nowrap; align-self: center; }
   .op-wordmark .op-red, .op-red { color: var(--red); }
   .op-logo { display: block; height: 30px; width: auto; }
   .op-foot-mark .op-logo { height: 20px; }
@@ -481,7 +481,7 @@
      ================================================================ */
 
   /* ---- header brand + nav (wordmark + subtitle, CV x JD + menu) ---- */
-  .op-brand { display: flex; flex-direction: column; gap: 3px; align-items: center; justify-content: center; }
+  .op-brand { display: flex; flex-direction: row; gap: 10px; align-items: center; justify-content: flex-start; }
   .op-brand-sub { font-family: var(--mono); font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--mono-muted); }
   .op-nav { display: flex; align-items: center; gap: 18px; }
   .op-menu-btn {
@@ -967,10 +967,6 @@
       <div class="op-brand">
         <img src="logo.svg" alt="OnPaper" class="op-logo op-wordmark" width="116" height="30" />
         <span class="op-beta-mark">Beta</span>
-        <!-- Beta marker — shown by JS only on the onpaper-site*.vercel.app test
-             build, never on production (onpaper.fit). Makes the staging build
-             unmistakable and pairs with the noindex header in vercel.json. -->
-        <span class="op-beta-tag" id="betaTag" hidden>BETA · test build</span>
       </div>
       <div class="op-nav">
         <span class="op-meta">CV <span class="op-red" id="headerHeart">&hearts;</span> JD</span>
