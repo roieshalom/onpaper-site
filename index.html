@@ -1247,11 +1247,6 @@
         <h3 class="op-sheet-title" id="wallTitle" hidden></h3>
         <!-- State 1 descriptive sub (hidden in State 2) — one line, above the count -->
         <p class="op-sheet-sub" id="wallSub"></p>
-        <!-- item 6: reassurance — same slot in both states, reads as persistent status -->
-        <p class="op-sheet-reassure" id="wallReassure">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg>
-          <span>Your CV and job description are still here.</span>
-        </p>
         <!-- State 1 countdown — the hero (hidden in State 2). The count sits in a
              fixed-width cell so the label never jumps as the digits change width. -->
         <div class="op-sheet-timer" id="wallCountRow">
@@ -1679,7 +1674,7 @@
     barWall: $("barWall"), wallTitle: $("wallTitle"), wallSub: $("wallSub"), wallCount: $("wallCount"),
     wallCountRow: $("wallCountRow"), wallTimerLabel: $("wallTimerLabel"), wallEmailLead: $("wallEmailLead"),
     wallKicker: $("wallKicker"), wallCode: $("wallCode"), wallTip: $("wallTip"),
-    wallUnlock: $("wallUnlock"), wallReassure: $("wallReassure"),
+    wallUnlock: $("wallUnlock"),
     availLine: $("availLine"), availText: $("availText"),
     closeNote: $("closeNote"), blockedInline: $("blockedInline"),
     emailReport: $("emailReport"), emailReportForm: $("emailReportForm"),
