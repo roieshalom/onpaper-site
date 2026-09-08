@@ -765,6 +765,13 @@
     animation: op-sheet-up .34s var(--ease-lift) both;
   }
   @keyframes op-sheet-up { from { transform: translateY(100%); } to { transform: translateY(0); } }
+  /* Lower: reverse of the rise, played on dismiss/revive before the sheet is
+     hidden (JS sets [hidden] on animationend). Overrides the entry animation. */
+  .op-sheet.op-sheet--leaving { animation: op-sheet-down .3s var(--ease-lift) both; }
+  @keyframes op-sheet-down { from { transform: translateY(0); } to { transform: translateY(100%); } }
+  @media (prefers-reduced-motion: reduce) {
+    .op-sheet, .op-sheet.op-sheet--leaving { animation-duration: .001s; }
+  }
   .op-sheet-in {
     max-width: var(--measure-work); margin: 0 auto;
     padding: var(--space-9) var(--space-9) var(--space-8);
@@ -2429,7 +2436,7 @@
       } else if (pool.reason === "device_cooldown") {
         // Personal per-device cooldown — countdown to this browser's window reset.
         if (els.wallKicker) els.wallKicker.textContent = "Slow down a moment";
-        if (els.wallSub) els.wallSub.textContent = "You've used your free runs for now — the next opens up on its own.";
+        if (els.wallSub) els.wallSub.textContent = "You've used your free runs for now.";
         if (els.wallTimerLabel) els.wallTimerLabel.textContent = "until your next run";
       } else {
         if (els.wallKicker) els.wallKicker.textContent = (pool.reason === "rate_limited") ? "Just a moment" : "All runs in use";
@@ -2503,7 +2510,9 @@
       if (els.wallTitle) els.wallTitle.hidden = true;
       if (els.wallCountRow) els.wallCountRow.hidden = false;
       if (els.wallSub) els.wallSub.hidden = false;
-      if (els.wallUnlock) els.wallUnlock.hidden = false; // item 3: promise the auto-revive
+      // Shared State 1 promises the auto-revive; the personal cooldown drops that
+      // line (it's self-evident and the owner asked to remove it there).
+      if (els.wallUnlock) els.wallUnlock.hidden = isCooldown;
       if (els.emailWall) els.emailWall.hidden = true;
       // The shared-pool countdown collapses to email capture at 30s; a personal
       // cooldown just counts down to its own reset, so skip that collapse.
@@ -2630,6 +2639,25 @@
     if (loading) { els.runLabel.textContent = "Thinking…"; return; }
     els.runLabel.textContent = (remaining === 1) ? "Check fit · last run" : "Check fit";
   }
+  // Show/hide the bottom-sheet wall with matching rise/lower animations. Rise is
+  // the CSS default on .op-sheet (replays when it un-hides); lower plays
+  // op-sheet-down, then sets [hidden] on animationend. Idempotent: calling show
+  // cancels a pending lower, and hide is a no-op when already hidden/leaving.
+  function showWall() {
+    var el = els.barWall; if (!el) return;
+    if (el._leaveTimer) { clearTimeout(el._leaveTimer); el._leaveTimer = null; }
+    el.classList.remove("op-sheet--leaving");
+    el.hidden = false;
+  }
+  function hideWall() {
+    var el = els.barWall; if (!el || el.hidden || el._leaveTimer) return;
+    el.classList.add("op-sheet--leaving");
+    el._leaveTimer = setTimeout(function () {
+      el._leaveTimer = null;
+      el.classList.remove("op-sheet--leaving");
+      el.hidden = true;
+    }, 300);
+  }
   function renderBalance() {
     updateRunLabel();
     // Three resting states:
@@ -2642,13 +2670,13 @@
       // controls behind it; the sheet carries the whole message.
       els.barRun.hidden = true;
       els.barOut.hidden = true;
-      if (els.barWall) els.barWall.hidden = false;
+      showWall();
     } else {
       // Normal bar — or the wall minimized via its × (still exhausted, Run stays
       // disabled by refreshRunDisabled; the availability line keeps the countdown).
       els.barRun.hidden = false;
       els.barOut.hidden = true;
-      if (els.barWall) els.barWall.hidden = true;
+      hideWall();
       if (typeof remaining === "number" && remaining > 0) {
         els.runRemaining.textContent = remaining + (remaining === 1 ? " run left · " : " runs left · ");
       } else if (remaining === 0) {
