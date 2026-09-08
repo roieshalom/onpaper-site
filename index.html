@@ -285,7 +285,7 @@
   }
 
   /* ---- header ---- */
-  .op-header { flex-shrink: 0; position: relative; z-index: 2; background: var(--paper-bg); border-bottom: 1px solid var(--line); padding-top: env(safe-area-inset-top, 0px); }
+  .op-header { flex-shrink: 0; position: relative; z-index: 5; background: var(--paper-bg); border-bottom: 1px solid var(--line); padding-top: env(safe-area-inset-top, 0px); }
   .op-header-in { max-width: 1000px; margin: 0 auto; padding: 22px 32px; display: flex; align-items: center; justify-content: space-between; gap: 16px; }
   .op-wordmark { font-family: var(--serif-d); font-size: 26px; letter-spacing: -0.01em; }
   .op-brand { display: flex; align-items: center; gap: 12px; }
@@ -297,7 +297,7 @@
   .op-meta { font-family: var(--mono); font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--mono-muted); }
 
   /* ---- desktop-recommended notice (subtle, non-blocking, dismissable) ---- */
-  .op-notice { flex-shrink: 0; position: relative; z-index: 2; background: var(--best-bg); border-bottom: 1px solid var(--line); }
+  .op-notice { flex-shrink: 0; position: relative; z-index: 5; background: var(--best-bg); border-bottom: 1px solid var(--line); }
   .op-notice-in { max-width: 1000px; margin: 0 auto; padding: 9px 44px 9px 32px; display: flex; align-items: baseline; gap: 8px; }
   .op-notice-t { font-family: var(--mono); font-size: 11px; letter-spacing: 0.02em; color: var(--ink-3); }
   .op-notice-t strong { font-weight: 600; color: var(--ink-2); }
@@ -2537,9 +2537,11 @@
   // cap surfaces here as `exhausted`; the hourly bucket only appears via a 429 on a
   // real run. Guarded so polls never overlap.
   async function pollFreeStatus(why) {
-    // A held (device/IP) wall is up: /balance only sees the shared pool, which is
-    // healthy, so polling it would wrongly revive the wall. Leave it until reload.
-    if (pool.hold) return;
+    // A personal wall is up (device cooldown, or the dormant hold variant):
+    // /balance only sees the shared pool, which is healthy, so polling it would
+    // wrongly revive the wall (e.g. on tab refocus). The local ticker owns the
+    // countdown + revive for these; leave the poll out entirely.
+    if (pool.hold || pool.localRevive) return;
     if (wallInFlight) return;
     wallInFlight = true; wallLastPoll = Date.now();
     try {
