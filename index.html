@@ -785,14 +785,12 @@
   .op-sheet-rule { align-self: stretch; background: var(--line); }
   /* left column tops out (kicker anchored); the quote column centers vertically */
   .op-sheet-aside { align-self: center; }
-  /* Personal cooldown wall — right side: no divider, tip aligned to the top, and
-     upright (not italic) for easier reading. Scoped so the shared-pool walls keep
-     their divider + centered italic quote. */
-  /* visibility (not display:none) so the 1px grid track stays reserved — dropping
-     the item would push the tip into the 1px column and squash it to one word wide. */
-  .op-sheet--cooldown .op-sheet-rule { visibility: hidden; }
+  /* Personal cooldown wall — right side: keep the centre divider, but top-align the
+     tip and render it upright (not italic) without the accent bar, for easy reading.
+     Extra space above both columns. Scoped so shared-pool walls are untouched. */
   .op-sheet--cooldown .op-sheet-aside { align-self: start; }
-  .op-sheet--cooldown .op-sheet-tip { font-style: normal; }
+  .op-sheet--cooldown .op-sheet-tip { font-style: normal; border-left: none; padding-left: 0; }
+  .op-sheet--cooldown .op-sheet-in { padding-top: calc(var(--space-9) * 2); }
   .op-sheet-kicker {
     display: flex; align-items: center; gap: var(--space-2);
     font-family: var(--mono); font-size: var(--type-meta); letter-spacing: var(--ls-label);
