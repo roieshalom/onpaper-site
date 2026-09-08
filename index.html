@@ -2387,31 +2387,65 @@
       ]
     }
   };
-  // Load the editable quotes file; on success, swap in whatever it provides.
-  (function loadWallQuotes() {
+  // Render a tip safely: escape all HTML, then turn [label](http(s)://url) into a
+  // real link (new tab, noopener). Tips are operator-editable (admin console), so
+  // nothing else in the text is allowed to become markup.
+  function escHtml(s) {
+    return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+    });
+  }
+  function linkify(text) {
+    var s = String(text == null ? "" : text), out = "", last = 0;
+    var re = /\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g, m;
+    while ((m = re.exec(s))) {
+      out += escHtml(s.slice(last, m.index));
+      out += '<a href="' + escHtml(m[2]) + '" target="_blank" rel="noopener noreferrer">' + escHtml(m[1]) + "</a>";
+      last = m.index + m[0].length;
+    }
+    return out + escHtml(s.slice(last));
+  }
+  function tipHtml(eyebrow, quote) {
+    return '<span class="op-tip-eyebrow">' + escHtml(eyebrow) + "</span>" + linkify(quote);
+  }
+  // Load the editable tips: prefer the API (admin-managed, no deploy), then the
+  // static file, then the inline defaults above. Same shape from all three.
+  (function loadWallTips() {
+    function apply(j) {
+      if (!j || typeof j !== "object") return false;
+      var got = false;
+      function set(key, src) {
+        if (!src) return;
+        if (typeof src.eyebrow === "string" && src.eyebrow.trim()) { WALL_TIPS[key].eyebrow = src.eyebrow.trim(); got = true; }
+        if (Array.isArray(src.quotes)) {
+          var qs = src.quotes.filter(function (q) { return typeof q === "string" && q.trim(); });
+          if (qs.length) { WALL_TIPS[key].quotes = qs; got = true; }
+        }
+      }
+      set("s1", j.state1_all_runs_in_use);
+      set("s2", j.state2_todays_runs);
+      if (got && pool.exhausted && els.wallTip) { // a wall is already up — refresh in place
+        var s = wallTipState2 ? WALL_TIPS.s2 : WALL_TIPS.s1;
+        els.wallTip.innerHTML = tipHtml(s.eyebrow, s.quotes[wallTipIdx % s.quotes.length]);
+      }
+      return got;
+    }
+    function grab(url) {
+      return fetch(url, { cache: "no-cache" })
+        .then(function (r) { return r && r.ok ? r.json() : null; })
+        .catch(function () { return null; });
+    }
     try {
-      fetch("wall-quotes.json", { cache: "no-cache" }).then(function (r) {
-        return r && r.ok ? r.json() : null;
-      }).then(function (j) {
-        if (!j) return;
-        function apply(key, src) {
-          if (!src) return;
-          if (typeof src.eyebrow === "string" && src.eyebrow.trim()) WALL_TIPS[key].eyebrow = src.eyebrow.trim();
-          if (Array.isArray(src.quotes) && src.quotes.length) WALL_TIPS[key].quotes = src.quotes.filter(function (q) { return typeof q === "string" && q.trim(); });
-        }
-        apply("s1", j.state1_all_runs_in_use);
-        apply("s2", j.state2_todays_runs);
-        if (pool.exhausted && els.wallTip) { // a wall is already up — refresh its quote in place
-          var set = wallTipState2 ? WALL_TIPS.s2 : WALL_TIPS.s1;
-          els.wallTip.innerHTML = '<span class="op-tip-eyebrow">' + set.eyebrow + '</span>' + set.quotes[wallTipIdx % set.quotes.length];
-        }
+      grab(API_BASE + "/wall-tips").then(function (j) {
+        if (apply(j)) return;                          // API served tips
+        return grab("wall-quotes.json").then(apply);   // else fall back to the static file
       }).catch(function () {});
     } catch (e) {}
   })();
   var wallTipTimer = null, wallTipIdx = 0, wallTipState2 = false;
   function paintWallTip(i) {
     var set = wallTipState2 ? WALL_TIPS.s2 : WALL_TIPS.s1;
-    return '<span class="op-tip-eyebrow">' + set.eyebrow + '</span>' + set.quotes[i % set.quotes.length];
+    return tipHtml(set.eyebrow, set.quotes[i % set.quotes.length]);
   }
   function showWallTip(i) {
     if (!els.wallTip) return;
