@@ -2477,7 +2477,9 @@
         // Personal per-device cooldown — countdown to this browser's window reset.
         if (els.wallKicker) els.wallKicker.textContent = "Slow down a moment";
         if (els.wallSub) els.wallSub.textContent = "You've used your free runs for now.";
-        if (els.wallTimerLabel) els.wallTimerLabel.textContent = "until your next run";
+        // Break after "your" so it reads "until your / next run", not the orphaned
+        // "until your next / run" the 10em max-width would otherwise produce.
+        if (els.wallTimerLabel) els.wallTimerLabel.innerHTML = "until your<br>next run";
       } else {
         if (els.wallKicker) els.wallKicker.textContent = (pool.reason === "rate_limited") ? "Just a moment" : "All runs in use";
         if (els.wallSub) els.wallSub.textContent = wallSubText();
