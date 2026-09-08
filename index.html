@@ -2293,11 +2293,12 @@
   // meaningful moments: page load, tab refocus, the countdown reaching zero, and
   // a slow drift-correction while waiting. On any read that says the pool is free
   // again, the wall tears itself down and the run button revives on its own.
-  // hold=true → a per-user cap (device/IP) with no pollable "freed" signal: it
-  // resets at UTC midnight, not when the shared pool frees, so the wall must NOT
-  // auto-revive off /balance (which only reports the shared pool). No ticker, and
-  // pollFreeStatus short-circuits while it's up.
-  var pool = { exhausted: false, secondsLeft: 0, anchorAt: 0, reason: "", midFlow: false, dismissed: false, hold: false };
+  // localRevive=true → a per-device cooldown (reason "device_cooldown"): the block
+  // clears when THIS browser's window resets, which /balance can't see (it only
+  // reports the shared pool). So its countdown re-enables the button locally when
+  // it reaches 0, without polling. (hold is the older no-signal variant, now
+  // dormant — kept harmless in case a timerless personal wall is wanted again.)
+  var pool = { exhausted: false, secondsLeft: 0, anchorAt: 0, reason: "", midFlow: false, dismissed: false, hold: false, localRevive: false };
   var wallTicker = null, wallInFlight = false, wallLastPoll = 0;
   var wallCollapseTimer = null, wallCollapsed = false;
   // After a free run completes we KNOW a token was just spent. If the bucket is
@@ -2425,9 +2426,15 @@
         if (els.wallKicker) els.wallKicker.textContent = "That's today's runs";
         if (els.wallTitle) els.wallTitle.textContent = "Today's free runs are all used up.";
         if (els.wallSub) els.wallSub.textContent = wallResetText();  // item 5
+      } else if (pool.reason === "device_cooldown") {
+        // Personal per-device cooldown — countdown to this browser's window reset.
+        if (els.wallKicker) els.wallKicker.textContent = "Slow down a moment";
+        if (els.wallSub) els.wallSub.textContent = "You've used your free runs for now — the next opens up on its own.";
+        if (els.wallTimerLabel) els.wallTimerLabel.textContent = "until your next run";
       } else {
         if (els.wallKicker) els.wallKicker.textContent = (pool.reason === "rate_limited") ? "Just a moment" : "All runs in use";
         if (els.wallSub) els.wallSub.textContent = wallSubText();
+        if (els.wallTimerLabel) els.wallTimerLabel.textContent = "until the next run is released";
       }
     }
     if (els.availLine) els.availLine.hidden = !pool.exhausted;
@@ -2438,6 +2445,13 @@
     wallTicker = setInterval(function () {
       renderWallCountdown();
       var left = poolRemaining();
+      if (pool.localRevive) {
+        // Personal device cooldown: /balance can't see it (it's per-browser), so
+        // just re-enable locally when the window elapses. A retry then succeeds or
+        // re-blocks with a fresh countdown.
+        if (left <= 0) revivePool();
+        return;
+      }
       if (left <= 0) {
         pollFreeStatus("countdown");            // local clock says a slot should be free — confirm
       } else if (Date.now() - wallLastPoll > 30000) {
@@ -2474,6 +2488,8 @@
     resetWallCollapse();
     pool.dismissed = false;
     pool.hold = !!opts.hold;
+    pool.localRevive = (pool.reason === "device_cooldown");
+    var isCooldown = (pool.reason === "device_cooldown");
     var isState2 = (pool.reason === "pool_exhausted");
     if (isState2) {
       // State 2 — personal daily limit: title + reset line + email capture (left), quote (right).
@@ -2489,7 +2505,9 @@
       if (els.wallSub) els.wallSub.hidden = false;
       if (els.wallUnlock) els.wallUnlock.hidden = false; // item 3: promise the auto-revive
       if (els.emailWall) els.emailWall.hidden = true;
-      if (pool.secondsLeft > 45) {
+      // The shared-pool countdown collapses to email capture at 30s; a personal
+      // cooldown just counts down to its own reset, so skip that collapse.
+      if (!isCooldown && pool.secondsLeft > 45) {
         wallCollapseTimer = setTimeout(collapseWallCountdown, 30000);
       }
     }
@@ -2504,7 +2522,7 @@
   // Pool is free again — tear the wall down, revive the button, no manual refresh.
   function revivePool() {
     if (!pool.exhausted && !freeExhausted) return;
-    pool.exhausted = false; pool.reason = ""; pool.midFlow = false; pool.dismissed = false; pool.hold = false;
+    pool.exhausted = false; pool.reason = ""; pool.midFlow = false; pool.dismissed = false; pool.hold = false; pool.localRevive = false;
     freeExhausted = false;
     stopWallTicker();
     stopWallTips();
@@ -3072,7 +3090,9 @@
         setLoading(false);
         closeConfirm(els.jdSearchBack);
         track("free_denied", { reason: err.reason });
-        enterWall({ reason: "pool_exhausted", midFlow: true, hold: true });
+        // Per-device rolling-window cap → personal countdown wall that re-enables
+        // itself when the window resets. `seconds` = time left on this device's window.
+        enterWall({ reason: "device_cooldown", seconds: err.seconds, midFlow: true });
         return;
       }
       if (err.reason === "turnstile_failed") {
@@ -3682,10 +3702,13 @@
   // before cfg:turnstile_enabled flips. Untested against a live deny until then.
   function runMockDeny() {
     if (!MOCK_DENY) return;
+    var mockSecs = parseInt(new URLSearchParams(location.search).get("secs"), 10);
+    if (isNaN(mockSecs)) mockSecs = 3600;
     if (MOCK_DENY === "turnstile_failed") openConfirm(els.denyTurnstileBack);
-    // device_limit / ip_limit now render the State 2 personal wall (see the run
-    // catch handler). ?deny=legacy-limit still previews the retired modal.
-    else if (MOCK_DENY === "device_limit" || MOCK_DENY === "ip_limit") enterWall({ reason: "pool_exhausted", midFlow: false, hold: true });
+    // device_limit / ip_limit now render the personal cooldown countdown wall (see
+    // the run catch handler). ?secs=N sets the demo countdown; ?deny=legacy-limit
+    // still previews the retired modal.
+    else if (MOCK_DENY === "device_limit" || MOCK_DENY === "ip_limit") enterWall({ reason: "device_cooldown", seconds: mockSecs, midFlow: false });
     else if (MOCK_DENY === "legacy-limit") showDenyLimit("device_limit");
     else if (MOCK_DENY === "blocked") showBlockedLink();                 // modal (comparison)
     else if (MOCK_DENY === "blocked-inline") showBlockedLinkInline();    // inline (live path)
