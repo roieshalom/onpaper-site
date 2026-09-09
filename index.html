@@ -2361,6 +2361,24 @@
   function wallSubText() {
     return "Free runs drop a few at a time to keep things fair";
   }
+  // Builds the " (CEST, UTC+2)" zone suffix for the reset time, so an absolute clock
+  // time is unambiguous for whoever is reading it. Abbreviation comes from Intl (when
+  // it's a real name, not a "GMT+2" restatement); the UTC offset is always shown.
+  function tzSuffix(d) {
+    var abbr = "";
+    try {
+      var parts = new Intl.DateTimeFormat([], { timeZoneName: "short" }).formatToParts(d);
+      for (var i = 0; i < parts.length; i++) {
+        if (parts[i].type === "timeZoneName") { abbr = parts[i].value; break; }
+      }
+    } catch (e) {}
+    if (/^(GMT|UTC)/i.test(abbr)) abbr = ""; // avoid "GMT+2, UTC+2"
+    var mins = -d.getTimezoneOffset();
+    var sign = mins >= 0 ? "+" : "-";
+    var am = Math.abs(mins), hh = Math.floor(am / 60), mm = am % 60;
+    var utc = "UTC" + sign + hh + (mm ? ":" + (mm < 10 ? "0" : "") + mm : "");
+    return " (" + (abbr ? abbr + ", " : "") + utc + ")";
+  }
   // item 5: State 2 (daily limit) — an absolute local time is something a person can
   // plan around; a 14h countdown is just a discouraging object. Derived from the same
   // secondsLeft anchor. Falls back to the vague line if the value is missing/implausible.
@@ -2368,7 +2386,7 @@
     var secs = poolRemaining();
     if (!(secs > 0) || secs > 48 * 3600) return "More are released tomorrow.";
     var reset = new Date(Date.now() + secs * 1000);
-    var hhmm = reset.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+    var hhmm = reset.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) + tzSuffix(reset);
     var now = new Date();
     var dayDiff = Math.round(
       (new Date(reset.getFullYear(), reset.getMonth(), reset.getDate()) -
