@@ -1410,11 +1410,12 @@
     </div>
 
     <!-- Admin: opens the internal management platform (the free-tier admin knobs).
-         It lives on the preview TWIN — the prod /api/admin hard-503s by design —
-         so this always points at the twin, regardless of build. Not part of the
-         product; deliberately quiet at the very bottom. -->
+         /api/admin is now a per-env console (prod deploy edits the prod store, preview
+         edits the twin), so the href is set in JS to API_BASE + "/admin" — prod site
+         → prod console, beta build → twin. The static href below is the prod fallback
+         if that JS never runs. Not part of the product; quiet at the very bottom. -->
     <a class="op-menu-admin" id="menuAdmin"
-       href="https://onpaper-api-git-free-tier-roys-projects-48041b7f.vercel.app/api/admin"
+       href="https://onpaper-api.vercel.app/api/admin"
        target="_blank" rel="noopener noreferrer">
       <span>Admin</span>
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -1577,6 +1578,12 @@
   var API_URL     = API_BASE + "/analyze";
   var REDEEM_URL  = API_BASE + "/redeem";
   var BALANCE_URL = API_BASE + "/balance";
+  // Point the quiet Admin link at the console for THIS environment: prod site → prod
+  // store, beta build → twin. Same routing as the API above (per-env /api/admin).
+  try {
+    var _admin = document.getElementById("menuAdmin");
+    if (_admin) _admin.href = API_BASE + "/admin";
+  } catch (e) {}
 
   var LS_CV   = "triage_fit_cv";     // text extracted from your uploaded CV (client-side only; per-tab)
   var LS_CVNM = "triage_fit_cv_name"; // uploaded CV filename, to restore the chip on reload (per-tab)
