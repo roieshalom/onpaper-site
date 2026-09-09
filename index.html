@@ -5,7 +5,7 @@
 <meta name="theme-color" content="#F0F4F7">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<title>OnPaper</title>
+<title>OnPaper — the gaps between your CV and the job</title>
 <script>
   // Lock the app-shell to the real visible height. iOS standalone (home-screen)
   // apps misreport vh/svh/dvh, which pushes the header/banner off-screen.
@@ -40,6 +40,12 @@
   })();
 </script>
 <meta name="description" content="Upload your CV and paste a job link. Get the real gaps between them, each with one concrete fix. Gaps, not scores. Fixes, not filler.">
+<link rel="canonical" href="https://onpaper.fit">
+<meta property="og:title" content="OnPaper — the gaps between your CV and the job">
+<meta property="og:description" content="Upload your CV and paste a job link. Get the real gaps between them, each with one concrete fix. Gaps, not scores. Fixes, not filler.">
+<meta property="og:url" content="https://onpaper.fit">
+<meta property="og:image" content="https://onpaper.fit/og-image.png">
+<meta name="twitter:card" content="summary_large_image">
 <link rel="icon" href="favicon.ico" sizes="any">
 <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
 <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
@@ -62,7 +68,80 @@
     autocapture: false,
     disable_session_recording: true
   });
+  // Internal-traffic marker (Roie's own dev/testing). Visit any page once with
+  // ?internal=1 to stamp this browser; the flag persists in localStorage (PostHog
+  // persistence is 'memory', so we re-register it on every load). It rides on every
+  // client event as a super property, and is threaded into the /analyze payload so
+  // the server run-cost event carries it too — letting PostHog's "internal & test
+  // accounts" filter drop ALL of Roie's traffic, anonymous or coupon-identified.
+  // Analytics-only: it never affects authorization, the pool, or spend.
+  try {
+    if (/[?&]internal=1(?:&|$)/.test(location.search || "")) {
+      try { localStorage.setItem("onpaper_internal", "1"); } catch (e) {}
+    }
+    var __opInternal = false;
+    try { __opInternal = localStorage.getItem("onpaper_internal") === "1"; } catch (e) {}
+    window.__opInternal = __opInternal;
+    if (__opInternal && window.posthog && posthog.register) posthog.register({ internal: true });
+  } catch (e) {}
+
+  // Operator abuse-gate bypass token (Roie's own testing). Visit once with
+  // ?bypass=<token> to stamp this browser; it persists in localStorage and rides
+  // on the /analyze payload (body.bypassToken). The backend compares it to
+  // cfg:free_bypass_token and, on a match, skips the device + IP gates ONLY (pool
+  // + dollar cap still apply). Unlike the device hash, this survives browsers that
+  // randomize their fingerprint. To clear it: ?bypass= (empty). Testing-only.
+  try {
+    var __bpMatch = /[?&]bypass=([^&]*)/.exec(location.search || "");
+    if (__bpMatch) {
+      var __bp = decodeURIComponent(__bpMatch[1] || "");
+      try { if (__bp) localStorage.setItem("onpaper_bypass", __bp); else localStorage.removeItem("onpaper_bypass"); } catch (e) {}
+    }
+    var __opBypass = "";
+    try { __opBypass = localStorage.getItem("onpaper_bypass") || ""; } catch (e) {}
+    window.__opBypass = __opBypass;
+  } catch (e) {}
 </script>
+
+<!-- Cloudflare Turnstile (Step 5a wiring). Managed mode + interaction-only appearance
+     → invisible for most users. The token is captured here and read by the analyze
+     call as body.turnstileToken. The site key is public by design; the secret half
+     lives server-side (onpaper-api TURNSTILE_SECRET_KEY). Enforcement stays inert
+     until cfg:turnstile_enabled is flipped on the backend. -->
+<script>
+  // Token plumbing lives on window because Turnstile invokes its callbacks by name
+  // from global scope, while the app logic runs inside an IIFE further down.
+  window.__opTS = (function () {
+    var token = "";       // current unused token ("" = none available yet)
+    var waiters = [];     // resolvers waiting for the next token
+    return {
+      set: function (t) {
+        token = t || "";
+        if (token) { var w = waiters; waiters = []; w.forEach(function (fn) { fn(token); }); }
+      },
+      clear: function () { token = ""; },
+      get: function () { return token; },
+      // Resolve to the current token, or wait for the widget to produce one.
+      // Falls back to "" after timeoutMs so a broken/blocked widget can't hang
+      // the click forever (that yields a clean turnstile_failed deny once enabled).
+      wait: function (timeoutMs) {
+        if (token) return Promise.resolve(token);
+        return new Promise(function (resolve) {
+          var done = false;
+          var to = setTimeout(function () { if (!done) { done = true; resolve(token || ""); } }, timeoutMs);
+          waiters.push(function (t) { if (!done) { done = true; clearTimeout(to); resolve(t); } });
+        });
+      }
+    };
+  })();
+  window.onpTurnstileOk      = function (t) { window.__opTS.set(t); };
+  window.onpTurnstileExpired = function () {
+    window.__opTS.clear();
+    try { if (window.turnstile) window.turnstile.reset(); } catch (e) {}
+  };
+  window.onpTurnstileError   = function () { window.__opTS.clear(); };
+</script>
+<script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
 
 <style>
   /* ================================================================
@@ -105,6 +184,29 @@
     --mono:    'IBM Plex Mono', ui-monospace, 'SF Mono', Menlo, monospace;
 
     --ok: #4F9E6E;   /* green — good-match grade */
+
+    /* ---- Design-system token layer (from the Claude Design handoff).
+       Values resolved to this skin's existing conventions so the wall v3
+       components read straight from the same variables the package uses. */
+    --on-red: #FFFFFF;          /* text/icon on a solid red fill */
+    /* spacing scale */
+    --space-2: 6px;  --space-3: 8px;   --space-4: 10px; --space-5: 12px;
+    --space-6: 16px; --space-7: 20px;  --space-8: 24px; --space-9: 28px;
+    --space-10: 32px; --space-11: 40px; --space-12: 48px; --space-13: 56px; --space-14: 64px;
+    /* type scale */
+    --type-micro: 10px; --type-meta: 11px; --type-ui-sm: 12px; --type-ui: 13px;
+    --type-fix: 14px; --type-lead: 15px; --type-dialog: 26px;
+    --lh-body: 1.6;
+    /* letter-spacing */
+    --ls-tiny: 0.02em; --ls-num: 0.02em; --ls-kind: 0.14em; --ls-label: 0.16em;
+    /* radii */
+    --radius: 8px; --radius-sharp: 3px; --radius-pill: 999px; --radius-modal: 12px;
+    /* motion */
+    --dur: .2s; --dur-fast: .15s; --ease-lift: cubic-bezier(.22,1,.36,1);
+    /* elevation + measures */
+    --shadow-modal: 0 24px 60px rgba(0,0,0,0.55);
+    --shadow-bar: 0 -8px 30px rgba(17,26,40,0.10);
+    --measure-work: 840px;
   }
 
   * { box-sizing: border-box; }
@@ -189,16 +291,19 @@
   }
 
   /* ---- header ---- */
-  .op-header { flex-shrink: 0; position: relative; z-index: 2; background: var(--paper-bg); border-bottom: 1px solid var(--line); padding-top: env(safe-area-inset-top, 0px); }
+  .op-header { flex-shrink: 0; position: relative; z-index: 5; background: var(--paper-bg); border-bottom: 1px solid var(--line); padding-top: env(safe-area-inset-top, 0px); }
   .op-header-in { max-width: 1000px; margin: 0 auto; padding: 22px 32px; display: flex; align-items: center; justify-content: space-between; gap: 16px; }
   .op-wordmark { font-family: var(--serif-d); font-size: 26px; letter-spacing: -0.01em; }
+  .op-brand { display: flex; align-items: center; gap: 12px; }
+  .op-beta-tag { font-family: var(--mono); font-size: 10px; font-weight: 500; letter-spacing: 0.12em; text-transform: uppercase; color: var(--red); border: 1px solid var(--tag-border); border-radius: 3px; padding: 3px 7px; white-space: nowrap; }
+  .op-beta-mark { font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Arial, sans-serif; font-size: 14px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--red); white-space: nowrap; align-self: center; }
   .op-wordmark .op-red, .op-red { color: var(--red); }
   .op-logo { display: block; height: 30px; width: auto; }
   .op-foot-mark .op-logo { height: 20px; }
   .op-meta { font-family: var(--mono); font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--mono-muted); }
 
   /* ---- desktop-recommended notice (subtle, non-blocking, dismissable) ---- */
-  .op-notice { flex-shrink: 0; position: relative; z-index: 2; background: var(--best-bg); border-bottom: 1px solid var(--line); }
+  .op-notice { flex-shrink: 0; position: relative; z-index: 5; background: var(--best-bg); border-bottom: 1px solid var(--line); }
   .op-notice-in { max-width: 1000px; margin: 0 auto; padding: 9px 44px 9px 32px; display: flex; align-items: baseline; gap: 8px; }
   .op-notice-t { font-family: var(--mono); font-size: 11px; letter-spacing: 0.02em; color: var(--ink-3); }
   .op-notice-t strong { font-weight: 600; color: var(--ink-2); }
@@ -382,7 +487,7 @@
      ================================================================ */
 
   /* ---- header brand + nav (wordmark + subtitle, CV x JD + menu) ---- */
-  .op-brand { display: flex; flex-direction: column; gap: 3px; align-items: center; justify-content: center; }
+  .op-brand { display: flex; flex-direction: row; gap: 10px; align-items: center; justify-content: flex-start; }
   .op-brand-sub { font-family: var(--mono); font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--mono-muted); }
   .op-nav { display: flex; align-items: center; gap: 18px; }
   .op-menu-btn {
@@ -402,6 +507,7 @@
     width: min(440px, 90vw); height: 100%; background: var(--paper);
     border-left: 1px solid var(--line-in); box-shadow: -18px 0 50px rgba(0,0,0,0.45);
     padding: 84px 34px 34px; overflow-y: auto;
+    display: flex; flex-direction: column;
     animation: op-menu-slide .28s ease both;
   }
   @keyframes op-menu-slide { from { transform: translateX(30px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
@@ -429,6 +535,21 @@
     color: var(--ink); padding: 22px 0 6px;
   }
   .op-menu-lead { font-family: var(--serif-b); font-weight: 600; color: var(--ink-2); }
+  /* Admin: a quiet, lighter-grey link at the very bottom of the drawer that opens
+     the internal management platform in a new tab. Intentionally understated. */
+  .op-menu-admin {
+    display: inline-flex; align-items: center; gap: 8px;
+    align-self: flex-start;
+    margin-top: auto;
+    position: sticky; bottom: 0;
+    background: var(--paper);
+    font-family: var(--mono); font-size: 12px; letter-spacing: 0.14em; text-transform: uppercase;
+    color: var(--faint); text-decoration: none;
+    padding: 20px 0 calc(env(safe-area-inset-bottom, 0px) + 4px);
+    transition: color .18s ease;
+  }
+  .op-menu-admin:hover { color: var(--ink-3); }
+  .op-menu-admin svg { width: 14px; height: 14px; flex-shrink: 0; }
   /* ---- feedback section (in menu) ---- */
   .op-fb-seg {
     display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px;
@@ -636,6 +757,208 @@
   .op-confirm-actions:empty + .op-confirm-foot, .op-confirm-foot:last-child { margin-bottom: 0; }
   .op-mini-spin { flex: none; width: 13px; height: 13px; align-self: center; border: 2px solid var(--line-in); border-top-color: var(--red); border-radius: 50%; animation: op-spin 0.7s linear infinite; }
 
+  /* ===== Step 5b: free-pool wall + denial states ===== */
+  /* The wall v3 — the dead-end blocker, BOTTOM-SHEET treatment (Claude Design
+     handoff, recommended). Rises from the docked bar; the CV/JD inputs stay
+     visible above it (no scrim). Wide desktop format, so both states lay out in
+     two columns split by a 1px rule: left = what's happening to you, right =
+     what you can do. State 1 (pool empty): the live countdown is the hero. State
+     2 (personal daily limit): no timer, so email capture is the primary action. */
+  .op-sheet {
+    position: absolute; left: 0; right: 0; bottom: 0; z-index: 40;
+    background: var(--paper); border-top: 3px solid var(--red);
+    box-shadow: var(--shadow-bar);
+    animation: op-sheet-up .34s var(--ease-lift) both;
+  }
+  @keyframes op-sheet-up { from { transform: translateY(100%); } to { transform: translateY(0); } }
+  /* Lower: reverse of the rise, played on dismiss/revive before the sheet is
+     hidden (JS sets [hidden] on animationend). Overrides the entry animation. */
+  .op-sheet.op-sheet--leaving { animation: op-sheet-down .3s var(--ease-lift) both; }
+  @keyframes op-sheet-down { from { transform: translateY(0); } to { transform: translateY(100%); } }
+  @media (prefers-reduced-motion: reduce) {
+    .op-sheet, .op-sheet.op-sheet--leaving { animation-duration: .001s; }
+  }
+  .op-sheet-in {
+    max-width: var(--measure-work); margin: 0 auto;
+    padding: var(--space-9) var(--space-9) var(--space-8);
+    display: grid; grid-template-columns: 1fr 1px 1fr; gap: var(--space-11);
+    align-items: start; align-content: stretch;
+    /* Fixed content height so every wall render is the same size: State 1 before
+       and after the countdown collapses (email revealed), and State 2. Content is
+       vertically centered within it, which also gives the gap before the email. */
+    min-height: 308px;
+  }
+  .op-sheet-rule { align-self: stretch; background: var(--line); }
+  /* left column tops out (kicker anchored); the quote column centers vertically */
+  .op-sheet-aside { align-self: center; }
+  /* Personal cooldown wall — right side: keep the centre divider, but top-align the
+     tip and render it upright (not italic) without the accent bar, for easy reading.
+     Extra space above both columns. Scoped so shared-pool walls are untouched. */
+  .op-sheet--cooldown .op-sheet-aside { align-self: start; }
+  .op-sheet--cooldown .op-sheet-tip { font-style: normal; border-left: none; padding-left: 0; }
+  .op-sheet--cooldown .op-sheet-in { padding-top: calc(var(--space-9) * 2); }
+  .op-sheet-kicker {
+    display: flex; align-items: center; gap: var(--space-2);
+    font-family: var(--mono); font-size: var(--type-meta); letter-spacing: var(--ls-label);
+    text-transform: uppercase; color: var(--red); margin-bottom: var(--space-4);
+  }
+  .op-sheet-kicker svg { width: 14px; height: 14px; }
+  /* state 1: the countdown is the hero, inline. The count lives in a fixed-width
+     cell (tabular-nums + min-width) so the label never shifts as the digits change.
+     Count + label are vertically centered against each other. */
+  .op-sheet-timer { display: flex; align-items: center; gap: var(--space-5); }
+  .op-sheet-count {
+    flex: 0 0 auto; min-width: 2.7em; text-align: left;
+    font-family: var(--serif-d); font-weight: 400; font-size: 46px; line-height: 1;
+    letter-spacing: -0.01em; color: var(--red); font-variant-numeric: tabular-nums;
+  }
+  .op-sheet-timer-label { font-family: var(--mono); font-size: var(--type-meta); letter-spacing: var(--ls-tiny);
+    text-transform: uppercase; color: var(--mono-muted); line-height: 1.4; max-width: 10em; }
+  /* email capture sits in the LEFT column, with clear space above it */
+  .op-sheet #emailWall { margin-top: var(--space-8); }
+  .op-sheet-sub { font-family: var(--serif-b); font-size: var(--type-fix); line-height: var(--lh-body);
+    color: var(--ink-3); margin: 0 0 var(--space-5); white-space: nowrap; }
+  .op-sheet-kept { display: flex; align-items: center; gap: 9px;
+    font-family: var(--mono); font-size: var(--type-meta); letter-spacing: var(--ls-tiny);
+    color: var(--ink-4); margin-bottom: var(--space-4); }
+  .op-sheet-kept svg { width: 13px; height: 13px; flex: none; color: var(--ok); }
+  .op-sheet-tip { font-family: var(--serif-b); font-size: var(--type-fix); font-style: italic;
+    line-height: var(--lh-body); color: var(--ink-4); margin: 0; padding-left: var(--space-4);
+    border-left: 2px solid var(--tag-border); text-wrap: pretty; transition: opacity .5s ease; }
+  /* state 2: title left, email capture right */
+  .op-sheet-title { font-family: var(--serif-d); font-weight: 400; font-size: var(--type-dialog);
+    line-height: 1.15; letter-spacing: -0.01em; color: var(--ink); margin: 0 0 var(--space-2); text-wrap: pretty; }
+  .op-sheet-title-sub { font-family: var(--serif-b); font-size: var(--type-lead); color: var(--ink-3); margin: 0 0 var(--space-6); }
+  .op-sheet-lead { font-family: var(--serif-b); font-size: var(--type-fix); color: var(--ink-2); margin: 0 0 var(--space-4); }
+  .op-sheet-opts { display: flex; gap: var(--space-7); margin-bottom: var(--space-4); flex-wrap: wrap; }
+  .op-sheet-row { display: flex; gap: var(--space-3); }
+  .op-sheet-row .op-input { flex: 1; min-width: 0; }
+  .op-sheet-note { font-family: var(--mono); font-size: var(--type-meta); line-height: 1.5;
+    letter-spacing: var(--ls-tiny); color: var(--faint); margin: var(--space-4) 0 0; text-wrap: pretty; }
+  .op-sheet-note b { color: var(--mono-muted); font-weight: 500; }
+  .op-sheet-done { display: flex; align-items: center; gap: var(--space-3);
+    font-family: var(--serif-b); font-size: var(--type-lead); color: var(--ok); }
+  .op-sheet-done svg { width: 20px; height: 20px; flex: none; }
+  /* shared wall email input + submit */
+  .op-sheet .op-input {
+    font-family: var(--serif-b); font-size: 14px; padding: 11px 14px;
+    border: 1px solid var(--line-in); border-radius: var(--radius-sharp);
+    background: var(--paper); color: var(--ink);
+  }
+  .op-sheet .op-input:focus { outline: none; border-color: var(--red-focus); box-shadow: 0 0 0 3px rgba(224,112,92,0.16); }
+  .op-sheet .op-btn--sm {
+    font-family: var(--mono); font-size: 13px; letter-spacing: 0.04em; font-weight: 500;
+    padding: 11px 18px; border: none; border-radius: var(--radius-sharp);
+    background: var(--ink); color: var(--paper-bg); cursor: pointer; white-space: nowrap;
+  }
+  .op-sheet .op-btn--sm:active { transform: translateY(1px); }
+  .op-sheet .op-btn--sm:disabled { background: #C7D0DA; color: #8793A3; cursor: not-allowed; }
+  /* collapse the sheet to a single column on narrow viewports */
+  @media (max-width: 620px) {
+    .op-sheet-in { grid-template-columns: 1fr; gap: var(--space-6); }
+    .op-sheet-rule { display: none; }
+  }
+  /* custom checkbox — square that fills red when ticked */
+  .op-check { display: flex; align-items: center; gap: var(--space-4); cursor: pointer;
+    font-family: var(--mono); font-size: var(--type-ui); color: var(--ink-2); }
+  .op-check input { position: absolute; opacity: 0; width: 0; height: 0; }
+  .op-check-box {
+    width: 20px; height: 20px; flex: none; color: var(--on-red);
+    display: inline-flex; align-items: center; justify-content: center;
+    border: 1.5px solid var(--btn-line); border-radius: var(--radius-sharp);
+    background: var(--paper); transition: background var(--dur), border-color var(--dur);
+  }
+  .op-check-box svg { width: 13px; height: 13px; opacity: 0; }
+  .op-check input:checked + .op-check-box { background: var(--red); border-color: var(--red); }
+  .op-check input:checked + .op-check-box svg { opacity: 1; }
+  .op-check input:focus-visible + .op-check-box { box-shadow: 0 0 0 3px rgba(224,112,92,0.16); }
+  /* item 3: unlock note under the countdown (state 1) */
+  .op-unlock-note {
+    font-family: var(--mono); font-size: var(--type-meta); letter-spacing: var(--ls-tiny);
+    color: var(--faint); margin: var(--space-4) 0 0; text-wrap: pretty;
+  }
+  /* item 6: reassurance line — same slot (left column, under the sub) in both states,
+     so it reads as a persistent status rather than a per-state message. */
+  .op-sheet-reassure {
+    display: flex; align-items: center; gap: var(--space-3);
+    font-family: var(--mono); font-size: var(--type-ui); letter-spacing: var(--ls-tiny);
+    color: var(--ink-3); margin: var(--space-5) 0 0; text-wrap: pretty;
+  }
+  .op-sheet-reassure svg { width: 15px; height: 15px; flex: none; color: var(--ok); }
+  /* item 7: state-driven eyebrow over the rotating tip */
+  .op-tip-eyebrow {
+    display: block; font-family: var(--mono); font-size: var(--type-meta);
+    letter-spacing: var(--ls-label); text-transform: uppercase;
+    color: var(--mono-muted); margin-bottom: var(--space-3);
+  }
+  /* item 4: collapsed countdown (t=30s) — the numeral scales down to a compact
+     line; one-way, never grows back. Once small, the label fits on one line. */
+  .op-sheet-timer.is-compact .op-sheet-count { font-size: var(--type-lead); min-width: 3.4em; }
+  .op-sheet-timer.is-compact .op-sheet-timer-label { max-width: none; white-space: nowrap; }
+  @media (prefers-reduced-motion: no-preference) {
+    .op-sheet-count { transition: font-size .28s var(--ease-lift), min-width .28s var(--ease-lift); }
+  }
+  @media (prefers-reduced-motion: reduce) { .op-sheet-tip { transition: none; } }
+  /* Availability line near the inputs — so the wall isn't discovered only after
+     both fields are filled. Same information, compact. */
+  .op-avail { display: flex; align-items: center; justify-content: center; gap: 8px; font-family: var(--mono); font-size: 12px; letter-spacing: 0.02em; color: var(--ink-3); background: var(--best-bg); border: 1px solid var(--line-in); border-radius: 4px; padding: 9px 15px; text-align: center; }
+  .op-avail svg { width: 13px; height: 13px; flex: none; color: var(--ink-4); }
+  .op-avail b { font-weight: 500; color: var(--ink); font-variant-numeric: tabular-nums; }
+
+  /* Denial modals reuse .op-confirm, but each carries a distinct icon + kicker so
+     turnstile / device-limit / blocked-link are never confused for one another. */
+  .op-deny-head { display: flex; align-items: center; gap: 10px; margin: 0 0 14px; }
+  .op-deny-ic { flex: none; width: 34px; height: 34px; display: flex; align-items: center; justify-content: center; border-radius: 50%; border: 1px solid var(--line-in); }
+  .op-deny-ic svg { width: 18px; height: 18px; }
+  .op-deny-kicker { font-family: var(--mono); font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase; }
+  /* per-state accents */
+  .op-deny--link .op-deny-ic { color: var(--red); border-color: var(--tag-border); }
+  .op-deny--link .op-deny-kicker { color: var(--red); }
+  .op-deny--turnstile .op-deny-ic { color: var(--ink-3); }
+  .op-deny--turnstile .op-deny-kicker { color: var(--ink-4); }
+  .op-deny--limit .op-deny-ic { color: var(--amber); border-color: rgba(181,103,12,0.4); }
+  .op-deny--limit .op-deny-kicker { color: var(--amber); }
+  .op-deny--limit .op-confirm { border-left: 3px solid var(--amber); }
+
+  /* Email capture — one field, single purpose. Used below the report (primary)
+     and, smaller, on the wall (secondary). Never adjacent to the privacy note. */
+  .op-email { margin: 26px 0 0; padding: 18px 20px; border: 1px solid var(--card-line); border-radius: 8px; background: var(--paper); }
+  .op-email--wall { margin: 4px 0 0; padding: 0; border: none; background: transparent; max-width: 420px; }
+  .op-email-lead { font-family: var(--serif-b); font-size: 15px; line-height: 1.45; color: var(--ink-2); margin: 0 0 12px; text-wrap: pretty; }
+  .op-email--wall .op-email-lead { font-family: var(--mono); font-size: 12px; color: var(--ink-3); margin-bottom: 9px; }
+  .op-email-row { display: flex; flex-wrap: wrap; gap: 9px; }
+  .op-email-in { flex: 1; min-width: 180px; font-family: var(--serif-b); font-size: 14px; padding: 11px 14px; border: 1px solid var(--line-in); border-radius: 3px; background: var(--paper); color: var(--ink); }
+  .op-email--wall .op-email-in { background: var(--paper); }
+  .op-email-in:focus { outline: none; border-color: var(--red-focus); box-shadow: 0 0 0 3px rgba(224,112,92,0.16); }
+  .op-email-btn { font-family: var(--mono); font-size: 13px; letter-spacing: 0.04em; font-weight: 500; padding: 11px 20px; border: none; border-radius: 3px; background: var(--ink); color: var(--paper-bg); cursor: pointer; white-space: nowrap; }
+  .op-email-btn:active { transform: translateY(1px); }
+  .op-email-fine { font-family: var(--mono); font-size: 10px; letter-spacing: 0.02em; color: var(--faint); margin: 9px 0 0; }
+  /* TEMPORARY BETA SCAFFOLDING — the honest "no automation yet" note; retire it
+     alongside NOTIFY_FORM once a real notify backend ships. */
+  .op-email-note { font-family: var(--mono); font-size: 11px; line-height: 1.5; color: var(--ink-3); margin: 10px 0 0; text-wrap: pretty; }
+  .op-email-done { font-family: var(--mono); font-size: 12px; letter-spacing: 0.02em; color: var(--ok); margin: 0; }
+
+  /* Top-of-report line (rewritten) + the closing note below the last gap. */
+  .op-free-line { font-family: var(--mono); font-size: 12px; letter-spacing: 0.03em; color: var(--ink-4); margin: 0 0 18px; }
+  .op-free-line b { font-weight: 500; color: var(--ink-2); }
+  .op-close-note { font-family: var(--serif-b); font-size: 14px; line-height: 1.6; color: var(--ink-3); margin: 24px 0 0; padding-top: 18px; border-top: 1px dashed var(--dash); text-wrap: pretty; }
+
+  /* Inline "do this instead" notice — the light-weight counterpart to the modal,
+     living where the inline validation line lives (under the inputs). Calm/neutral,
+     not the red error tone: this isn't a mistake, it's a redirect. */
+  .op-inline-note { display: flex; align-items: flex-start; gap: 9px; font-family: var(--mono); font-size: 12px; line-height: 1.55; letter-spacing: 0.01em; color: var(--ink-3); background: var(--best-bg); border: 1px solid var(--line-in); border-radius: 4px; padding: 10px 14px; text-align: left; }
+  .op-inline-note svg { flex: none; width: 14px; height: 14px; margin-top: 1px; color: var(--ink-4); }
+  .op-inline-note b { font-weight: 500; color: var(--ink-2); }
+  .op-inline-note .op-inline-foot { color: var(--faint); }
+
+  /* Email capture v2 — two honest, separate permissions under one field. Submit is
+     disabled until at least one is ticked (no error copy needed). */
+  .op-email-perms { display: flex; flex-direction: column; gap: 8px; margin: 12px 0 0; }
+  .op-perm { display: flex; align-items: flex-start; gap: 9px; font-family: var(--mono); font-size: 12px; line-height: 1.4; color: var(--ink-3); cursor: pointer; }
+  .op-perm input { flex: none; width: 15px; height: 15px; margin: 1px 0 0; accent-color: var(--ink); cursor: pointer; }
+  .op-email--wall .op-perm { color: var(--ink-3); }
+  .op-email-btn:disabled { background: #C7D0DA; color: #8793A3; cursor: not-allowed; }
+
   /* ---- "coming soon" diagonal stamp over the packs ---- */
   .op-packs-wrap { position: relative; }
   .op-soon-stamp { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; pointer-events: none; }
@@ -670,6 +993,7 @@
     <div class="op-header-in">
       <div class="op-brand">
         <img src="logo.svg" alt="OnPaper" class="op-logo op-wordmark" width="116" height="30" />
+        <span class="op-beta-mark">Beta</span>
       </div>
       <div class="op-nav">
         <span class="op-meta">CV <span class="op-red" id="headerHeart">&hearts;</span> JD</span>
@@ -761,10 +1085,24 @@
           </div>
         </div>
 
-        <p class="op-field-hint op-privacy-note"><svg class="op-privacy-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg><span>We use the data once to run your check. Nothing is saved.</span></p>
+        <p class="op-field-hint op-privacy-note"><svg class="op-privacy-ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg><span>We use the data once to run your fit check. Nothing is saved.</span></p>
 
         <div class="op-tools">
+          <!-- Free-pool availability, shown near the inputs so the wall isn't only
+               discovered after both fields are filled. Driven by the same state as
+               the docked wall; updated live by the countdown ticker. -->
+          <div class="op-avail" id="availLine" hidden>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+            <span id="availText"></span>
+          </div>
           <div class="op-error" id="fitError" hidden></div>
+          <!-- Inline blocked-link redirect (the light-weight alternative to the
+               modal). Shown here, with the JD paste box already opened, so the fix
+               is right below it. No scrim, no button. -->
+          <div class="op-inline-note" id="blockedInline" hidden>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1 1"/><path d="M14 11a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1-1"/><path d="M4 4l16 16"/></svg>
+            <span>That job link is behind a login, so I can&rsquo;t read it. <b>Paste the job text instead</b> and you&rsquo;re good. <span class="op-inline-foot">This didn&rsquo;t use one of your runs.</span></span>
+          </div>
           <!-- Sample-result preview hidden for now. Restore by un-commenting; the
                handler + SAMPLE data below are kept intact and simply unreferenced.
           <a href="#" class="op-sample" id="fitSample">preview a sample result &rarr;</a>
@@ -797,6 +1135,10 @@
     <!-- ============ RESULTS VIEW ============ -->
     <div id="viewResults" hidden>
       <div class="op-results">
+        <!-- Free-tier only: one calm line above the title (shown by showResults for
+             free runs). No hedge, no scarcity, no purchase nudge — the fallback is
+             off, so it's the same model as everything else. -->
+        <p id="freeBanner" class="op-free-line" hidden><b>Free run</b> &middot; top gaps &middot; a second opinion, not a verdict.</p>
         <div class="op-rtools">
           <span class="op-rstamp" id="resultStamp"></span>
           <button type="button" class="op-icon-btn" id="fitDownload" aria-label="Download fit check" title="Download PDF">
@@ -844,6 +1186,28 @@
           </div>
           <div class="op-rate-thanks" id="opRateThanks" hidden>Thank you for your feedback!</div>
         </div>
+
+        <!-- Closing note (free runs only) — read AFTER the findings, so it lands as
+             calibration, not a pre-emptive hedge. -->
+        <p id="closeNote" class="op-close-note" hidden>OnPaper reads your CV against the posting and names what&rsquo;s missing. It&rsquo;s confident and it can still be wrong, so check anything that surprises you. Free runs reset continuously through the day.</p>
+
+        <!-- Primary email capture — value has already landed. One field, no account.
+             Two separate, honest permissions; at least one required to submit. -->
+        <div id="emailReport" class="op-email" hidden>
+          <p class="op-email-lead">Want a heads-up? Tell me what for.</p>
+          <form id="emailReportForm" novalidate>
+            <div class="op-email-perms">
+              <label class="op-perm"><input type="checkbox" class="op-perm-free" /><span>Tell me if more free runs open up</span></label>
+              <label class="op-perm"><input type="checkbox" class="op-perm-paid" /><span>Tell me when paid runs launch</span></label>
+            </div>
+            <div class="op-email-row" style="margin-top:12px">
+              <input type="email" class="op-email-in" id="emailReportIn" placeholder="you@example.com" autocomplete="email" inputmode="email" spellcheck="false" />
+              <button type="submit" class="op-email-btn" id="emailReportBtn" disabled>Notify me</button>
+            </div>
+            <p class="op-email-note">Emails aren&rsquo;t automated yet, so I&rsquo;ll follow up myself.</p>
+          </form>
+          <p class="op-email-done" id="emailReportDone" hidden>Got it &mdash; noted.</p>
+        </div>
       </div>
     </div>
 
@@ -866,16 +1230,77 @@
           <span id="runRemaining"></span><button type="button" class="op-getmore" id="getMore1">Get more runs</button>
         </div>
       </div>
-      <!-- out of runs: primary button becomes the "get more runs" action -->
-      <div id="barOut" hidden style="display:flex;flex-direction:column;align-items:center;gap:9px">
-        <button type="button" class="op-btn" id="getMore2">Get more runs</button>
-        <div class="op-runline"><span>0 runs left &middot; </span><button type="button" class="op-getmore" id="getMore3">Have a code?</button></div>
-      </div>
+      <!-- shared pool spent (or hourly bucket empty): the wall. A calm panel with a
+           live countdown; inputs are untouched behind it. Replaces the old "out of
+           runs" bar. barOut is kept in the map for back-compat but no longer shown. -->
+      <div id="barOut" hidden></div>
+      <!-- #barWall lives at shell level as a bottom sheet (see below) — not in the bar. -->
       <!-- results view: start another fit check -->
       <div id="barResults" hidden style="display:flex;flex-direction:column;align-items:center;gap:9px">
         <button type="button" class="op-btn" id="fitNew">New fit check</button>
       </div>
       <span class="op-barmsg" id="barMsg" hidden></span>
+      <!-- Turnstile (Managed, interaction-only → invisible for most users). Step 5a:
+           token wiring only, no visible UX. Rendered once; token read at run time. -->
+      <div id="opTurnstile" class="cf-turnstile"
+           data-sitekey="0x4AAAAAAEmFFKg-jn6sXMSs"
+           data-callback="onpTurnstileOk"
+           data-expired-callback="onpTurnstileExpired"
+           data-error-callback="onpTurnstileError"
+           data-appearance="interaction-only"></div>
+    </div>
+  </div>
+
+  <!-- ===== The wall v3 — bottom sheet (rises from the docked bar; inputs stay
+       visible above it, no scrim). Two columns: left = the message + email
+       capture, right = a rotating quote. One markup, both states toggled by JS. ===== -->
+  <div id="barWall" class="op-sheet" hidden>
+    <div class="op-sheet-in">
+      <!-- LEFT: the message + email capture -->
+      <div>
+        <div class="op-sheet-kicker">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+          <span id="wallKicker">All runs in use</span>
+        </div>
+        <!-- State 2 title (hidden in State 1) -->
+        <h3 class="op-sheet-title" id="wallTitle" hidden></h3>
+        <!-- State 1 descriptive sub (hidden in State 2) — one line, above the count -->
+        <p class="op-sheet-sub" id="wallSub"></p>
+        <!-- State 1 countdown — the hero (hidden in State 2). The count sits in a
+             fixed-width cell so the label never jumps as the digits change width. -->
+        <div class="op-sheet-timer" id="wallCountRow">
+          <span class="op-sheet-count" id="wallCount">&mdash;</span>
+          <span class="op-sheet-timer-label" id="wallTimerLabel">until the next run is released</span>
+        </div>
+        <!-- item 3: the wall revives itself (revivePool) — say so, or the timer reads
+             as "come back and retry". State 1 only; hidden in State 2. -->
+        <p class="op-unlock-note" id="wallUnlock">This page unlocks itself &mdash; you don&rsquo;t need to refresh.</p>
+        <!-- email capture — State 2: always shown. State 1: revealed after the 30s
+             collapse. Two separate permissions; at least one required to submit. -->
+        <div id="emailWall" hidden>
+          <form id="emailWallForm" novalidate>
+            <p class="op-sheet-lead" id="wallEmailLead">Notify me:</p>
+            <div class="op-sheet-opts">
+              <label class="op-check"><input type="checkbox" class="op-perm-free" /><span class="op-check-box"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg></span><span>Free runs added</span></label>
+              <label class="op-check"><input type="checkbox" class="op-perm-paid" /><span class="op-check-box"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6L9 17l-5-5"/></svg></span><span>Private runs launch</span></label>
+            </div>
+            <div class="op-sheet-row">
+              <input type="email" class="op-input" id="emailWallIn" placeholder="you@example.com" autocomplete="email" inputmode="email" spellcheck="false" />
+              <button type="submit" class="op-btn--sm" id="emailWallBtn" disabled>Notify me</button>
+            </div>
+            <p class="op-sheet-note">Emails aren&rsquo;t automated yet, so I&rsquo;ll follow up myself.</p>
+          </form>
+          <div class="op-sheet-done" id="emailWallDone" hidden>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M8 12l3 3 5-6"/></svg>
+            <span>Got it, noted.</span>
+          </div>
+        </div>
+      </div>
+      <div class="op-sheet-rule" aria-hidden="true"></div>
+      <!-- RIGHT: a rotating quote (state-driven eyebrow) -->
+      <div class="op-sheet-aside">
+        <p class="op-sheet-tip" id="wallTip" aria-live="off"></p>
+      </div>
     </div>
   </div>
 </div>
@@ -942,10 +1367,10 @@
         <p><strong>Your job search is personal.</strong></p>
         <p><span class="op-menu-lead">We don&rsquo;t keep your CV or the job text.</span> They&rsquo;re used once, in the moment, to generate your fit check, and then they&rsquo;re gone. We don&rsquo;t save them, and we can&rsquo;t pull them up later.</p>
         <p><span class="op-menu-lead">Your CV file never leaves your browser.</span> When you upload a PDF or DOCX, the text is pulled out on your own device. Only that text is sent to run the check &mdash; the file itself stays with you.</p>
-        <p><span class="op-menu-lead">The job link is read once.</span> We open the link you paste on our server to read the posting text for this one check, and we don&rsquo;t store the link or the page.</p>
+        <p><span class="op-menu-lead">The job link is read once.</span> We open the link you paste on our server to read the posting text for this one run, and we don&rsquo;t store the link or the page.</p>
         <p><span class="op-menu-lead">No account, no sign-up, no email, no name.</span> You never hand us your identity. Your browser holds a small random ID so we can remember how many runs you have left, and it isn&rsquo;t linked to who you are.</p>
         <p><span class="op-menu-lead">How the run actually works.</span> To run the comparison, we send your CV text and the job text to Anthropic, the company behind the Claude AI that does the analysis. We don&rsquo;t store either one ourselves.</p>
-        <p><span class="op-menu-lead">We measure anonymously how the site is used</span> &mdash; for example, which pages get opened and roughly how long a check takes, using privacy-friendly analytics on European servers. It never includes your CV, the job text, or your results, it doesn&rsquo;t use cookies, and it never identifies you.</p>
+        <p><span class="op-menu-lead">We measure anonymously how the site is used</span> &mdash; for example, which pages get opened and roughly how long a run takes, using privacy-friendly analytics on European servers. It never includes your CV, the job text, or your results, it doesn&rsquo;t use cookies, and it never identifies you.</p>
         <p><span class="op-red">In short:</span> your CV stays yours. We help you hold it up against a job, and then we let it go.</p>
       </div>
     </div>
@@ -1026,6 +1451,62 @@
   </div>
 </div>
 
+<!-- JD link behind a login (backend fallback is off → fails fast). A friendly
+     redirect into paste mode, not an error. Consumes nothing. -->
+<div class="op-confirm-back op-deny op-deny--link" id="blockedLinkBack" hidden>
+  <div class="op-confirm" role="dialog" aria-modal="true" aria-label="That job link is behind a login">
+    <div class="op-deny-head">
+      <span class="op-deny-ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1 1"/><path d="M14 11a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1-1"/><path d="M4 4l16 16"/></svg></span>
+      <span class="op-deny-kicker">Link behind a login</span>
+    </div>
+    <p class="op-confirm-title">That job link is behind a login, so I can&rsquo;t read it.</p>
+    <p class="op-confirm-note">Paste the job text instead and you&rsquo;re good.</p>
+    <p class="op-confirm-foot">This didn&rsquo;t use one of your runs.</p>
+    <div class="op-confirm-actions">
+      <button type="button" class="op-btn" id="blockedPasteBtn">Paste the job text</button>
+    </div>
+  </div>
+</div>
+
+<!-- Verification couldn't complete — retry-able (turnstile_failed). Copy states the
+     outcome only, never the mechanism: no mention of browser checks / verification
+     challenges, which would hint at how to game them. UNTESTED against a live deny
+     until cfg:turnstile_enabled flips — preview on localhost with ?deny=turnstile_failed. -->
+<div class="op-confirm-back op-deny op-deny--turnstile" id="denyTurnstileBack" hidden>
+  <div class="op-confirm" role="dialog" aria-modal="true" aria-label="Couldn't verify this run">
+    <div class="op-deny-head">
+      <span class="op-deny-ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/><path d="M3 21v-5h5"/></svg></span>
+      <span class="op-deny-kicker">One more step</span>
+    </div>
+    <p class="op-confirm-title">We couldn&rsquo;t verify this run the usual way.</p>
+    <p class="op-confirm-note">Give it a second, then try again.</p>
+    <p class="op-confirm-foot">This didn&rsquo;t use one of your runs.</p>
+    <div class="op-confirm-actions">
+      <button type="button" class="op-btn" id="denyTurnstileRetry">Try again</button>
+    </div>
+  </div>
+</div>
+
+<!-- RETIRED from the live path (kept for reference/preview). device_limit / ip_limit
+     now render the State 2 "personal daily limit" wall (see the run catch handler) so
+     the per-user cap gets the friendly personal block, not this vague modal. Preview
+     the old screen with ?deny=legacy-limit. Original note: the two 429 limit reasons
+     shared this ONE screen so per-browser vs per-network was never hinted at. -->
+<div class="op-confirm-back op-deny op-deny--limit" id="denyLimitBack" hidden>
+  <div class="op-confirm" role="dialog" aria-modal="true" aria-label="Couldn't verify this run">
+    <div class="op-deny-head">
+      <span class="op-deny-ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 1.5"/><path d="M9 2h6"/></svg></span>
+      <span class="op-deny-kicker">Try again later</span>
+    </div>
+    <p class="op-confirm-title">We couldn&rsquo;t verify this run the usual way.</p>
+    <p class="op-confirm-note">This can happen for a few reasons. Try again a little later.</p>
+    <p class="op-confirm-foot">This didn&rsquo;t use one of your runs.</p>
+    <div class="op-confirm-actions">
+      <button type="button" class="op-ghost-btn" id="denyLimitOk">Got it</button>
+    </div>
+  </div>
+</div>
+
 <!-- Identical re-submission confirm: same CV + JD as the last successful run -->
 <div class="op-confirm-back" id="rerunBack" hidden>
   <div class="op-confirm" role="dialog" aria-modal="true" aria-label="Run the same fit check again">
@@ -1039,9 +1520,29 @@
 
 <script>
 (function () {
+  // The beta/staging build: the onpaper-site Vercel project (any onpaper-site*.
+  // vercel.app host — preview OR production). It is a SEPARATE project from the
+  // production website, which is GitHub Pages at onpaper.fit and never starts with
+  // "onpaper-site", so it never matches this and is completely untouched.
+  var IS_BETA = false;
+  try { IS_BETA = /^onpaper-site/i.test(location.hostname); } catch (e) {}
+
   // The deployed Vercel function (private onpaper-api repo) that holds the key + prompt.
-  // LOCAL DEMO OVERRIDE: pointed at the free-tier PREVIEW backend (uncommitted).
-  var API_BASE   = "https://onpaper-api-git-free-tier-roys-projects-48041b7f.vercel.app/api";
+  var API_BASE = "https://onpaper-api.vercel.app/api";
+  // On the beta build, talk to the preview API TWIN (its own pool + the enabled
+  // abuse layer), so friend-testing is cost-isolated from production — the same
+  // twin everything else in this project has used. Production stays on prod.
+  if (IS_BETA) {
+    API_BASE = "https://onpaper-api-git-free-tier-roys-projects-48041b7f.vercel.app/api";
+  }
+  // Local testing only: on localhost, ?api=<base> can point at a preview backend
+  // (e.g. the free-tier PR preview). Ignored on the live site, so it's safe to ship.
+  try {
+    if (/^(localhost|127\.0\.0\.1)$/.test(location.hostname)) {
+      var apiOverride = new URLSearchParams(location.search).get("api");
+      if (apiOverride) API_BASE = apiOverride.replace(/\/+$/, "");
+    }
+  } catch (e) {}
   var API_URL     = API_BASE + "/analyze";
   var REDEEM_URL  = API_BASE + "/redeem";
   var BALANCE_URL = API_BASE + "/balance";
@@ -1083,6 +1584,62 @@
   try { uid = localStorage.getItem(LS_UID) || ""; if (!uid) { uid = uuid(); localStorage.setItem(LS_UID, uid); } }
   catch (e) { uid = uuid(); }
 
+  // Device signal hash (Step 5a, Part 2). Coarse, non-PII browser signals hashed
+  // into one value for the backend's per-device daily limit. Only the hash is
+  // sent as body.device — never the raw signals. Computed ONCE, now, on load, so
+  // the click-to-request path just reads a resolved promise (no visible delay).
+  var deviceHashPromise = (function computeDeviceHash() {
+    function collectSignals() {
+      var parts = [];
+      try { parts.push(navigator.userAgent || ""); } catch (e) {}
+      try { parts.push(Intl.DateTimeFormat().resolvedOptions().timeZone || ""); } catch (e) {}
+      try { parts.push((new Date()).getTimezoneOffset()); } catch (e) {}
+      try { parts.push([screen.width, screen.height, screen.colorDepth, (window.devicePixelRatio || 1)].join("x")); } catch (e) {}
+      try { parts.push((navigator.language || "") + "|" + ((navigator.languages || []).join(","))); } catch (e) {}
+      try { parts.push((navigator.hardwareConcurrency || 0) + "|" + (navigator.maxTouchPoints || 0)); } catch (e) {}
+      // A small canvas fingerprint: rendering differs by GPU/font stack/AA.
+      try {
+        var c = document.createElement("canvas");
+        c.width = 200; c.height = 40;
+        var ctx = c.getContext("2d");
+        ctx.textBaseline = "top";
+        ctx.font = "14px 'Arial'";
+        ctx.fillStyle = "#f60"; ctx.fillRect(0, 0, 100, 20);
+        ctx.fillStyle = "#069"; ctx.fillText("OnPaper ✈ device", 2, 2);
+        ctx.strokeStyle = "rgba(120,60,200,0.6)"; ctx.beginPath();
+        ctx.arc(50, 20, 15, 0, Math.PI * 2); ctx.stroke();
+        parts.push(c.toDataURL());
+      } catch (e) {}
+      return parts.join("␟"); // unit separator, unlikely in any signal
+    }
+    function fallbackHash(str) {
+      // FNV-1a 32-bit, only if SubtleCrypto is unavailable (insecure context).
+      var h = 0x811c9dc5;
+      for (var i = 0; i < str.length; i++) { h ^= str.charCodeAt(i); h = (h + ((h << 1) + (h << 4) + (h << 7) + (h << 8) + (h << 24))) >>> 0; }
+      return ("00000000" + h.toString(16)).slice(-8);
+    }
+    var raw;
+    try { raw = collectSignals(); } catch (e) { raw = String(Date.now()); }
+    try {
+      if (window.crypto && crypto.subtle && crypto.subtle.digest) {
+        var buf = new TextEncoder().encode(raw);
+        return crypto.subtle.digest("SHA-256", buf).then(function (digest) {
+          var b = new Uint8Array(digest), hex = "";
+          for (var i = 0; i < b.length; i++) hex += ("0" + b[i].toString(16)).slice(-2);
+          return hex;
+        }).catch(function () { return fallbackHash(raw); });
+      }
+    } catch (e) {}
+    return Promise.resolve(fallbackHash(raw));
+  })();
+
+  // Debug hook: surface this browser's computed device hash for the operator
+  // allowlist (onpaper-api admin → Device allowlist). Read it from the console
+  // with `await window.__onpaperDeviceHash`, or just `__onpaperDeviceHash` once
+  // resolved. Exposing it changes nothing — the same hash already rides on
+  // body.device — it just saves digging it out of the network tab.
+  try { deviceHashPromise.then(function (h) { window.__onpaperDeviceHash = h; }); } catch (e) {}
+
   // If this browser has already redeemed a coupon, re-establish it as the PostHog
   // identity on every load. PostHog runs with persistence:'memory' (no tracking
   // cookies), so its distinct_id resets each visit — re-identifying here is what
@@ -1117,8 +1674,22 @@
     resultTitle: $("resultTitle"), resultMatch: $("resultMatch"), resultMatchVal: $("resultMatchVal"),
     resultStamp: $("resultStamp"), resultSource: $("resultSource"), resultDeal: $("resultDeal"), resultDealText: $("resultDealText"),
     gapList: $("gapList"),
+    freeBanner: $("freeBanner"),
+    barWall: $("barWall"), wallTitle: $("wallTitle"), wallSub: $("wallSub"), wallCount: $("wallCount"),
+    wallCountRow: $("wallCountRow"), wallTimerLabel: $("wallTimerLabel"), wallEmailLead: $("wallEmailLead"),
+    wallKicker: $("wallKicker"), wallCode: $("wallCode"), wallTip: $("wallTip"),
+    wallUnlock: $("wallUnlock"),
+    availLine: $("availLine"), availText: $("availText"),
+    closeNote: $("closeNote"), blockedInline: $("blockedInline"),
+    emailReport: $("emailReport"), emailReportForm: $("emailReportForm"),
+    emailReportIn: $("emailReportIn"), emailReportDone: $("emailReportDone"), emailReportBtn: $("emailReportBtn"),
+    emailWall: $("emailWall"), emailWallForm: $("emailWallForm"),
+    emailWallIn: $("emailWallIn"), emailWallDone: $("emailWallDone"), emailWallBtn: $("emailWallBtn"),
+    blockedLinkBack: $("blockedLinkBack"), blockedPasteBtn: $("blockedPasteBtn"),
+    denyTurnstileBack: $("denyTurnstileBack"), denyTurnstileRetry: $("denyTurnstileRetry"),
+    denyLimitBack: $("denyLimitBack"), denyLimitOk: $("denyLimitOk"),
     payBack: $("payBack"), payModal: $("payModal"), payClose: $("payClose"),
-    getMore1: $("getMore1"), getMore2: $("getMore2"), getMore3: $("getMore3"),
+    getMore1: $("getMore1"),
     coupon: $("fitCoupon"), couponBtn: $("fitCouponBtn"), couponMsg: $("fitCouponMsg"),
     menuBtn: $("menuBtn"), menuBack: $("menuBack"), menuClose: $("menuClose"),
     shortBack: $("shortBack"), shortBackBtn: $("shortBackBtn"), shortYesBtn: $("shortYesBtn"),
@@ -1138,15 +1709,20 @@
   function sget(k) { try { return sessionStorage.getItem(k) || ""; } catch (e) { return ""; } }
   function sset(k, v) { try { sessionStorage.setItem(k, v); } catch (e) {} }
 
-  // desktop-recommended notice: subtle, non-blocking, dismissable (remembered)
+  // desktop-recommended notice: shown only on narrow/mobile viewports, subtle,
+  // non-blocking, dismissable (remembered). Hides live if the viewport widens
+  // past the breakpoint, and stays gone once dismissed.
   (function () {
     var n = $("deskNotice"), x = $("deskNoticeX");
     if (!n || !x) return;
-    // Only relevant on narrow / mobile screens, and only until dismissed once.
-    var isNarrow = false;
-    try { isNarrow = window.matchMedia("(max-width: 768px)").matches; } catch (e) {}
-    if (isNarrow && get("op_desk_notice") !== "dismissed") n.hidden = false;
-    x.addEventListener("click", function () { n.hidden = true; set("op_desk_notice", "dismissed"); });
+    var mq = window.matchMedia("(max-width: 900px)");
+    function sync() {
+      n.hidden = !(mq.matches && get("op_desk_notice") !== "dismissed");
+    }
+    x.addEventListener("click", function () { set("op_desk_notice", "dismissed"); sync(); });
+    if (mq.addEventListener) mq.addEventListener("change", sync);
+    else if (mq.addListener) mq.addListener(sync); // older Safari
+    sync();
   })();
 
   // analytics: fire a PostHog event with non-sensitive metadata only (no CV/JD/passcode/PII).
@@ -1414,7 +1990,14 @@
     return s;
   }
   function isProbablyUrl(v) {
-    var s = normalizeUrl(v);
+    var raw = (v || "").trim();
+    if (!raw) return false;
+    // A real web address never contains whitespace; pasted job-description text
+    // always does. Bail out early so a pasted posting (whose sentences end in
+    // ".", which the URL parser otherwise reads as a valid dotted host by
+    // percent-encoding the spaces) is treated as text, not a link to fetch.
+    if (/\s/.test(raw)) return false;
+    var s = normalizeUrl(raw);
     if (!s) return false;
     try { var u = new URL(s); return !!u.hostname && u.hostname.indexOf(".") > 0; }
     catch (e) { return false; }
@@ -1702,22 +2285,436 @@
 
   // Remaining analyses (server-authoritative; null = unknown until first action).
   var remaining = null;
+  // True while the shared free pool is spent (daily cap) or the hourly bucket is
+  // empty — i.e. the wall is up. Distinct from remaining === 0, which just means
+  // "no paid balance → draw on the free pool". This gates the run button.
+  var freeExhausted = false;
+
+  // ===== Free-pool wall state machine (Step 5b, Part 1) =====
+  // Single source of truth for the shared pool. The countdown is DERIVED locally
+  // from an anchor (secondsLeft captured at anchorAt), so the display ticks every
+  // second without a per-second network poll. The server is re-read only at
+  // meaningful moments: page load, tab refocus, the countdown reaching zero, and
+  // a slow drift-correction while waiting. On any read that says the pool is free
+  // again, the wall tears itself down and the run button revives on its own.
+  // localRevive=true → a per-device cooldown (reason "device_cooldown"): the block
+  // clears when THIS browser's window resets, which /balance can't see (it only
+  // reports the shared pool). So its countdown re-enables the button locally when
+  // it reaches 0, without polling. (hold is the older no-signal variant, now
+  // dormant — kept harmless in case a timerless personal wall is wanted again.)
+  var pool = { exhausted: false, secondsLeft: 0, anchorAt: 0, reason: "", midFlow: false, dismissed: false, hold: false, localRevive: false };
+  var wallTicker = null, wallInFlight = false, wallLastPoll = 0;
+  var wallCollapseTimer = null, wallCollapsed = false;
+  // After a free run completes we KNOW a token was just spent. If the bucket is
+  // now empty and won't refill within the time a user could plausibly re-prep and
+  // retry, we put the wall up right away instead of offering a Run that can only
+  // bounce off a 429. Below this many seconds we stay quiet — a token will be back
+  // before they're ready, so a wall would be needless friction.
+  var WALL_PREDICT_SECS = 60;
+
+  function poolRemaining() {
+    if (!pool.exhausted) return 0;
+    var elapsed = (Date.now() - pool.anchorAt) / 1000;
+    return Math.max(0, Math.ceil(pool.secondsLeft - elapsed));
+  }
+  function fmtCountdown(secs) {
+    secs = Math.max(0, secs | 0);
+    var h = Math.floor(secs / 3600), m = Math.floor((secs % 3600) / 60), s = secs % 60;
+    function p(n) { return (n < 10 ? "0" : "") + n; }
+    if (h > 0) return h + ":" + p(m) + ":" + p(s);
+    if (m > 0) return m + ":" + p(s);
+    return s + (s === 1 ? " second" : " seconds");
+  }
+  // State 1 descriptive sub-line (under the countdown). Shared-pool framing;
+  // never reveals the mechanism (per-device vs per-network vs pool-wide).
+  function wallSubText() {
+    return "Free runs drop a few at a time to keep things fair";
+  }
+  // item 5: State 2 (daily limit) — an absolute local time is something a person can
+  // plan around; a 14h countdown is just a discouraging object. Derived from the same
+  // secondsLeft anchor. Falls back to the vague line if the value is missing/implausible.
+  function wallResetText() {
+    var secs = poolRemaining();
+    if (!(secs > 0) || secs > 48 * 3600) return "More are released tomorrow.";
+    var reset = new Date(Date.now() + secs * 1000);
+    var hhmm = reset.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+    var now = new Date();
+    var dayDiff = Math.round(
+      (new Date(reset.getFullYear(), reset.getMonth(), reset.getDate()) -
+       new Date(now.getFullYear(), now.getMonth(), now.getDate())) / 86400000
+    );
+    if (dayDiff <= 0) return "More open up at " + hhmm + ".";
+    if (dayDiff === 1) return "More open up at " + hhmm + " tomorrow.";
+    return "More are released tomorrow.";
+  }
+  // Paint just the live numbers (called by the 1s ticker — cheap, no layout thrash).
+  function renderWallCountdown() {
+    var txt = fmtCountdown(poolRemaining());
+    if (els.wallCount) els.wallCount.textContent = txt;
+    if (els.availText) els.availText.innerHTML = "Free runs are all in use &middot; next one in <b>" + txt + "</b>";
+  }
+  // A rotating calm line under the countdown — turns dead-wait into something with
+  // a pulse (and a little use), without touching the number or implying scarcity.
+  // Tips + their eyebrows live in wall-quotes.json (fetched below) so they can be
+  // edited without touching this file. These inline copies are the fallback used
+  // when the JSON can't be fetched (offline / file://).
+  var WALL_TIPS = {
+    s1: {
+      eyebrow: "While you wait",
+      quotes: [
+        "Reread the posting and note the words it keeps repeating — those repeats are usually what the role is really weighed on.",
+        "The strongest CVs echo the job’s own language, not a thesaurus of it. A good moment to read yours back line by line.",
+        "Most postings put what matters most in the first third. Worth a slow second read before you spend your next run.",
+        "A gap is only worth fixing if the role actually asks for it — reread with that lens, and let the rest go."
+      ]
+    },
+    s2: {
+      eyebrow: "Before tomorrow",
+      quotes: [
+        "Line up the two or three roles you want to run first, so tomorrow’s runs go where they count.",
+        "Rewrite one bullet per role to mirror the posting’s own words.",
+        "Pick your top gap from the last run and draft the fix now — tomorrow you’ll just paste and go.",
+        "Compare two postings side by side: the overlapping asks are the skills to lead with."
+      ]
+    }
+  };
+  // Render a tip safely: escape all HTML, then turn [label](http(s)://url) into a
+  // real link (new tab, noopener). Tips are operator-editable (admin console), so
+  // nothing else in the text is allowed to become markup.
+  function escHtml(s) {
+    return String(s == null ? "" : s).replace(/[&<>"']/g, function (c) {
+      return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+    });
+  }
+  function linkify(text) {
+    var s = String(text == null ? "" : text), out = "", last = 0;
+    var re = /\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g, m;
+    while ((m = re.exec(s))) {
+      out += escHtml(s.slice(last, m.index));
+      out += '<a href="' + escHtml(m[2]) + '" target="_blank" rel="noopener noreferrer">' + escHtml(m[1]) + "</a>";
+      last = m.index + m[0].length;
+    }
+    return out + escHtml(s.slice(last));
+  }
+  function tipHtml(eyebrow, quote) {
+    return '<span class="op-tip-eyebrow">' + escHtml(eyebrow) + "</span>" + linkify(quote);
+  }
+  // Load the editable tips: prefer the API (admin-managed, no deploy), then the
+  // static file, then the inline defaults above. Same shape from all three.
+  (function loadWallTips() {
+    function apply(j) {
+      if (!j || typeof j !== "object") return false;
+      var got = false;
+      function set(key, src) {
+        if (!src) return;
+        if (typeof src.eyebrow === "string" && src.eyebrow.trim()) { WALL_TIPS[key].eyebrow = src.eyebrow.trim(); got = true; }
+        if (Array.isArray(src.quotes)) {
+          var qs = src.quotes.filter(function (q) { return typeof q === "string" && q.trim(); });
+          if (qs.length) { WALL_TIPS[key].quotes = qs; got = true; }
+        }
+      }
+      set("s1", j.state1_all_runs_in_use);
+      set("s2", j.state2_todays_runs);
+      if (got && pool.exhausted && els.wallTip) { // a wall is already up — refresh in place
+        var s = wallTipState2 ? WALL_TIPS.s2 : WALL_TIPS.s1;
+        els.wallTip.innerHTML = tipHtml(s.eyebrow, s.quotes[wallTipIdx % s.quotes.length]);
+      }
+      return got;
+    }
+    function grab(url) {
+      return fetch(url, { cache: "no-cache" })
+        .then(function (r) { return r && r.ok ? r.json() : null; })
+        .catch(function () { return null; });
+    }
+    try {
+      grab(API_BASE + "/wall-tips").then(function (j) {
+        if (apply(j)) return;                          // API served tips
+        return grab("wall-quotes.json").then(apply);   // else fall back to the static file
+      }).catch(function () {});
+    } catch (e) {}
+  })();
+  var wallTipTimer = null, wallTipIdx = 0, wallTipState2 = false;
+  function paintWallTip(i) {
+    var set = wallTipState2 ? WALL_TIPS.s2 : WALL_TIPS.s1;
+    return tipHtml(set.eyebrow, set.quotes[i % set.quotes.length]);
+  }
+  function showWallTip(i) {
+    if (!els.wallTip) return;
+    els.wallTip.style.opacity = "0";
+    setTimeout(function () {
+      els.wallTip.innerHTML = paintWallTip(i);
+      els.wallTip.style.opacity = "1";
+    }, 260);
+  }
+  function startWallTips(isState2) {
+    if (wallTipTimer || !els.wallTip) return;
+    wallTipIdx = 0;
+    wallTipState2 = !!isState2;
+    els.wallTip.innerHTML = paintWallTip(0);
+    els.wallTip.style.opacity = "1";
+    wallTipTimer = setInterval(function () { showWallTip(++wallTipIdx); }, 7000);
+  }
+  function stopWallTips() { if (wallTipTimer) { clearInterval(wallTipTimer); wallTipTimer = null; } }
+
+  // Paint the whole wall + availability line (called on state change).
+  function renderWall() {
+    var isState2 = (pool.reason === "pool_exhausted");
+    if (pool.exhausted) {
+      if (isState2) {
+        if (els.wallKicker) els.wallKicker.textContent = "That's today's runs";
+        if (els.wallTitle) els.wallTitle.textContent = "Today's free runs are all used up.";
+        if (els.wallSub) els.wallSub.textContent = wallResetText();  // item 5
+      } else if (pool.reason === "device_cooldown") {
+        // Personal per-device cooldown — countdown to this browser's window reset.
+        if (els.wallKicker) els.wallKicker.textContent = "Slow down a moment";
+        if (els.wallSub) els.wallSub.textContent = "You've used your free runs for now.";
+        // Break after "your" so it reads "until your / next run", not the orphaned
+        // "until your next / run" the 10em max-width would otherwise produce.
+        if (els.wallTimerLabel) els.wallTimerLabel.innerHTML = "until your<br>next run";
+      } else {
+        if (els.wallKicker) els.wallKicker.textContent = (pool.reason === "rate_limited") ? "Just a moment" : "All runs in use";
+        if (els.wallSub) els.wallSub.textContent = wallSubText();
+        if (els.wallTimerLabel) els.wallTimerLabel.textContent = "until the next run is released";
+      }
+    }
+    if (els.availLine) els.availLine.hidden = !pool.exhausted;
+    if (!isState2) renderWallCountdown();
+  }
+  function startWallTicker() {
+    if (wallTicker) return;
+    wallTicker = setInterval(function () {
+      renderWallCountdown();
+      var left = poolRemaining();
+      if (pool.localRevive) {
+        // Personal device cooldown: /balance can't see it (it's per-browser), so
+        // just re-enable locally when the window elapses. A retry then succeeds or
+        // re-blocks with a fresh countdown.
+        if (left <= 0) revivePool();
+        return;
+      }
+      if (left <= 0) {
+        pollFreeStatus("countdown");            // local clock says a slot should be free — confirm
+      } else if (Date.now() - wallLastPoll > 30000) {
+        pollFreeStatus("drift");                // slow re-anchor against server clock
+      }
+    }, 1000);
+  }
+  function stopWallTicker() { if (wallTicker) { clearInterval(wallTicker); wallTicker = null; } }
+
+  // Enter the wall. `seconds` seeds the countdown; midFlow=true means the user just
+  // submitted into an empty pool (vs. discovering the wall passively on load/refocus).
+  // Never touches cvText or the JD field — the paste stays exactly where it is.
+  // At t=30s the countdown scales down (CSS handles the animation + one-line
+  // label) and the email capture fades into the left column, under the message.
+  function collapseWallCountdown() {
+    if (wallCollapsed) return;
+    wallCollapsed = true;
+    if (els.wallCountRow) els.wallCountRow.classList.add("is-compact");
+    if (els.emailWall) els.emailWall.hidden = false;
+  }
+  function resetWallCollapse() {
+    wallCollapsed = false;
+    if (wallCollapseTimer) { clearTimeout(wallCollapseTimer); wallCollapseTimer = null; }
+    if (els.wallCountRow) els.wallCountRow.classList.remove("is-compact");
+  }
+  function enterWall(opts) {
+    opts = opts || {};
+    pool.exhausted = true;
+    pool.reason = opts.reason || "pool_exhausted";
+    pool.midFlow = !!opts.midFlow;
+    pool.secondsLeft = Math.max(0, Number(opts.seconds) || 0);
+    pool.anchorAt = Date.now();
+    freeExhausted = true;
+    resetWallCollapse();
+    pool.dismissed = false;
+    pool.hold = !!opts.hold;
+    pool.localRevive = (pool.reason === "device_cooldown");
+    var isCooldown = (pool.reason === "device_cooldown");
+    var isState2 = (pool.reason === "pool_exhausted");
+    if (els.barWall) els.barWall.classList.toggle("op-sheet--cooldown", isCooldown);
+    if (isState2) {
+      // State 2 — personal daily limit: title + reset line + email capture (left), quote (right).
+      if (els.wallTitle) els.wallTitle.hidden = false;
+      if (els.wallCountRow) els.wallCountRow.hidden = true;
+      if (els.wallSub) els.wallSub.hidden = false;      // holds the reset line (item 5)
+      if (els.wallUnlock) els.wallUnlock.hidden = true; // no countdown, so no "unlocks itself"
+      if (els.emailWall) els.emailWall.hidden = false;
+    } else {
+      // State 1 — shared pool empty: the countdown is the hero; email hidden until 30s collapse.
+      if (els.wallTitle) els.wallTitle.hidden = true;
+      if (els.wallCountRow) els.wallCountRow.hidden = false;
+      if (els.wallSub) els.wallSub.hidden = false;
+      // Shared State 1 promises the auto-revive; the personal cooldown drops that
+      // line (it's self-evident and the owner asked to remove it there).
+      if (els.wallUnlock) els.wallUnlock.hidden = isCooldown;
+      if (els.emailWall) els.emailWall.hidden = true;
+      // The shared-pool countdown collapses to email capture at 30s; a personal
+      // cooldown just counts down to its own reset, so skip that collapse.
+      if (!isCooldown && pool.secondsLeft > 45) {
+        wallCollapseTimer = setTimeout(collapseWallCountdown, 30000);
+      }
+    }
+    renderBalance();
+    renderWall();
+    refreshRunDisabled();
+    // A held (device/IP) wall has no live signal to poll — leave it static (it
+    // clears on reload / next day). All other walls run the revive ticker.
+    if (!pool.hold) startWallTicker();
+    startWallTips(isState2);
+  }
+  // Pool is free again — tear the wall down, revive the button, no manual refresh.
+  function revivePool() {
+    if (!pool.exhausted && !freeExhausted) return;
+    pool.exhausted = false; pool.reason = ""; pool.midFlow = false; pool.dismissed = false; pool.hold = false; pool.localRevive = false;
+    freeExhausted = false;
+    stopWallTicker();
+    stopWallTips();
+    resetWallCollapse();
+    resetEmail(els.emailWall, els.emailWallForm, els.emailWallDone, els.emailWallIn);
+    renderBalance();
+    renderWall();
+    refreshRunDisabled();
+    track("free_pool_available", {});
+  }
+  // Read the shared-pool status (read-only, no token, no mutation). Only the daily
+  // cap surfaces here as `exhausted`; the hourly bucket only appears via a 429 on a
+  // real run. Guarded so polls never overlap.
+  async function pollFreeStatus(why) {
+    // A personal wall is up (device cooldown, or the dormant hold variant):
+    // /balance only sees the shared pool, which is healthy, so polling it would
+    // wrongly revive the wall (e.g. on tab refocus). The local ticker owns the
+    // countdown + revive for these; leave the poll out entirely.
+    if (pool.hold || pool.localRevive) return;
+    if (wallInFlight) return;
+    wallInFlight = true; wallLastPoll = Date.now();
+    try {
+      var res = await fetch(BALANCE_URL, {
+        method: "POST", headers: { "content-type": "application/json" },
+        body: JSON.stringify({ free: true })
+      });
+      if (!res.ok) return;
+      var data = await res.json();
+      if (data && data.exhausted) {
+        var secs = Math.max(0, Number(data.seconds_until_next_run) || 0);
+        if (!freeExhausted) {
+          // Newly discovered passively (load / refocus). The /balance exhausted flag
+          // is the daily cap, so this is State 2 (pool_exhausted) unless a prior 429
+          // already set a reason. enterWall applies the full sheet layout.
+          enterWall({ seconds: secs, reason: pool.reason || "pool_exhausted", midFlow: false });
+        } else {
+          // Wall already up — just re-anchor the countdown (State 1 only; State 2
+          // has no live timer, so there's nothing per-second to repaint there).
+          pool.secondsLeft = secs; pool.anchorAt = Date.now();
+          if (pool.reason !== "pool_exhausted") renderWallCountdown();
+        }
+      } else {
+        revivePool();
+      }
+    } catch (e) {
+      // Network/CORS — keep the wall + ticker up; we'll retry on the next tick.
+    } finally {
+      wallInFlight = false;
+    }
+  }
+
+  // Called right after a FREE run succeeds. This is the one moment we can predict
+  // the wall with high confidence: a token was just consumed, and the bucket only
+  // refills over time, so an "empty now, next token >= WALL_PREDICT_SECS away"
+  // reading is stable enough to act on — another user can only drain it further,
+  // never top it up. So we peek the shared pool (read-only) and, if it's spent for
+  // longer than a re-prep-and-retry would take, raise the wall immediately instead
+  // of leaving a Run button that would only 429. A near-full bucket (short wait)
+  // is left alone. The reactive 429 stays the authoritative fallback either way.
+  async function maybeWallAfterFreeRun() {
+    try {
+      var res = await fetch(BALANCE_URL, {
+        method: "POST", headers: { "content-type": "application/json" },
+        body: JSON.stringify({ free: true })
+      });
+      if (!res.ok) return;
+      var data = await res.json();
+      var secs = Math.max(0, Number(data && data.seconds_until_next_run) || 0);
+      if (data && data.exhausted) {
+        // Daily/dollar cap hit — hard wall until the UTC reset.
+        enterWall({ seconds: secs, reason: "pool_exhausted", midFlow: true });
+      } else if (secs >= WALL_PREDICT_SECS) {
+        // Hourly bucket spent and won't refill within the retry window.
+        enterWall({ seconds: secs, reason: "rate_limited", midFlow: true });
+      }
+    } catch (e) {
+      // Network/CORS — leave Run enabled; a real retry still hits the 429 guard.
+    }
+  }
+
+  // Local QA only (ignored on the live site): preview states without draining the
+  // real pool or waiting for the abuse flag to flip.
+  //   ?state=exhausted        → passive wall (daily), demo countdown
+  //   ?wall=rate_limited&secs=90 → bucket wall, short countdown
+  //   ?deny=turnstile_failed | device_limit | ip_limit → the denial modals
+  //   ?deny=blocked (modal)  |  ?deny=blocked-inline (inline notice)  → blocked link
+  var MOCK_DENY = "";
+  try {
+    if (/^(localhost|127\.0\.0\.1)$/.test(location.hostname)) {
+      var qs = new URLSearchParams(location.search);
+      if (qs.get("state") === "exhausted") {
+        setTimeout(function () { enterWall({ seconds: 3600, reason: "pool_exhausted", midFlow: false }); }, 0);
+      }
+      if (qs.get("wall")) {
+        var secs = parseInt(qs.get("secs"), 10);
+        setTimeout(function () { enterWall({ seconds: isNaN(secs) ? 90 : secs, reason: qs.get("wall"), midFlow: false }); }, 0);
+      }
+      MOCK_DENY = qs.get("deny") || "";
+    }
+  } catch (e) {}
+
+  // Whether the run just shown was a free-tier run (drives the result banner).
+  var lastRunWasFree = false;
   function updateRunLabel() {
     if (loading) { els.runLabel.textContent = "Thinking…"; return; }
     els.runLabel.textContent = (remaining === 1) ? "Check fit · last run" : "Check fit";
   }
+  // Show/hide the bottom-sheet wall with matching rise/lower animations. Rise is
+  // the CSS default on .op-sheet (replays when it un-hides); lower plays
+  // op-sheet-down, then sets [hidden] on animationend. Idempotent: calling show
+  // cancels a pending lower, and hide is a no-op when already hidden/leaving.
+  function showWall() {
+    var el = els.barWall; if (!el) return;
+    if (el._leaveTimer) { clearTimeout(el._leaveTimer); el._leaveTimer = null; }
+    el.classList.remove("op-sheet--leaving");
+    el.hidden = false;
+  }
+  function hideWall() {
+    var el = els.barWall; if (!el || el.hidden || el._leaveTimer) return;
+    el.classList.add("op-sheet--leaving");
+    el._leaveTimer = setTimeout(function () {
+      el._leaveTimer = null;
+      el.classList.remove("op-sheet--leaving");
+      el.hidden = true;
+    }, 300);
+  }
   function renderBalance() {
     updateRunLabel();
-    // resting line: show remaining (when known) + always-available "get more runs" so a
-    // coupon can be redeemed even with runs left. (Small addition beyond the mock — flagged.)
-    if (remaining === 0) {
+    // Three resting states:
+    //   • paid balance (remaining > 0, or unknown/null before load): "Check fit", show count.
+    //   • no paid balance (remaining === 0): free tier — "Check fit" still runs, drawing on
+    //     the shared daily pool. Labelled "Free run", with "Get more runs" still available.
+    //   • free pool spent / bucket empty (freeExhausted): the wall (barWall).
+    if (freeExhausted && !pool.dismissed) {
+      // The wall is up as a bottom sheet (shell-level). Hide the docked bar's run
+      // controls behind it; the sheet carries the whole message.
       els.barRun.hidden = true;
-      els.barOut.hidden = false;
+      els.barOut.hidden = true;
+      showWall();
     } else {
+      // Normal bar — or the wall minimized via its × (still exhausted, Run stays
+      // disabled by refreshRunDisabled; the availability line keeps the countdown).
       els.barRun.hidden = false;
       els.barOut.hidden = true;
-      if (typeof remaining === "number") {
+      hideWall();
+      if (typeof remaining === "number" && remaining > 0) {
         els.runRemaining.textContent = remaining + (remaining === 1 ? " run left · " : " runs left · ");
+      } else if (remaining === 0) {
+        els.runRemaining.textContent = "Free run · ";
       } else {
         els.runRemaining.textContent = "";
       }
@@ -1727,16 +2724,17 @@
     if (typeof n !== "number" || isNaN(n)) return;
     remaining = n;
     renderBalance();
-    if (n <= 0) els.run.disabled = true;
+    refreshRunDisabled();   // at 0 the free tier keeps the button live (unless the pool is spent)
   }
   function findDisabled() {
-    return loading || !cvText.trim() || !jdKind(els.jdUrl.value) || remaining === 0;
+    return loading || !cvText.trim() || !jdKind(els.jdUrl.value) || freeExhausted;
   }
   function refreshRunDisabled() { els.run.disabled = findDisabled(); }
   function onEdit() {
     setError("");
+    if (els.blockedInline) els.blockedInline.hidden = true;   // they're acting on the redirect
     rerunConfirmed = false;   // editing either input means the next run isn't a blind re-run
-    if (!loading && remaining !== 0) els.run.disabled = findDisabled();
+    if (!loading && !freeExhausted) els.run.disabled = findDisabled();
   }
 
   // ---- report parsing ----
@@ -1853,6 +2851,15 @@
     var stamp = now.toLocaleString(undefined, { day: "numeric", month: "short", year: "numeric", hour: "numeric", minute: "2-digit" });
 
     els.sampleBadge.hidden = !isSample;
+    // Free runs carry the one-line note above the title, the calibration note
+    // below the last gap, and the "notify me" capture below the report.
+    var showFree = lastRunWasFree && !isSample;
+    els.freeBanner.hidden = !showFree;
+    if (els.closeNote) els.closeNote.hidden = !showFree;
+    if (els.emailReport) {
+      els.emailReport.hidden = !showFree;
+      if (showFree) resetEmail(els.emailReport, els.emailReportForm, els.emailReportDone, els.emailReportIn);
+    }
 
     // A real report carries the header block (role/company/match/deal) or at
     // least one parsed gap. Anything else is an off-format / refusal body we
@@ -1954,12 +2961,25 @@
       headers: { "content-type": "application/json" },
       body: JSON.stringify(payload)
     });
+    // Turnstile tokens are single-use. Once the backend has seen this one, drop it
+    // and refresh the widget so the next request (the blocked→search retry, or the
+    // next run) has a fresh token ready instead of re-sending a spent one.
+    try {
+      if (window.__opTS) window.__opTS.clear();
+      if (window.turnstile) window.turnstile.reset();
+    } catch (e) {}
     var data = {};
     try { data = await res.json(); } catch (e) {}
     if (!res.ok) {
       var err = new Error(data.error || ("Request failed (" + res.status + ")"));
       if (typeof data.remaining === "number") err.remaining = data.remaining;
       if (data.stage) err.stage = data.stage;   // "blocked" | "search_failed"
+      if (data.exhausted) err.exhausted = true;  // shared pool / bucket (HTTP 429)
+      // Machine-readable denial reason + live countdown (Step 5b). reason ∈
+      // pool_exhausted | rate_limited | device_limit | ip_limit (429) |
+      // turnstile_failed (403) | fallback_disabled (422, blocked link).
+      if (data.reason) err.reason = data.reason;
+      if (typeof data.seconds_until_next_run === "number") err.seconds = data.seconds_until_next_run;
       throw err;
     }
     return { text: (data.text || "").trim(), remaining: data.remaining };
@@ -2044,7 +3064,11 @@
 
     // A link is resolved server-side (fetched, or searched on the retry); pasted
     // text is sent straight through as the job description.
-    var payload = { cv: cv, token: uid, free: true }; // LOCAL DEMO: free-tier pool (uncommitted)
+    var payload = { cv: cv, token: uid };
+    // No paid balance → this is a free run, drawing on the shared daily pool.
+    var freeRun = (remaining === 0);
+    if (freeRun) payload.free = true;
+    lastRunWasFree = freeRun;
     var jdSource;
     if (kind === "url") {
       payload.jdUrl = jd;
@@ -2054,11 +3078,20 @@
       payload.jd = jd; jdSource = "paste";
     }
 
+    // Abuse signals (Step 5a). Device hash resolves instantly (computed on load).
+    // For the Turnstile token we WAIT for the widget rather than fire token-less
+    // (a token-less request is a guaranteed turnstile_failed deny once enabled);
+    // the wait is bounded and normally ~0 since Managed mode resolves on load.
+    try { payload.device = await deviceHashPromise; } catch (e) {}
+    payload.turnstileToken = window.__opTS ? await window.__opTS.wait(10000) : "";
+    if (window.__opInternal) payload.internal = true;   // tag the server run-cost event as Roie's own testing
+    if (window.__opBypass) payload.bypassToken = window.__opBypass;   // operator abuse-gate bypass (device+IP only)
+
     var t0 = Date.now();
     if (!opts.search) {
       runStartMs = t0;   // measure the min-think floor from the original run, not the search retry
       analysisRuns++;
-      track(analysisRuns > 1 ? "analysis_rerun" : "analysis_started", { cv_chars: cv.length, jd_source: jdSource });
+      track(analysisRuns > 1 ? "analysis_rerun" : "analysis_started", { cv_chars: cv.length, jd_source: jdSource, tier: freeRun ? "free" : "paid" });
     }
 
     setLoading(true);
@@ -2086,6 +3119,10 @@
       lastRunCv = cv; lastRunJd = jd; haveLastRun = true;   // remember for identical-resubmission guard
       reportCvName = cvName; reportJdUrl = (kind === "url") ? jd : ""; // link behind this report (none for pasted text)
       showResults(out || "", false);
+      // A token was just spent on this free run — if the bucket is now empty for
+      // longer than a re-prep-and-retry would take, raise the wall now rather than
+      // let the user discover it by bouncing off a 429 on their next click.
+      if (freeRun) maybeWallAfterFreeRun();
     } catch (err) {
       // NOTE: deliberately no setLoading(false) here. The blocked→search retry
       // and the "couldn't retrieve" modal both keep the loader waves + lifted
@@ -2094,9 +3131,54 @@
       // modal (closeConfirm → stopLoaderOverlay). Stopping+restarting it here is
       // what made the card contour replay and the cards drop + re-lift.
 
-      // The website blocked the direct fetch. Don't treat this as a final
-      // failure: keep the animation running and automatically look for the same
-      // position on another public source. No run has been used.
+      // Blocked job link with the backend fallback off (fails fast, spends
+      // nothing). Not a search retry — redirect straight into paste mode. Check
+      // this BEFORE the legacy blocked→search path below.
+      if (err.stage === "blocked" && err.reason === "fallback_disabled") {
+        setLoading(false);
+        closeConfirm(els.jdSearchBack);
+        track("jd_link_blocked", { fallback: "off" });
+        showBlockedLinkInline();
+        return;
+      }
+
+      // Per-user daily cap (device / IP abuse gate). No run used. Route to the
+      // State 2 "personal daily limit" wall — the friendly personal block with the
+      // reset line + email capture — NOT the old vague "couldn't verify" modal
+      // (denyLimitBack, now retired from the live path). These caps reset at UTC
+      // midnight (backend seconds = -1), so there's no short countdown: State 2
+      // shows the reset line, not a timer. Forced to State 2 via reason
+      // "pool_exhausted" (enterWall keys State 2 off that); the true device_limit/
+      // ip_limit reason is preserved for analytics only.
+      if (err.reason === "device_limit" || err.reason === "ip_limit") {
+        setLoading(false);
+        closeConfirm(els.jdSearchBack);
+        track("free_denied", { reason: err.reason });
+        // Per-device rolling-window cap → personal countdown wall that re-enables
+        // itself when the window resets. `seconds` = time left on this device's window.
+        enterWall({ reason: "device_cooldown", seconds: err.seconds, midFlow: true });
+        return;
+      }
+      if (err.reason === "turnstile_failed") {
+        setLoading(false);
+        closeConfirm(els.jdSearchBack);
+        track("free_denied", { reason: err.reason });
+        openConfirm(els.denyTurnstileBack);
+        return;
+      }
+
+      // Shared pool spent (daily) or hourly bucket empty → the wall, with a live
+      // countdown. Not a real failure. Inputs are left exactly as they are.
+      if (err.exhausted || err.reason === "pool_exhausted" || err.reason === "rate_limited") {
+        setLoading(false);
+        closeConfirm(els.jdSearchBack);
+        track("free_pool_exhausted", { reason: err.reason || "pool_exhausted" });
+        enterWall({ seconds: err.seconds, reason: err.reason || "pool_exhausted", midFlow: true });
+        return;
+      }
+
+      // The website blocked the direct fetch (legacy path, fallback ON). Keep the
+      // animation running and look for the same position on another public source.
       if (err.stage === "blocked") {
         track("jd_fetch_blocked", {});
         openConfirm(els.jdSearchBack);
@@ -2246,6 +3328,106 @@
     toastTimer = setTimeout(function () { t.remove(); }, 1800);
   }
 
+  // ===== Step 5b denial UIs + email capture =====
+  // Blocked job link, INLINE variant (the light-weight "do this instead" pattern,
+  // same slot as the inline validation line). Opens the JD paste box and shows a
+  // calm notice right above it — no scrim, no button. This is the live path.
+  function showBlockedLinkInline() {
+    setError("");                        // clear any red validation line first
+    openJdPaste();                       // paste box open + focused, fix is right there
+    if (els.blockedInline) els.blockedInline.hidden = false;
+  }
+  // Blocked job link, MODAL variant. Kept for side-by-side comparison (?deny=blocked).
+  function showBlockedLink() {
+    openConfirm(els.blockedLinkBack);
+  }
+  // Verification couldn't complete. Copy reveals no mechanism (see the modals); the
+  // two 429 limit reasons (device_limit / ip_limit) share this ONE screen so we
+  // never hint at per-browser vs per-network. `reason` kept only for analytics.
+  function showDenyLimit(reason) {
+    openConfirm(els.denyLimitBack);
+  }
+
+  // Email capture. Two separate, honest permissions (free-runs / paid-launch); at
+  // least one must be ticked (the submit button is disabled otherwise — no error
+  // copy needed). No email is ever sent to analytics (PII) — only which permissions
+  // were chosen.
+  //
+  // TEMPORARY BETA SCAFFOLDING — there is no /api/notify backend (deliberately, for a
+  // friends-only beta). Submissions POST into a Google Form that acts as the data
+  // sink; responses land in its linked sheet, and the owner follows up by hand. When
+  // a real notify endpoint exists, replace NOTIFY_FORM + the fetch in submitEmail()
+  // with a POST to it and drop this comment.
+  var NOTIFY_FORM = {
+    action: "https://docs.google.com/forms/d/e/1FAIpQLScNKPGKqXP3X32YDcM6dajdG1NxXVgUc2rrfYf8ks0u5tLIuA/formResponse",
+    email:   "entry.1334173261",
+    free:    "entry.1229492431",   // "yes" / "no"
+    paid:    "entry.1530041921",   // "yes" / "no"
+    context: "entry.108639631"     // "report" / "wall"
+  };
+  var EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  function permsOf(formEl) {
+    if (!formEl) return { free: false, paid: false };
+    var f = formEl.querySelector(".op-perm-free"), p = formEl.querySelector(".op-perm-paid");
+    return { free: !!(f && f.checked), paid: !!(p && p.checked) };
+  }
+  function syncEmailBtn(formEl, btnEl) {
+    if (!btnEl) return;
+    var perms = permsOf(formEl);
+    btnEl.disabled = !(perms.free || perms.paid);   // ≥1 permission required
+  }
+  function submitEmail(inputEl, ctx, formEl, doneEl) {
+    var v = (inputEl && inputEl.value || "").trim();
+    var perms = permsOf(formEl);
+    if (!(perms.free || perms.paid)) return false;        // guarded by the disabled button too
+    if (!EMAIL_RE.test(v)) { try { inputEl.focus(); } catch (e) {} return false; }
+    // Fire-and-forget POST into the Google Form (see NOTIFY_FORM above). Forms sends
+    // no CORS headers, so mode:"no-cors" yields an opaque response we can't read —
+    // we assume the send succeeded and show the confirmation regardless. Good enough
+    // for a beta sink; a real backend would let us confirm and surface failures.
+    try {
+      var body = new URLSearchParams();
+      body.append(NOTIFY_FORM.email, v);
+      body.append(NOTIFY_FORM.free, perms.free ? "yes" : "no");
+      body.append(NOTIFY_FORM.paid, perms.paid ? "yes" : "no");
+      body.append(NOTIFY_FORM.context, ctx);
+      fetch(NOTIFY_FORM.action, { method: "POST", mode: "no-cors", body: body });
+    } catch (e) {}
+    track("notify_signup", { context: ctx, notify_free: perms.free, notify_paid: perms.paid });  // never the address
+    if (formEl) formEl.hidden = true;
+    if (doneEl) doneEl.hidden = false;
+    return true;
+  }
+  function resetEmail(wrapEl, formEl, doneEl, inputEl) {
+    if (formEl) {
+      formEl.hidden = false;
+      Array.prototype.forEach.call(formEl.querySelectorAll("input[type=checkbox]"), function (c) { c.checked = false; });
+    }
+    if (doneEl) doneEl.hidden = true;
+    if (inputEl) inputEl.value = "";
+    if (wrapEl) { var b = wrapEl.querySelector(".op-email-btn, .op-btn--sm"); if (b) b.disabled = true; }
+  }
+  function wireEmail(formEl, inputEl, ctx, doneEl, btnEl) {
+    if (!formEl) return;
+    formEl.addEventListener("submit", function (e) { e.preventDefault(); submitEmail(inputEl, ctx, formEl, doneEl); });
+    formEl.addEventListener("change", function () { syncEmailBtn(formEl, btnEl); });
+  }
+  wireEmail(els.emailReportForm, els.emailReportIn, "report", els.emailReportDone, els.emailReportBtn);
+  wireEmail(els.emailWallForm, els.emailWallIn, "wall", els.emailWallDone, els.emailWallBtn);
+
+  // Blocked-link modal button (comparison variant): drop into the paste field.
+  if (els.blockedPasteBtn) els.blockedPasteBtn.addEventListener("click", function () {
+    closeConfirm(els.blockedLinkBack);
+    openJdPaste();
+  });
+  if (els.denyTurnstileRetry) els.denyTurnstileRetry.addEventListener("click", function () {
+    closeConfirm(els.denyTurnstileBack);
+    attemptRun(true);                  // momentary — a fresh token is already re-armed
+  });
+  if (els.denyLimitOk) els.denyLimitOk.addEventListener("click", function () {
+    closeConfirm(els.denyLimitBack);
+  });
+
   // ---- generic confirm/overlay helpers (menu + D/E modals) ----
   // Overlays fade in/out (opacity) whenever they come or go. Because
   // [hidden] { display:none } can't transition, we flip hidden first (display
@@ -2271,11 +3453,13 @@
   }
   function anyConfirmOpen() {
     // jdSearchBack is transient (auto-advances) and deliberately not dismissable.
-    return [els.shortBack, els.cvBack, els.failBack, els.jdFailBack, els.rerunBack].filter(function (b) { return !b.hidden; });
+    return [els.shortBack, els.cvBack, els.failBack, els.jdFailBack, els.rerunBack,
+            els.blockedLinkBack, els.denyTurnstileBack, els.denyLimitBack].filter(function (b) { return !b.hidden; });
   }
-  // click-outside to dismiss (fail + short + cv + jd-recovery + rerun). Dismissing
-  // the JD recovery just returns to the input, same as its one button.
-  [els.shortBack, els.cvBack, els.failBack, els.jdFailBack, els.rerunBack].forEach(function (b) {
+  // click-outside to dismiss (fail + short + cv + jd-recovery + rerun + 5b denials).
+  // Dismissing the JD recovery / blocked-link just returns to the input.
+  [els.shortBack, els.cvBack, els.failBack, els.jdFailBack, els.rerunBack,
+   els.blockedLinkBack, els.denyTurnstileBack, els.denyLimitBack].forEach(function (b) {
     b.addEventListener("click", function (e) { if (e.target === b) closeConfirm(b); });
   });
 
@@ -2489,9 +3673,7 @@
   // ---- pay modal (packs "coming soon"; coupon is live) ----
   function openPay() { els.payBack.hidden = false; track("get_more_opened", {}); setTimeout(function () { els.coupon.focus(); }, 30); }
   function closePay() { els.payBack.hidden = true; }
-  els.getMore1.addEventListener("click", openPay);
-  els.getMore2.addEventListener("click", openPay);
-  els.getMore3.addEventListener("click", openPay);
+  [els.getMore1, els.wallCode].forEach(function (b) { if (b) b.addEventListener("click", openPay); });
   els.payClose.addEventListener("click", closePay);
   els.payBack.addEventListener("click", function (e) { if (e.target === els.payBack) closePay(); });
   document.addEventListener("keydown", function (e) {
@@ -2564,17 +3746,46 @@
       if (typeof data.remaining === "number") {
         updateRemaining(data.remaining); // sets remaining, re-renders, shows the right bar
         refreshRunDisabled();
+        // Free tier (no paid balance): check the shared pool now, so the wall (or
+        // its absence) is correct before the first submit. Skip while a QA mock
+        // has already forced a wall/deny.
+        if (data.remaining === 0 && !pool.exhausted && !MOCK_DENY) pollFreeStatus("load");
       }
     } catch (e) {
       // Network/CORS failure — keep fallback behavior, don't block the user.
     }
   }
 
+  // Re-anchor when the tab regains focus: someone who left OnPaper open for 20
+  // minutes should see the wall — or its absence — without clicking anything. Poll
+  // when free-tier or already walled; the poll itself decides whether to revive.
+  document.addEventListener("visibilitychange", function () {
+    if (document.visibilityState !== "visible") return;
+    if (pool.exhausted || remaining === 0) pollFreeStatus("visible");
+  });
+
+  // QA (localhost only): force a denial UI on load so the abuse states can be seen
+  // before cfg:turnstile_enabled flips. Untested against a live deny until then.
+  function runMockDeny() {
+    if (!MOCK_DENY) return;
+    var mockSecs = parseInt(new URLSearchParams(location.search).get("secs"), 10);
+    if (isNaN(mockSecs)) mockSecs = 3600;
+    if (MOCK_DENY === "turnstile_failed") openConfirm(els.denyTurnstileBack);
+    // device_limit / ip_limit now render the personal cooldown countdown wall (see
+    // the run catch handler). ?secs=N sets the demo countdown; ?deny=legacy-limit
+    // still previews the retired modal.
+    else if (MOCK_DENY === "device_limit" || MOCK_DENY === "ip_limit") enterWall({ reason: "device_cooldown", seconds: mockSecs, midFlow: false });
+    else if (MOCK_DENY === "legacy-limit") showDenyLimit("device_limit");
+    else if (MOCK_DENY === "blocked") showBlockedLink();                 // modal (comparison)
+    else if (MOCK_DENY === "blocked-inline") showBlockedLinkInline();    // inline (live path)
+  }
+
   // init
+  if (IS_BETA) { try { var bt = document.getElementById("betaTag"); if (bt) bt.hidden = false; } catch (e) {} }
   renderBalance();
   refreshRunDisabled();
-  // LOCAL DEMO: skip the balance gate so free-tier runs are clickable (uncommitted).
-  // fetchBalance();
-  track("onpaper_opened", { entry: "load" });
+  fetchBalance();
+  runMockDeny();
+  track("onpaper_opened", { entry: "load", build: IS_BETA ? "beta" : "prod" });
 })();
 </script>
