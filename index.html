@@ -5,7 +5,7 @@
 <meta name="theme-color" content="#F0F4F7">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
-<title>OnPaper</title>
+<title>OnPaper — the gaps between your CV and the job</title>
 <script>
   // Lock the app-shell to the real visible height. iOS standalone (home-screen)
   // apps misreport vh/svh/dvh, which pushes the header/banner off-screen.
@@ -40,6 +40,12 @@
   })();
 </script>
 <meta name="description" content="Upload your CV and paste a job link. Get the real gaps between them, each with one concrete fix. Gaps, not scores. Fixes, not filler.">
+<link rel="canonical" href="https://onpaper.fit">
+<meta property="og:title" content="OnPaper — the gaps between your CV and the job">
+<meta property="og:description" content="Upload your CV and paste a job link. Get the real gaps between them, each with one concrete fix. Gaps, not scores. Fixes, not filler.">
+<meta property="og:url" content="https://onpaper.fit">
+<meta property="og:image" content="https://onpaper.fit/og-image.png">
+<meta name="twitter:card" content="summary_large_image">
 <link rel="icon" href="favicon.ico" sizes="any">
 <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
 <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
@@ -1198,7 +1204,7 @@
               <input type="email" class="op-email-in" id="emailReportIn" placeholder="you@example.com" autocomplete="email" inputmode="email" spellcheck="false" />
               <button type="submit" class="op-email-btn" id="emailReportBtn" disabled>Notify me</button>
             </div>
-            <p class="op-email-note"><b>Beta:</b> no automated emails yet &ndash; I&rsquo;ll follow up myself.</p>
+            <p class="op-email-note">Emails aren&rsquo;t automated yet, so I&rsquo;ll follow up myself.</p>
           </form>
           <p class="op-email-done" id="emailReportDone" hidden>Got it &mdash; noted.</p>
         </div>
@@ -1282,7 +1288,7 @@
               <input type="email" class="op-input" id="emailWallIn" placeholder="you@example.com" autocomplete="email" inputmode="email" spellcheck="false" />
               <button type="submit" class="op-btn--sm" id="emailWallBtn" disabled>Notify me</button>
             </div>
-            <p class="op-sheet-note"><b>Beta:</b> no automated emails yet.</p>
+            <p class="op-sheet-note">Emails aren&rsquo;t automated yet, so I&rsquo;ll follow up myself.</p>
           </form>
           <div class="op-sheet-done" id="emailWallDone" hidden>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M8 12l3 3 5-6"/></svg>
@@ -1386,21 +1392,6 @@
         </div>
       </div>
     </div>
-
-    <!-- Admin: opens the internal management platform (the free-tier admin knobs).
-         It lives on the preview TWIN — the prod /api/admin hard-503s by design —
-         so this always points at the twin, regardless of build. Not part of the
-         product; deliberately quiet at the very bottom. -->
-    <a class="op-menu-admin" id="menuAdmin"
-       href="https://onpaper-api-git-free-tier-roys-projects-48041b7f.vercel.app/api/admin"
-       target="_blank" rel="noopener noreferrer">
-      <span>Admin</span>
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-        <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
-        <polyline points="15 3 21 3 21 9"></polyline>
-        <line x1="10" y1="14" x2="21" y2="3"></line>
-      </svg>
-    </a>
 
   </div>
 </div>
