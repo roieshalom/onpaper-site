@@ -296,7 +296,20 @@
   .op-wordmark { font-family: var(--serif-d); font-size: 26px; letter-spacing: -0.01em; }
   .op-brand { display: flex; align-items: center; gap: 12px; }
   .op-beta-tag { font-family: var(--mono); font-size: 10px; font-weight: 500; letter-spacing: 0.12em; text-transform: uppercase; color: var(--red); border: 1px solid var(--tag-border); border-radius: 3px; padding: 3px 7px; white-space: nowrap; }
-  .op-beta-mark { font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Arial, sans-serif; font-size: 14px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--red); white-space: nowrap; align-self: center; }
+  .op-beta-mark { font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Arial, sans-serif; font-size: 11px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; color: var(--faint); white-space: nowrap; align-self: center; }
+  /* Staging marker: a colored bar pinned to the left edge on the Vercel preview
+     build, so it's never mistaken for the real site. Revealed only when IS_BETA. */
+  .op-staging-bar {
+    position: fixed; top: 0; left: 0; bottom: 0; z-index: 9999;
+    width: 26px; background: var(--red); color: #fff;
+    display: flex; align-items: center; justify-content: center;
+    pointer-events: none; box-shadow: 2px 0 8px rgba(0,0,0,.18);
+  }
+  .op-staging-bar span {
+    writing-mode: vertical-rl; transform: rotate(180deg);
+    font-family: var(--mono); font-size: 11px; font-weight: 600;
+    letter-spacing: 0.18em; text-transform: uppercase; white-space: nowrap;
+  }
   .op-wordmark .op-red, .op-red { color: var(--red); }
   .op-logo { display: block; height: 30px; width: auto; }
   .op-foot-mark .op-logo { height: 20px; }
@@ -987,6 +1000,9 @@
 
 <div class="op-shell">
   <div class="op-noise"></div>
+
+  <!-- staging-only marker, revealed when IS_BETA (Vercel preview build) -->
+  <div class="op-staging-bar" id="stagingBar" hidden><span>STAGING &middot; not the real site</span></div>
 
   <!-- header -->
   <header class="op-header">
@@ -3782,6 +3798,7 @@
 
   // init
   if (IS_BETA) { try { var bt = document.getElementById("betaTag"); if (bt) bt.hidden = false; } catch (e) {} }
+  if (IS_BETA) { try { var sb = document.getElementById("stagingBar"); if (sb) sb.hidden = false; } catch (e) {} }
   renderBalance();
   refreshRunDisabled();
   fetchBalance();
