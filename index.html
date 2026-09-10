@@ -265,6 +265,11 @@
   /* During a run the cards are scrolled to the vertical centre of the viewport
      (setLoading -> centre-in-view), not lifted, so the analysis node lands mid-
      screen and the page stays scrollable. */
+  /* Processing streams: a single dash flows from the card edge toward the node
+     (pathLength is normalised to 1, so 0.05/0.95 is one travelling dot). */
+  @keyframes op-stream-flow { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
+  .op-stream-dot { animation: op-stream-flow 2.6s linear infinite; }
+  @media (prefers-reduced-motion: reduce) { .op-stream-dot { animation: none; opacity: 0; } }
   @keyframes op-spin { to { transform: rotate(360deg); } }
   @keyframes op-rise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
   @keyframes rainbow-heart {
@@ -2192,13 +2197,21 @@
       this.gStreams = mk("g", {}); this.gNode = mk("g", {});
       svg.appendChild(this.gStreams); svg.appendChild(this.gNode);
 
-      // Stream bundles: cvStreams reach in from the left card, jdStreams from the right.
-      this.cvStreams = []; this.jdStreams = [];
+      // Stream bundles: cvStreams reach in from the left card, jdStreams from the
+      // right. Each stream also gets a "dot" path (a copy of the same geometry)
+      // whose dash flows toward the node via a pure-CSS animation (.op-stream-dot).
+      this.cvStreams = []; this.jdStreams = []; this.cvDots = []; this.jdDots = [];
       for (var i = 0; i < this.streamCount; i++) {
         var a = mk("path", { fill: "none", "stroke-linecap": "round" });
         var b = mk("path", { fill: "none", "stroke-linecap": "round" });
+        var ad = mk("path", { fill: "none", "stroke-linecap": "round", pathLength: 1, "stroke-dasharray": "0.05 0.95", "class": "op-stream-dot" });
+        var bd = mk("path", { fill: "none", "stroke-linecap": "round", pathLength: 1, "stroke-dasharray": "0.05 0.95", "class": "op-stream-dot" });
+        ad.style.animationDelay = (i * 0.55).toFixed(2) + "s";
+        bd.style.animationDelay = (i * 0.55 + 0.28).toFixed(2) + "s";
         this.gStreams.appendChild(a); this.gStreams.appendChild(b);
+        this.gStreams.appendChild(ad); this.gStreams.appendChild(bd);
         this.cvStreams.push(a); this.jdStreams.push(b);
+        this.cvDots.push(ad); this.jdDots.push(bd);
       }
 
       // Center analysis node: two faint outer rings + a paper disc + a sparkle.
@@ -2260,6 +2273,13 @@
         this.jdStreams[i].setAttribute("stroke", this.jdColor);
         this.jdStreams[i].setAttribute("stroke-width", strokeW);
         this.jdStreams[i].setAttribute("opacity", mid ? 0.6 : 0.4);
+        // Flowing dot: same geometry, brighter + thicker; motion is CSS-driven.
+        this.cvDots[i].setAttribute("d", cvd);
+        this.cvDots[i].setAttribute("stroke", this.cvColor);
+        this.cvDots[i].setAttribute("stroke-width", strokeW * 1.9);
+        this.jdDots[i].setAttribute("d", jdd);
+        this.jdDots[i].setAttribute("stroke", this.jdColor);
+        this.jdDots[i].setAttribute("stroke-width", strokeW * 1.9);
       }
 
       for (var j = 0; j < this.rings.length; j++) {
