@@ -270,6 +270,16 @@
   @keyframes op-stream-flow { from { stroke-dashoffset: 1; } to { stroke-dashoffset: 0; } }
   .op-stream-dot { animation: op-stream-flow 2.6s linear infinite; }
   @media (prefers-reduced-motion: reduce) { .op-stream-dot { animation: none; opacity: 0; } }
+  /* Analysis node life: sparkle pulses, rings breathe (scale around their own
+     centre via fill-box). Elements sit in gNode's scaled unit space. */
+  .op-node-spark, .op-node-ring { transform-box: fill-box; transform-origin: center; }
+  .op-node-spark { transform: scale(0.62); animation: op-node-pulse 3.2s ease-in-out infinite; }
+  @keyframes op-node-pulse { 0%, 100% { transform: scale(0.60); opacity: .85; } 50% { transform: scale(0.68); opacity: 1; } }
+  .op-node-ring-a { animation: op-node-breathe-a 3.8s ease-in-out infinite; }
+  .op-node-ring-b { animation: op-node-breathe-b 3.8s ease-in-out .7s infinite; }
+  @keyframes op-node-breathe-a { 0%, 100% { transform: scale(1);    opacity: .16; } 50% { transform: scale(1.12); opacity: .05; } }
+  @keyframes op-node-breathe-b { 0%, 100% { transform: scale(1.02); opacity: .10; } 50% { transform: scale(1.16); opacity: .03; } }
+  @media (prefers-reduced-motion: reduce) { .op-node-spark, .op-node-ring-a, .op-node-ring-b { animation: none; } }
   @keyframes op-spin { to { transform: rotate(360deg); } }
   @keyframes op-rise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
   @keyframes rainbow-heart {
@@ -2214,14 +2224,17 @@
         this.cvDots.push(ad); this.jdDots.push(bd);
       }
 
-      // Center analysis node: two faint outer rings + a paper disc + a sparkle.
+      // Center analysis node, drawn in UNIT space (radius 1) inside gNode; the
+      // frame only sets gNode's transform (translate to centre, scale to nodeR).
+      // Strokes stay constant via non-scaling-stroke; CSS animates the children.
       this.rings = [];
+      var ringCls = ["op-node-ring op-node-ring-a", "op-node-ring op-node-ring-b"];
       for (var j = 0; j < 2; j++) {
-        var ring = mk("circle", { fill: "none", stroke: this.ink });
+        var ring = mk("circle", { cx: 0, cy: 0, r: (1.5 + 0.62 * j).toFixed(2), fill: "none", stroke: this.ink, "stroke-width": 1.2, "vector-effect": "non-scaling-stroke", "class": ringCls[j] });
         this.gNode.appendChild(ring); this.rings.push(ring);
       }
-      this.disc = mk("circle", { fill: this.paper, stroke: this.ink });
-      this.spark = mk("path", { d: SPARKLE, fill: this.ink });
+      this.disc = mk("circle", { cx: 0, cy: 0, r: 1, fill: this.paper, stroke: this.ink, "stroke-width": 1.2, "stroke-opacity": 0.18, opacity: 0.95, "vector-effect": "non-scaling-stroke" });
+      this.spark = mk("path", { d: SPARKLE, fill: this.ink, "class": "op-node-spark" });
       this.gNode.appendChild(this.disc); this.gNode.appendChild(this.spark);
     };
     // One smooth cubic from a card edge (sx,sy) converging toward the node (ex,ey).
@@ -2282,22 +2295,11 @@
         this.jdDots[i].setAttribute("stroke-width", strokeW * 1.9);
       }
 
-      for (var j = 0; j < this.rings.length; j++) {
-        this.rings[j].setAttribute("cx", cx); this.rings[j].setAttribute("cy", cy);
-        this.rings[j].setAttribute("r", nodeR * (1.5 + 0.6 * j));
-        this.rings[j].setAttribute("stroke-width", strokeW);
-        this.rings[j].setAttribute("opacity", 0.16 - 0.06 * j);
-      }
-      this.disc.setAttribute("cx", cx); this.disc.setAttribute("cy", cy);
-      this.disc.setAttribute("r", nodeR);
-      this.disc.setAttribute("stroke-width", strokeW);
-      this.disc.setAttribute("opacity", 0.95);
-      this.disc.setAttribute("stroke-opacity", 0.18);
-      this.spark.setAttribute("transform", "translate(" + cx.toFixed(1) + "," + cy.toFixed(1) + ") scale(" + (nodeR * 0.6).toFixed(1) + ")");
-      this.spark.setAttribute("opacity", 0.9);
+      // Node children live in unit space; just place + scale the whole group.
+      this.gNode.setAttribute("transform", "translate(" + cx.toFixed(1) + "," + cy.toFixed(1) + ") scale(" + nodeR.toFixed(2) + ")");
 
-      // Skeleton step: re-track geometry each frame (the cards lift on start), but
-      // no time-based motion yet — that layers on in the next steps.
+      // Re-track geometry each frame (the cards tilt on start); the streams' dot
+      // flow and the node's pulse/breathing are CSS-driven and loop on their own.
       this._raf = window.requestAnimationFrame(this._frame.bind(this));
     };
     Loader.prototype.start = function () {
