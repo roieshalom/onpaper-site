@@ -2151,15 +2151,19 @@
     function easeOutCubic(t) { return 1 - Math.pow(1 - t, 3); }
     function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
 
+    // Processing-only palette (kept local — does NOT touch the site's :root skin).
+    var CV_BLUE = "#8FB4D9";   // CV information stream (matches the ::selection blue)
+    var JD_LAV  = "#A99BD6";   // JD information stream (muted lavender)
+    var SPARKLE = "M0,-1 Q0.22,-0.22 1,0 Q0.22,0.22 0,1 Q-0.22,0.22 -1,0 Q-0.22,-0.22 0,-1 Z";
+
     function Loader(opts) {
       this.left = opts.leftCard; this.right = opts.rightCard;
       this.color = opts.color || "#ed2c0a";
       this.ink = opts.ink || "#111A28";
-      this.rayCount = opts.rayCount || 3;
-      this.speed = opts.speed || 12;
-      this.showIntro = opts.showIntro !== false;
-      this.introDur = 1.4; this.loopDur = 3.6;
-      this.START_FRAC = 0.69; this.END_FRAC = 0.375;
+      this.paper = opts.paper || "#FFFFFF";
+      this.cvColor = opts.cvColor || CV_BLUE;
+      this.jdColor = opts.jdColor || JD_LAV;
+      this.streamCount = opts.streamCount || 3;
       this._raf = null; this._t0 = 0;
       this._build();
     }
@@ -2169,74 +2173,96 @@
       // so the bottom bar always stays in front of the animation.
       svg.style.cssText = "position:fixed;inset:0;width:100vw;height:100vh;z-index:4;overflow:visible;";
       this.svg = svg;
-      this.gBorders = mk("g", {}); this.gRays = mk("g", {});
-      svg.appendChild(this.gBorders); svg.appendChild(this.gRays);
-      this.rectL = mk("rect", { fill: "none", "stroke-linejoin": "round", "stroke-linecap": "round", pathLength: 1 });
-      this.rectR = mk("rect", { fill: "none", "stroke-linejoin": "round", "stroke-linecap": "round", pathLength: 1 });
-      this.gBorders.appendChild(this.rectL); this.gBorders.appendChild(this.rectR);
-      this.lines = [];
-      for (var i = 0; i < this.rayCount; i++) {
-        var base = mk("path", { fill: "none", "stroke-linecap": "round" });
-        var pulse = mk("path", { fill: "none", "stroke-linecap": "round", pathLength: 1000, "stroke-dasharray": "24 226" });
-        this.gRays.appendChild(base); this.gRays.appendChild(pulse);
-        this.lines.push({ base: base, pulse: pulse });
+      // Draw order: streams (behind) -> node (in front).
+      this.gStreams = mk("g", {}); this.gNode = mk("g", {});
+      svg.appendChild(this.gStreams); svg.appendChild(this.gNode);
+
+      // Stream bundles: cvStreams reach in from the left card, jdStreams from the right.
+      this.cvStreams = []; this.jdStreams = [];
+      for (var i = 0; i < this.streamCount; i++) {
+        var a = mk("path", { fill: "none", "stroke-linecap": "round" });
+        var b = mk("path", { fill: "none", "stroke-linecap": "round" });
+        this.gStreams.appendChild(a); this.gStreams.appendChild(b);
+        this.cvStreams.push(a); this.jdStreams.push(b);
       }
-    };
-    // Wave sampled along a "main" axis, oscillating on the "cross" axis.
-    // horizontal=true -> beam runs left->right (main=x, cross=y);
-    // horizontal=false -> beam runs top->bottom (main=y, cross=x).
-    Loader.prototype._wavePath = function (m0, m1, cross, amp, k, phase, horizontal) {
-      var n = 72, d = "";
-      for (var i = 0; i <= n; i++) {
-        var m = m0 + ((m1 - m0) * i) / n;
-        var c = cross + amp * Math.sin(k * (m - m0) - phase);
-        var x = horizontal ? m : c, y = horizontal ? c : m;
-        d += (i === 0 ? "M" : "L") + x.toFixed(1) + " " + y.toFixed(1) + " ";
+
+      // Center analysis node: two faint outer rings + a paper disc + a sparkle.
+      this.rings = [];
+      for (var j = 0; j < 2; j++) {
+        var ring = mk("circle", { fill: "none", stroke: this.ink });
+        this.gNode.appendChild(ring); this.rings.push(ring);
       }
-      return d;
+      this.disc = mk("circle", { fill: this.paper, stroke: this.ink });
+      this.spark = mk("path", { d: SPARKLE, fill: this.ink });
+      this.gNode.appendChild(this.disc); this.gNode.appendChild(this.spark);
     };
-    Loader.prototype._drawRect = function (rect, box, strokeW, progress) {
-      rect.setAttribute("x", box.left); rect.setAttribute("y", box.top);
-      rect.setAttribute("width", box.width); rect.setAttribute("height", box.height);
-      rect.setAttribute("stroke", this.ink); rect.setAttribute("stroke-width", strokeW);
-      rect.setAttribute("stroke-dasharray", 1); rect.setAttribute("stroke-dashoffset", 1 - progress);
+    // One smooth cubic from a card edge (sx,sy) converging toward the node (ex,ey).
+    Loader.prototype._streamPath = function (sx, sy, ex, ey, horizontal) {
+      var c1x, c1y, c2x, c2y;
+      if (horizontal) { c1x = sx + (ex - sx) * 0.5; c1y = sy; c2x = sx + (ex - sx) * 0.55; c2y = ey; }
+      else            { c1y = sy + (ey - sy) * 0.5; c1x = sx; c2y = sy + (ey - sy) * 0.55; c2x = ex; }
+      return "M" + sx.toFixed(1) + " " + sy.toFixed(1) +
+             " C" + c1x.toFixed(1) + " " + c1y.toFixed(1) +
+             " " + c2x.toFixed(1) + " " + c2y.toFixed(1) +
+             " " + ex.toFixed(1) + " " + ey.toFixed(1);
     };
-    Loader.prototype._frame = function (now) {
-      var t = (now - this._t0) / 1000;
+    Loader.prototype._frame = function () {
       var L = this.left.getBoundingClientRect(), R = this.right.getBoundingClientRect();
-      // Cards side-by-side -> horizontal beam; stacked (mobile) -> vertical beam.
+      // Cards side-by-side -> horizontal streams; stacked (mobile) -> vertical.
       var horizontal = R.left >= L.right - 1;
-      // "cross" is the dimension perpendicular to the beam.
-      var crossDim = horizontal ? L.height : L.width;
-      var strokeW = Math.max(2, Math.min(L.width, L.height) * 0.0107);
-      var amp = crossDim * 0.046, spacing = crossDim * 0.15;
-      var crossMid, m0, m1;
+      var cx, cy, crossDim;
       if (horizontal) {
-        crossMid = L.top + L.height / 2;
-        m0 = L.left + L.width * this.START_FRAC; m1 = R.left + R.width * this.END_FRAC;
+        cx = (L.right + R.left) / 2;
+        cy = ((L.top + L.height / 2) + (R.top + R.height / 2)) / 2;
+        crossDim = Math.min(L.height, R.height);
       } else {
-        crossMid = L.left + L.width / 2;
-        m0 = L.top + L.height * this.START_FRAC; m1 = R.top + R.height * this.END_FRAC;
+        cx = ((L.left + L.width / 2) + (R.left + R.width / 2)) / 2;
+        cy = (L.bottom + R.top) / 2;
+        crossDim = Math.min(L.width, R.width);
       }
-      var k = (2 * Math.PI) / ((m1 - m0) / 3.1);
-      var pL = this.showIntro ? easeInOutQuad(clamp((t - 0.05) / 0.6, 0, 1)) : 1;
-      var pR = this.showIntro ? easeInOutQuad(clamp((t - 0.55) / 0.65, 0, 1)) : 1;
-      this._drawRect(this.rectL, L, strokeW, pL); this._drawRect(this.rectR, R, strokeW, pR);
-      var rayIn = this.showIntro ? easeOutCubic(clamp((t - 0.95) / 0.6, 0, 1)) : 1;
-      var loopT = this.showIntro ? Math.max(0, t - this.introDur) : t;
-      var phase = ((2 * Math.PI * this.speed) / this.loopDur) * loopT;
-      var pulseOffset = -250 * ((loopT / this.loopDur) * (this.speed / 2));
-      for (var i = 0; i < this.rayCount; i++) {
-        var cross = crossMid + (i - (this.rayCount - 1) / 2) * spacing;
-        var a = amp * (i === Math.floor(this.rayCount / 2) ? 1 : 0.82);
-        var d = this._wavePath(m0, m1, cross, a, k, phase + i * 0.9, horizontal);
-        var ln = this.lines[i];
-        ln.base.setAttribute("d", d); ln.base.setAttribute("stroke", this.color);
-        ln.base.setAttribute("stroke-width", strokeW); ln.base.setAttribute("opacity", 0.4 * rayIn);
-        ln.pulse.setAttribute("d", d); ln.pulse.setAttribute("stroke", this.color);
-        ln.pulse.setAttribute("stroke-width", strokeW * 1.5); ln.pulse.setAttribute("opacity", rayIn);
-        ln.pulse.setAttribute("stroke-dashoffset", pulseOffset);
+      var nodeR = clamp(crossDim * 0.11, 15, 38);   // paper-disc radius
+      var strokeW = Math.max(1, Math.min(L.width, L.height) * 0.006);
+      var spacing = crossDim * 0.12;
+      var n = this.streamCount, half = (n - 1) / 2;
+
+      for (var i = 0; i < n; i++) {
+        var off = (i - half) * spacing;
+        var conv = off * 0.22;                       // streams converge toward the node
+        var cvd, jdd;
+        if (horizontal) {
+          cvd = this._streamPath(L.right, cy + off, cx - nodeR * 1.15, cy + conv, true);
+          jdd = this._streamPath(R.left,  cy + off, cx + nodeR * 1.15, cy + conv, true);
+        } else {
+          cvd = this._streamPath(cx + off, L.bottom, cx + conv, cy - nodeR * 1.15, false);
+          jdd = this._streamPath(cx + off, R.top,    cx + conv, cy + nodeR * 1.15, false);
+        }
+        var mid = (i === Math.round(half));
+        this.cvStreams[i].setAttribute("d", cvd);
+        this.cvStreams[i].setAttribute("stroke", this.cvColor);
+        this.cvStreams[i].setAttribute("stroke-width", strokeW);
+        this.cvStreams[i].setAttribute("opacity", mid ? 0.6 : 0.4);
+        this.jdStreams[i].setAttribute("d", jdd);
+        this.jdStreams[i].setAttribute("stroke", this.jdColor);
+        this.jdStreams[i].setAttribute("stroke-width", strokeW);
+        this.jdStreams[i].setAttribute("opacity", mid ? 0.6 : 0.4);
       }
+
+      for (var j = 0; j < this.rings.length; j++) {
+        this.rings[j].setAttribute("cx", cx); this.rings[j].setAttribute("cy", cy);
+        this.rings[j].setAttribute("r", nodeR * (1.5 + 0.6 * j));
+        this.rings[j].setAttribute("stroke-width", strokeW);
+        this.rings[j].setAttribute("opacity", 0.16 - 0.06 * j);
+      }
+      this.disc.setAttribute("cx", cx); this.disc.setAttribute("cy", cy);
+      this.disc.setAttribute("r", nodeR);
+      this.disc.setAttribute("stroke-width", strokeW);
+      this.disc.setAttribute("opacity", 0.95);
+      this.disc.setAttribute("stroke-opacity", 0.18);
+      this.spark.setAttribute("transform", "translate(" + cx.toFixed(1) + "," + cy.toFixed(1) + ") scale(" + (nodeR * 0.6).toFixed(1) + ")");
+      this.spark.setAttribute("opacity", 0.9);
+
+      // Skeleton step: re-track geometry each frame (the cards lift on start), but
+      // no time-based motion yet — that layers on in the next steps.
       this._raf = window.requestAnimationFrame(this._frame.bind(this));
     };
     Loader.prototype.start = function () {
