@@ -235,6 +235,25 @@
     filter: blur(1.5px) saturate(0.9);
     transition: opacity .3s ease, filter .3s ease;
   }
+  /* Processing state: shrink the two input cards a little, nudge them apart, and
+     tilt each card's INNER edge toward the centre in 3D (as if the two cards face
+     each other), opening room for the analysis node between them. The loader
+     re-reads the cards' live geometry every frame, so the node re-centres into the
+     widened gap on its own. Hinged at the inner edge so the gap opens like a book. */
+  #viewInput .op-field { transition: transform .5s var(--ease-lift); }
+  #viewInput.is-locked .op-col:first-child .op-field {
+    transform: perspective(1300px) translateX(-26px) scale(0.92) rotateY(14deg);
+    transform-origin: right center;
+  }
+  #viewInput.is-locked .op-col:last-child .op-field {
+    transform: perspective(1300px) translateX(26px) scale(0.92) rotateY(-14deg);
+    transform-origin: left center;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    #viewInput .op-field { transition: none; }
+    #viewInput.is-locked .op-col:first-child .op-field,
+    #viewInput.is-locked .op-col:last-child .op-field { transform: none; }
+  }
   /* While a run is in flight, lift the whole input view upward so the loading
      animation (the loader tracks the cards' live geometry every frame, so the
      rays follow) rises above the modal, which sits just below centre. */
