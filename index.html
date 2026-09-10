@@ -288,6 +288,14 @@
     18%, 100% { opacity: 0; transform: translateY(-4px); }
   }
   @media (prefers-reduced-motion: reduce) { .op-word { animation: none; opacity: 0; } }
+  /* Completion settle (success): one stronger node pulse, rings expand + fade,
+     streams + dots + words fade. Overrides the looping node/word animations. */
+  .op-loader-done .op-node-spark { animation: op-done-spark .5s ease-out forwards; }
+  .op-loader-done .op-node-ring { animation: op-done-ring .55s ease-out forwards; }
+  .op-loader-done .op-stream-dot { animation: none; opacity: 0; transition: opacity .3s ease; }
+  .op-loader-done .op-word { animation: none; opacity: 0; transition: opacity .2s ease; }
+  @keyframes op-done-spark { 0% { transform: scale(.62); opacity: .85; } 45% { transform: scale(.82); opacity: 1; } 100% { transform: scale(.5); opacity: 0; } }
+  @keyframes op-done-ring { 0% { transform: scale(1); opacity: .16; } 100% { transform: scale(1.7); opacity: 0; } }
   @keyframes op-spin { to { transform: rotate(360deg); } }
   @keyframes op-rise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
   @keyframes rainbow-heart {
@@ -2334,13 +2342,25 @@
       this._t0 = performance.now(); this.svg.style.opacity = "1";
       this._raf = window.requestAnimationFrame(this._frame.bind(this));
     };
-    Loader.prototype.stop = function () {
+    // complete=true (success): play a short "analysis complete" settle — one
+    // stronger node pulse, rings expand/fade, streams + words fade — before the
+    // overlay leaves (~700ms). Otherwise (error teardown) just fade out quickly,
+    // so a failure never reads as "complete".
+    Loader.prototype.stop = function (complete) {
       var self = this;
-      this.svg.style.transition = "opacity 0.35s ease"; this.svg.style.opacity = "0";
+      // Freeze geometry NOW so the settle plays on the last-known node position —
+      // showResults hides the cards right after, which would otherwise zero their
+      // rects and snap the node to the corner mid-settle.
+      if (this._raf) { window.cancelAnimationFrame(this._raf); this._raf = null; }
+      if (complete) {
+        this.svg.classList.add("op-loader-done");
+        this.svg.style.transition = "opacity 0.4s ease 0.32s"; this.svg.style.opacity = "0";
+      } else {
+        this.svg.style.transition = "opacity 0.35s ease"; this.svg.style.opacity = "0";
+      }
       setTimeout(function () {
-        window.cancelAnimationFrame(self._raf); self._raf = null;
         if (self.svg.parentNode) self.svg.parentNode.removeChild(self.svg);
-      }, 360);
+      }, complete ? 760 : 360);
     };
     return Loader;
   })();
@@ -2364,9 +2384,9 @@
     opLoader = new OnPaperLoader({ leftCard: left, rightCard: right, color: red, ink: ink });
     opLoader.start();
   }
-  function stopLoaderOverlay() {
+  function stopLoaderOverlay(complete) {
     if (!opLoader) return;
-    opLoader.stop(); opLoader = null;
+    opLoader.stop(complete); opLoader = null;
   }
   // Make the input fields non-editable while a run is in flight. The CSS scrim
   // (#viewInput.is-locked) blocks pointer access; we also flip the real form
@@ -2397,16 +2417,17 @@
     var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     sc.scrollTo({ top: target, behavior: reduce ? "auto" : "smooth" });
   }
-  function setLoading(on) {
+  function setLoading(on, complete) {
     // Centre the input cards in the viewport when a run begins (the node lands
-    // mid-screen); the page stays scrollable.
+    // mid-screen); the page stays scrollable. `complete` (success only) plays the
+    // "analysis complete" settle as the overlay tears down.
     if (on) { try { centerCardsInView(); } catch (e) {} }
     loading = on;
     els.run.classList.toggle("is-loading", on);
     els.run.disabled = on;
     els.spin.hidden = !on;
     lockInputs(on);
-    if (on) startLoaderOverlay(); else stopLoaderOverlay();
+    if (on) startLoaderOverlay(); else stopLoaderOverlay(complete);
     if (on) window.addEventListener("beforeunload", warnUnload);
     else window.removeEventListener("beforeunload", warnUnload);
     updateRunLabel();
@@ -3272,7 +3293,7 @@
       // that as soon as possible.
       var thinkLeft = MIN_THINK_MS - (Date.now() - runStartMs);
       if (thinkLeft > 0) { await new Promise(function (r) { setTimeout(r, thinkLeft); }); }
-      setLoading(false);
+      setLoading(false, true);                              // success → play the "analysis complete" settle
       closeConfirm(els.jdSearchBack);                       // clear the transient "searching" state, if shown
       updateRemaining(data.remaining);
       lastRunCv = cv; lastRunJd = jd; haveLastRun = true;   // remember for identical-resubmission guard
