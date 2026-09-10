@@ -280,6 +280,11 @@
   @keyframes op-node-breathe-a { 0%, 100% { transform: scale(1);    opacity: .16; } 50% { transform: scale(1.12); opacity: .05; } }
   @keyframes op-node-breathe-b { 0%, 100% { transform: scale(1.02); opacity: .10; } 50% { transform: scale(1.16); opacity: .03; } }
   @media (prefers-reduced-motion: reduce) { .op-node-spark, .op-node-ring-a, .op-node-ring-b { animation: none; } }
+  /* Orbiting ring dots: pivot on the node centre (fill-box centre = the dot at
+     local 0,0), swung out by --r (set per frame) and spun by CSS. */
+  .op-orbit { transform-box: fill-box; transform-origin: center; animation-name: op-orbit-spin; animation-timing-function: linear; animation-iteration-count: infinite; }
+  @keyframes op-orbit-spin { from { transform: rotate(0deg) translateX(var(--r, 40px)); } to { transform: rotate(360deg) translateX(var(--r, 40px)); } }
+  @media (prefers-reduced-motion: reduce) { .op-orbit { animation: none; } .op-orbit circle { opacity: 0; } }
   /* Comparison words: small mono signals surfacing near the node, one at a time. */
   .op-word { font-family: var(--mono); font-size: 11px; letter-spacing: .08em; text-transform: uppercase; fill: var(--ink-4); opacity: 0; animation: op-word-cycle 9s ease-in-out infinite; }
   @keyframes op-word-cycle {
@@ -2198,9 +2203,15 @@
     function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
 
     // Processing-only palette (kept local — does NOT touch the site's :root skin).
-    var CV_BLUE = "#8FB4D9";   // CV information stream (matches the ::selection blue)
-    var JD_LAV  = "#A99BD6";   // JD information stream (muted lavender)
+    // Vivid-but-soft blue (CV) and violet (JD) that mix at the node.
+    var CV_BLUE = "#5568E8";   // CV information stream
+    var JD_LAV  = "#8B5CF6";   // JD information stream (violet)
     var SPARKLE = "M0,-1 Q0.22,-0.22 1,0 Q0.22,0.22 0,1 Q-0.22,0.22 -1,0 Q-0.22,-0.22 0,-1 Z";
+    function grad(id, stops) {
+      var g = mk("linearGradient", { id: id, x1: "0", y1: "0", x2: "1", y2: "0" });
+      for (var s = 0; s < stops.length; s++) g.appendChild(mk("stop", { offset: stops[s][0], "stop-color": stops[s][1] }));
+      return g;
+    }
 
     function Loader(opts) {
       this.left = opts.leftCard; this.right = opts.rightCard;
@@ -2219,9 +2230,20 @@
       // so the bottom bar always stays in front of the animation.
       svg.style.cssText = "position:fixed;inset:0;width:100vw;height:100vh;z-index:4;overflow:visible;";
       this.svg = svg;
-      // Draw order: streams (behind) -> node (in front).
-      this.gStreams = mk("g", {}); this.gNode = mk("g", {});
-      svg.appendChild(this.gStreams); svg.appendChild(this.gNode);
+      // Gradients (ids unique per instance so multiple loaders never collide).
+      var uid = "opl" + Math.random().toString(36).slice(2, 8);
+      this.cvGradId = uid + "cv"; this.jdGradId = uid + "jd"; this.mixId = uid + "mix"; this.sparkId = uid + "sp";
+      var defs = mk("defs", {});
+      defs.appendChild(grad(this.cvGradId, [["0", "#3F53D8"], ["1", "#7E93F4"]]));   // CV: deep -> light blue
+      defs.appendChild(grad(this.jdGradId, [["0", "#A585F2"], ["1", "#6C46D6"]]));   // JD: light -> deep violet
+      defs.appendChild(grad(this.mixId,    [["0", "#5568E8"], ["0.5", "#8172EE"], ["1", "#8B5CF6"]])); // blue -> violet mix
+      defs.appendChild(grad(this.sparkId,  [["0", "#5568E8"], ["1", "#8B5CF6"]]));
+      svg.appendChild(defs);
+      this.cvStroke = "url(#" + this.cvGradId + ")";
+      this.jdStroke = "url(#" + this.jdGradId + ")";
+      // Draw order: streams (behind) -> node -> orbiting dots (front-most on rings).
+      this.gStreams = mk("g", {}); this.gNode = mk("g", {}); this.gOrbit = mk("g", {});
+      svg.appendChild(this.gStreams); svg.appendChild(this.gNode); svg.appendChild(this.gOrbit);
 
       // Stream bundles: cvStreams reach in from the left card, jdStreams from the
       // right. Each stream also gets a "dot" path (a copy of the same geometry)
@@ -2232,8 +2254,11 @@
         var b = mk("path", { fill: "none", "stroke-linecap": "round" });
         var ad = mk("path", { fill: "none", "stroke-linecap": "round", pathLength: 1, "stroke-dasharray": "0.05 0.95", "class": "op-stream-dot" });
         var bd = mk("path", { fill: "none", "stroke-linecap": "round", pathLength: 1, "stroke-dasharray": "0.05 0.95", "class": "op-stream-dot" });
-        ad.style.animationDelay = (i * 0.55).toFixed(2) + "s";
-        bd.style.animationDelay = (i * 0.55 + 0.28).toFixed(2) + "s";
+        // Faster, per-stream rhythms so the dots don't move in lockstep.
+        var cvDur = [1.35, 1.75, 1.05, 1.55, 1.9][i % 5];
+        var jdDur = [1.6, 1.15, 1.85, 1.3, 1.7][i % 5];
+        ad.style.animationDuration = cvDur + "s"; ad.style.animationDelay = (i * -0.4).toFixed(2) + "s";
+        bd.style.animationDuration = jdDur + "s"; bd.style.animationDelay = (i * -0.3 - 0.2).toFixed(2) + "s";
         this.gStreams.appendChild(a); this.gStreams.appendChild(b);
         this.gStreams.appendChild(ad); this.gStreams.appendChild(bd);
         this.cvStreams.push(a); this.jdStreams.push(b);
@@ -2243,15 +2268,37 @@
       // Center analysis node, drawn in UNIT space (radius 1) inside gNode; the
       // frame only sets gNode's transform (translate to centre, scale to nodeR).
       // Strokes stay constant via non-scaling-stroke; CSS animates the children.
+      var mix = "url(#" + this.mixId + ")";
       this.rings = [];
       var ringCls = ["op-node-ring op-node-ring-a", "op-node-ring op-node-ring-b"];
       for (var j = 0; j < 2; j++) {
-        var ring = mk("circle", { cx: 0, cy: 0, r: (1.5 + 0.62 * j).toFixed(2), fill: "none", stroke: this.ink, "stroke-width": 1.2, "vector-effect": "non-scaling-stroke", "class": ringCls[j] });
+        var ring = mk("circle", { cx: 0, cy: 0, r: (1.5 + 0.62 * j).toFixed(2), fill: "none", stroke: mix, "stroke-width": 1.3, "vector-effect": "non-scaling-stroke", "class": ringCls[j] });
         this.gNode.appendChild(ring); this.rings.push(ring);
       }
-      this.disc = mk("circle", { cx: 0, cy: 0, r: 1, fill: this.paper, stroke: this.ink, "stroke-width": 1.2, "stroke-opacity": 0.18, opacity: 0.95, "vector-effect": "non-scaling-stroke" });
-      this.spark = mk("path", { d: SPARKLE, fill: this.ink, "class": "op-node-spark" });
+      this.disc = mk("circle", { cx: 0, cy: 0, r: 1, fill: this.paper, stroke: mix, "stroke-width": 2, "stroke-opacity": 0.9, opacity: 0.97, "vector-effect": "non-scaling-stroke" });
+      this.spark = mk("path", { d: SPARKLE, fill: "url(#" + this.sparkId + ")", "class": "op-node-spark" });
       this.gNode.appendChild(this.disc); this.gNode.appendChild(this.spark);
+
+      // Orbiting dots riding the rings — each in a group that CSS spins around the
+      // node centre; radius (unit) tracks the rings, size stays constant (px, set
+      // per frame). Varied radius / speed / direction / phase / colour.
+      this.orbits = [];
+      var specs = [
+        { rf: 1.5, dur: 7, dir: 1, ph: 0.0, c: "#5568E8" }, { rf: 1.5, dur: 9, dir: -1, ph: 0.45, c: "#8B5CF6" },
+        { rf: 2.12, dur: 11, dir: 1, ph: 0.2, c: "#7E93F4" }, { rf: 2.12, dur: 8.5, dir: -1, ph: 0.7, c: "#8B5CF6" },
+        { rf: 1.5, dur: 10, dir: 1, ph: 0.75, c: "#6C46D6" }, { rf: 2.12, dur: 13, dir: -1, ph: 0.35, c: "#5568E8" }
+      ];
+      for (var o = 0; o < specs.length; o++) {
+        var sp = specs[o];
+        var spin = mk("g", { "class": "op-orbit" });
+        spin.style.animationDuration = sp.dur + "s";
+        spin.style.animationDirection = sp.dir < 0 ? "reverse" : "normal";
+        spin.style.animationDelay = (-sp.ph * sp.dur).toFixed(2) + "s";
+        var od = mk("circle", { cx: 0, cy: 0, r: 2.6, fill: sp.c });
+        spin.appendChild(od);
+        this.gOrbit.appendChild(spin);
+        this.orbits.push({ g: spin, dot: od, rf: sp.rf });
+      }
 
       // Comparison words: crisp SVG text in a group that tracks the node centre
       // (unscaled, so text stays sharp). A single staggered CSS keyframe makes
@@ -2312,25 +2359,32 @@
         }
         var mid = (i === Math.round(half));
         this.cvStreams[i].setAttribute("d", cvd);
-        this.cvStreams[i].setAttribute("stroke", this.cvColor);
+        this.cvStreams[i].setAttribute("stroke", this.cvStroke);
         this.cvStreams[i].setAttribute("stroke-width", strokeW);
-        this.cvStreams[i].setAttribute("opacity", mid ? 0.6 : 0.4);
+        this.cvStreams[i].setAttribute("opacity", mid ? 0.7 : 0.45);
         this.jdStreams[i].setAttribute("d", jdd);
-        this.jdStreams[i].setAttribute("stroke", this.jdColor);
+        this.jdStreams[i].setAttribute("stroke", this.jdStroke);
         this.jdStreams[i].setAttribute("stroke-width", strokeW);
-        this.jdStreams[i].setAttribute("opacity", mid ? 0.6 : 0.4);
+        this.jdStreams[i].setAttribute("opacity", mid ? 0.7 : 0.45);
         // Flowing dot: same geometry, brighter + thicker; motion is CSS-driven.
         this.cvDots[i].setAttribute("d", cvd);
-        this.cvDots[i].setAttribute("stroke", this.cvColor);
-        this.cvDots[i].setAttribute("stroke-width", strokeW * 1.9);
+        this.cvDots[i].setAttribute("stroke", this.cvStroke);
+        this.cvDots[i].setAttribute("stroke-width", strokeW * 2.1);
         this.jdDots[i].setAttribute("d", jdd);
-        this.jdDots[i].setAttribute("stroke", this.jdColor);
-        this.jdDots[i].setAttribute("stroke-width", strokeW * 1.9);
+        this.jdDots[i].setAttribute("stroke", this.jdStroke);
+        this.jdDots[i].setAttribute("stroke-width", strokeW * 2.1);
       }
 
       // Node children live in unit space; just place + scale the whole group.
       this.gNode.setAttribute("transform", "translate(" + cx.toFixed(1) + "," + cy.toFixed(1) + ") scale(" + nodeR.toFixed(2) + ")");
       this.gWords.setAttribute("transform", "translate(" + cx.toFixed(1) + "," + cy.toFixed(1) + ")");
+      // Orbiting dots: group tracks node centre (unscaled); each dot sits at a px
+      // radius derived from nodeR so it rides its ring, while its CSS-spun parent
+      // carries it around. Dot size stays constant.
+      this.gOrbit.setAttribute("transform", "translate(" + cx.toFixed(1) + "," + cy.toFixed(1) + ")");
+      for (var o = 0; o < this.orbits.length; o++) {
+        this.orbits[o].g.style.setProperty("--r", (nodeR * this.orbits[o].rf).toFixed(1) + "px");
+      }
 
       // Re-track geometry each frame (the cards tilt on start); the streams' dot
       // flow and the node's pulse/breathing are CSS-driven and loop on their own.
