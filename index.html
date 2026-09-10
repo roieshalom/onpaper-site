@@ -240,35 +240,31 @@
      each other), opening room for the analysis node between them. The loader
      re-reads the cards' live geometry every frame, so the node re-centres into the
      widened gap on its own. Hinged at the inner edge so the gap opens like a book. */
-  #viewInput .op-field { transition: transform .5s var(--ease-lift); }
-  #viewInput.is-locked .op-col:first-child .op-field {
-    transform: perspective(1300px) translateX(-26px) scale(0.92) rotateY(14deg);
-    transform-origin: right center;
-  }
-  #viewInput.is-locked .op-col:last-child .op-field {
-    transform: perspective(1300px) translateX(26px) scale(0.92) rotateY(-14deg);
+  /* Resting cards carry a neutral 3D transform (rotateY(0)) so the processing
+     tilt animates 3D->3D. Transitioning from `none` to a 3D transform is
+     unreliable in Chrome (it can stick at identity); a real transform at rest
+     avoids that. rotateY(0) scale(1) is visually identical to no transform. */
+  #viewInput .op-col:first-child .op-field {
+    transform: perspective(1000px) rotateY(0deg) scale(1);
     transform-origin: left center;
+    transition: transform .55s var(--ease-lift);
   }
+  #viewInput .op-col:last-child .op-field {
+    transform: perspective(1000px) rotateY(0deg) scale(1);
+    transform-origin: right center;
+    transition: transform .55s var(--ease-lift);
+  }
+  #viewInput.is-locked .op-col:first-child .op-field { transform: perspective(1000px) rotateY(22deg) scale(0.9); }
+  #viewInput.is-locked .op-col:last-child .op-field  { transform: perspective(1000px) rotateY(-22deg) scale(0.9); }
   @media (prefers-reduced-motion: reduce) {
-    #viewInput .op-field { transition: none; }
-    #viewInput.is-locked .op-col:first-child .op-field,
-    #viewInput.is-locked .op-col:last-child .op-field { transform: none; }
+    #viewInput .op-col:first-child .op-field,
+    #viewInput .op-col:last-child .op-field { transition: none; }
+    #viewInput.is-locked .op-col:first-child .op-field { transform: perspective(1000px) rotateY(22deg) scale(0.9); }
+    #viewInput.is-locked .op-col:last-child .op-field  { transform: perspective(1000px) rotateY(-22deg) scale(0.9); }
   }
-  /* While a run is in flight, lift the whole input view upward so the loading
-     animation (the loader tracks the cards' live geometry every frame, so the
-     rays follow) rises above the modal, which sits just below centre. */
-  #viewInput { transition: transform .5s cubic-bezier(.22,1,.36,1); }
-  /* Lift only when the window is tall enough for the animation to clear the
-     modal; shorter windows keep the modal centred over the cards. A fixed px
-     lift (not vh) lands the cards just below the header at any height, while the
-     below-centre modal — which only drops lower as height grows — stays clear. */
-  @media (min-height: 680px) {
-    #viewInput.is-locked { transform: translateY(-230px); }
-  }
-  @media (prefers-reduced-motion: reduce) {
-    #viewInput { transition: none; }
-    #viewInput.is-locked { transform: none; }
-  }
+  /* During a run the cards are scrolled to the vertical centre of the viewport
+     (setLoading -> centre-in-view), not lifted, so the analysis node lands mid-
+     screen and the page stays scrollable. */
   @keyframes op-spin { to { transform: rotate(360deg); } }
   @keyframes op-rise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
   @keyframes rainbow-heart {
@@ -2338,11 +2334,25 @@
       if (el) el.readOnly = on;
     });
   }
+  // Smooth-scroll the two input cards to the vertical centre of the scroll
+  // viewport, so the analysis node (drawn between them) lands mid-screen when a
+  // run begins. Uses the real scroll position — not a transform — so the user
+  // can keep scrolling afterwards. Child card tilts don't affect .op-io's layout
+  // box, so its rect is a stable centring target.
+  function centerCardsInView() {
+    var sc = document.querySelector(".op-scroll");
+    var io = document.querySelector(".op-io");
+    if (!sc || !io) return;
+    var scR = sc.getBoundingClientRect(), ioR = io.getBoundingClientRect();
+    var delta = (ioR.top + ioR.height / 2) - (scR.top + scR.height / 2);
+    var target = Math.max(0, Math.min(sc.scrollHeight - sc.clientHeight, sc.scrollTop + delta));
+    var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    sc.scrollTo({ top: target, behavior: reduce ? "auto" : "smooth" });
+  }
   function setLoading(on) {
-    // Frame the input cards at the top of the scroll area when a run begins, so
-    // the lift (#viewInput.is-locked) reveals the animation above the modal
-    // instead of pushing already-scrolled cards off-screen.
-    if (on) { try { document.querySelector(".op-scroll").scrollTop = 0; } catch (e) {} }
+    // Centre the input cards in the viewport when a run begins (the node lands
+    // mid-screen); the page stays scrollable.
+    if (on) { try { centerCardsInView(); } catch (e) {} }
     loading = on;
     els.run.classList.toggle("is-loading", on);
     els.run.disabled = on;
