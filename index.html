@@ -280,6 +280,14 @@
   @keyframes op-node-breathe-a { 0%, 100% { transform: scale(1);    opacity: .16; } 50% { transform: scale(1.12); opacity: .05; } }
   @keyframes op-node-breathe-b { 0%, 100% { transform: scale(1.02); opacity: .10; } 50% { transform: scale(1.16); opacity: .03; } }
   @media (prefers-reduced-motion: reduce) { .op-node-spark, .op-node-ring-a, .op-node-ring-b { animation: none; } }
+  /* Comparison words: small mono signals surfacing near the node, one at a time. */
+  .op-word { font-family: var(--mono); font-size: 11px; letter-spacing: .08em; text-transform: uppercase; fill: var(--ink-4); opacity: 0; animation: op-word-cycle 9s ease-in-out infinite; }
+  @keyframes op-word-cycle {
+    0%, 5% { opacity: 0; transform: translateY(4px); }
+    9%, 13% { opacity: .78; transform: translateY(0); }
+    18%, 100% { opacity: 0; transform: translateY(-4px); }
+  }
+  @media (prefers-reduced-motion: reduce) { .op-word { animation: none; opacity: 0; } }
   @keyframes op-spin { to { transform: rotate(360deg); } }
   @keyframes op-rise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
   @keyframes rainbow-heart {
@@ -2236,6 +2244,23 @@
       this.disc = mk("circle", { cx: 0, cy: 0, r: 1, fill: this.paper, stroke: this.ink, "stroke-width": 1.2, "stroke-opacity": 0.18, opacity: 0.95, "vector-effect": "non-scaling-stroke" });
       this.spark = mk("path", { d: SPARKLE, fill: this.ink, "class": "op-node-spark" });
       this.gNode.appendChild(this.disc); this.gNode.appendChild(this.spark);
+
+      // Comparison words: crisp SVG text in a group that tracks the node centre
+      // (unscaled, so text stays sharp). A single staggered CSS keyframe makes
+      // roughly one word surface at a time at varied offsets — extracted signals.
+      this.gWords = mk("g", {});
+      svg.appendChild(this.gWords);
+      var words = [
+        { t: "skills", x: -66, y: -66 }, { t: "experience", x: 72, y: -48 },
+        { t: "keywords", x: -76, y: 36 }, { t: "tools", x: 60, y: 62 },
+        { t: "impact", x: 2, y: -94 }, { t: "systems", x: -6, y: 92 }
+      ];
+      for (var w = 0; w < words.length; w++) {
+        var tx = mk("text", { x: words[w].x, y: words[w].y, "text-anchor": "middle", "class": "op-word" });
+        tx.textContent = words[w].t;
+        tx.style.animationDelay = (w * -1.5).toFixed(1) + "s";
+        this.gWords.appendChild(tx);
+      }
     };
     // One smooth cubic from a card edge (sx,sy) converging toward the node (ex,ey).
     Loader.prototype._streamPath = function (sx, sy, ex, ey, horizontal) {
@@ -2297,6 +2322,7 @@
 
       // Node children live in unit space; just place + scale the whole group.
       this.gNode.setAttribute("transform", "translate(" + cx.toFixed(1) + "," + cy.toFixed(1) + ") scale(" + nodeR.toFixed(2) + ")");
+      this.gWords.setAttribute("transform", "translate(" + cx.toFixed(1) + "," + cy.toFixed(1) + ")");
 
       // Re-track geometry each frame (the cards tilt on start); the streams' dot
       // flow and the node's pulse/breathing are CSS-driven and loop on their own.
