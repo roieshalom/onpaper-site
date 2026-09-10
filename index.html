@@ -3374,6 +3374,76 @@
   // Mock preview: on load, jump straight to the SAMPLE result so the widget is visible.
   if (MOCK) { window.addEventListener("load", function () { showResults(SAMPLE, true); }); }
 
+  // ============================================================================
+  // DEV ANIMATION HARNESS  (processing-animation branch ONLY — MUST be removed
+  // before this branch merges to main / becomes any onpaper-site production).
+  //
+  // Purpose: tune the processing animation with NO cost. On this branch, on
+  // staging (IS_BETA) or localhost, the backend call is DISABLED BY DEFAULT — no
+  // ?anim flag required. Nothing ever reaches onpaper-api, so Claude is never
+  // called and no run is ever spent, no matter how many times "Check fit" is
+  // clicked. It can NEVER affect production (onpaper.fit): the whole block bails
+  // unless IS_BETA or localhost.
+  //
+  // Tools:
+  //   * Every "Check fit" is stubbed to run the REAL loader for ?delay=<seconds>
+  //     (default 4), then resolve with SAMPLE. Balance is returned UNCHANGED.
+  //   * A fixed Start/Stop button drives the loader on its own (setLoading ->
+  //     startLoaderOverlay -> OnPaperLoader), bypassing doRun entirely — handy
+  //     for tuning without filling in the CV/JD.
+  //   * A "NO-COST MODE" badge makes the disabled state unmistakable.
+  // ============================================================================
+  (function devAnimHarness() {
+    var isLocal = /^(localhost|127\.0\.0\.1)$/.test(location.hostname);
+    if (!(IS_BETA || isLocal)) return;                       // never on production
+
+    var qs = new URLSearchParams(location.search);
+    var delayMs = Math.max(0, (parseFloat(qs.get("delay")) || 4) * 1000);
+
+    // Disable the network call unconditionally: SAMPLE after a delay, no request,
+    // no run consumed. Shape matches the real response doRun reads (text/remaining).
+    callClaude = function (payload) {                         // eslint-disable-line no-func-assign
+      return new Promise(function (resolve) {
+        setTimeout(function () {
+          resolve({ text: SAMPLE, remaining: remaining });   // balance unchanged
+        }, delayMs);
+      });
+    };
+
+    window.addEventListener("load", function () {
+      // Unmistakable "cost is off" badge.
+      var badge = document.createElement("div");
+      badge.textContent = "● NO-COST MODE · Claude disabled";
+      badge.style.cssText =
+        "position:fixed;left:14px;bottom:54px;z-index:100000;pointer-events:none;" +
+        "font-family:var(--mono),monospace;font-size:11px;font-weight:600;" +
+        "letter-spacing:.04em;padding:6px 10px;border-radius:6px;" +
+        "border:1px solid var(--ok,#4F9E6E);background:var(--paper);color:var(--ok,#4F9E6E);" +
+        "box-shadow:0 4px 14px rgba(0,0,0,.18);";
+      document.body.appendChild(badge);
+
+      // Fixed Start/Stop button: the real loader path, no doRun/API.
+      var btn = document.createElement("button");
+      btn.type = "button";
+      btn.textContent = "▶ Start animation";
+      btn.style.cssText =
+        "position:fixed;left:14px;bottom:14px;z-index:100000;" +
+        "font-family:var(--mono),monospace;font-size:12px;font-weight:600;" +
+        "letter-spacing:.04em;padding:9px 14px;border-radius:6px;cursor:pointer;" +
+        "border:1px solid var(--line-in);background:var(--paper);color:var(--ink);" +
+        "box-shadow:0 4px 14px rgba(0,0,0,.22);";
+      var on = false;
+      btn.addEventListener("click", function () {
+        on = !on;
+        setLoading(on);                                      // real overlay, no API
+        btn.textContent = on ? "■ Stop animation" : "▶ Start animation";
+      });
+      document.body.appendChild(btn);
+
+      try { console.log("[anim harness] NO-COST MODE — Claude calls disabled on this branch. delay=" + (delayMs / 1000) + "s"); } catch (e) {}
+    });
+  })();
+
   // ---- toast ----
   var toastTimer = null;
   function toast(msg) {
