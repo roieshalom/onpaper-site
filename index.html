@@ -2321,10 +2321,13 @@
       }
     };
     // One smooth cubic from a card edge (sx,sy) converging toward the node (ex,ey).
-    Loader.prototype._streamPath = function (sx, sy, ex, ey, horizontal) {
+    // `bow` bends the belly on the cross axis so lines that share endpoints (the
+    // middle one) still read as a distinct arc rather than a flat axis line.
+    Loader.prototype._streamPath = function (sx, sy, ex, ey, horizontal, bow) {
+      bow = bow || 0;
       var c1x, c1y, c2x, c2y;
-      if (horizontal) { c1x = sx + (ex - sx) * 0.5; c1y = sy; c2x = sx + (ex - sx) * 0.55; c2y = ey; }
-      else            { c1y = sy + (ey - sy) * 0.5; c1x = sx; c2y = sy + (ey - sy) * 0.55; c2x = ex; }
+      if (horizontal) { c1x = sx + (ex - sx) * 0.5; c1y = sy + bow; c2x = sx + (ex - sx) * 0.55; c2y = ey + bow; }
+      else            { c1y = sy + (ey - sy) * 0.5; c1x = sx + bow; c2y = sy + (ey - sy) * 0.55; c2x = ex + bow; }
       return "M" + sx.toFixed(1) + " " + sy.toFixed(1) +
              " C" + c1x.toFixed(1) + " " + c1y.toFixed(1) +
              " " + c2x.toFixed(1) + " " + c2y.toFixed(1) +
@@ -2346,19 +2349,22 @@
       }
       var nodeR = clamp(crossDim * 0.11, 15, 38);   // paper-disc radius
       var strokeW = Math.max(1, Math.min(L.width, L.height) * 0.006);
-      var spacing = crossDim * 0.16;
+      var spacing = crossDim * 0.2;
       var n = this.streamCount, half = (n - 1) / 2;
 
       for (var i = 0; i < n; i++) {
         var off = (i - half) * spacing;
-        var conv = off * 0.22;                       // streams converge toward the node
+        var conv = off * 0.4;                        // streams converge toward the node
+        // Bow the belly so every line — including the centre one — reads as its
+        // own arc; alternate the direction a touch so they don't stack.
+        var bow = (off === 0 ? -spacing * 0.5 : off * 0.35);
         var cvd, jdd;
         if (horizontal) {
-          cvd = this._streamPath(L.right, cy + off, cx - nodeR * 1.15, cy + conv, true);
-          jdd = this._streamPath(R.left,  cy + off, cx + nodeR * 1.15, cy + conv, true);
+          cvd = this._streamPath(L.right, cy + off, cx - nodeR * 1.15, cy + conv, true, bow);
+          jdd = this._streamPath(R.left,  cy + off, cx + nodeR * 1.15, cy + conv, true, bow);
         } else {
-          cvd = this._streamPath(cx + off, L.bottom, cx + conv, cy - nodeR * 1.15, false);
-          jdd = this._streamPath(cx + off, R.top,    cx + conv, cy + nodeR * 1.15, false);
+          cvd = this._streamPath(cx + off, L.bottom, cx + conv, cy - nodeR * 1.15, false, bow);
+          jdd = this._streamPath(cx + off, R.top,    cx + conv, cy + nodeR * 1.15, false, bow);
         }
         var mid = (i === Math.round(half));
         this.cvStreams[i].setAttribute("d", cvd);
