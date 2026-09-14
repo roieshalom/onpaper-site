@@ -276,13 +276,7 @@
   .op-node-spark { transform: scale(0.62); animation: op-node-pulse 2.1s ease-in-out infinite, op-node-spin 9s linear infinite; }
   @keyframes op-node-pulse { 0%, 100% { transform: scale(0.56); opacity: .8; } 50% { transform: scale(0.72); opacity: 1; } }
   @keyframes op-node-spin { to { rotate: 360deg; } }
-  /* Orb glow pulses around the disc (replaces the concentric rings). */
-  .op-orb-canvas { animation: op-orb-glow 2.4s ease-in-out infinite; }
-  @keyframes op-orb-glow {
-    0%, 100% { box-shadow: 0 0 10px 2px rgba(110,120,240,0.22), 0 0 0 1px rgba(120,110,240,0.10); }
-    50%      { box-shadow: 0 0 26px 7px rgba(120,110,240,0.5),  0 0 0 1px rgba(120,110,240,0.20); }
-  }
-  @media (prefers-reduced-motion: reduce) { .op-orb-canvas { animation: none; box-shadow: 0 0 14px 3px rgba(120,110,240,0.3); } }
+  /* Orb glow + radar sweep are drawn on the canvas itself (see _drawOrb). */
   @media (prefers-reduced-motion: reduce) { .op-node-spark, .op-node-ring-a, .op-node-ring-b { animation: none; } }
   /* Orbiting ring dots: pivot on the node centre (fill-box centre = the dot at
      local 0,0), swung out by --r (set per frame) and spun by CSS. */
@@ -2308,7 +2302,7 @@
       this.orb = document.createElement("canvas");
       this.orb.setAttribute("aria-hidden", "true");
       this.orb.className = "op-orb-canvas";
-      this.orb.style.cssText = "position:fixed;z-index:3;pointer-events:none;transform:translate(-50%,-50%);border-radius:50%;";
+      this.orb.style.cssText = "position:fixed;z-index:3;pointer-events:none;transform:translate(-50%,-50%);";
       document.body.appendChild(this.orb);
       this.octx = this.orb.getContext("2d");
       this.f = 0; this.flashes = []; this.nextFlash = 30; this._orbD = 0;
@@ -2382,8 +2376,9 @@
       // Node children live in unit space; just place + scale the whole group.
       this.gNode.setAttribute("transform", "translate(" + cx.toFixed(1) + "," + cy.toFixed(1) + ") scale(" + nodeR.toFixed(2) + ")");
 
-      // Orb canvas: sized to the disc, pinned at the node centre, redrawn here.
-      var D = Math.round(nodeR * 2);
+      // Orb canvas: disc + a glow band around it (PAD), pinned at the node centre.
+      var PAD = Math.round(nodeR * 0.32);
+      var D = Math.round((nodeR + PAD) * 2);
       if (this._orbD !== D) {
         this._orbD = D;
         var dpr = Math.min(2, window.devicePixelRatio || 1);
@@ -2404,7 +2399,8 @@
     // over a dark disc, flashing where tokens match. Clipped to the circle.
     Loader.prototype._drawOrb = function (R) {
       var ctx = this.octx, self = this;
-      var cx = R, cy = R;
+      var PAD = Math.round(R * 0.32);
+      var cx = R + PAD, cy = R + PAD;
       var LINE_H = R * 0.16, GAP = R * 0.16, FONT = Math.max(4, R * 0.106), BLK = R;
       var lX = cx - GAP / 2 - BLK, rX = cx + GAP / 2;
       ctx.font = FONT.toFixed(2) + "px monospace";
@@ -2484,12 +2480,15 @@
         }
       }
 
-      ctx.clearRect(0, 0, R * 2, R * 2);
+      ctx.clearRect(0, 0, (R + PAD) * 2, (R + PAD) * 2);
       if (--this.nextFlash <= 0 && !this._reduce) scheduleFlash();
 
-      var halo = ctx.createRadialGradient(cx, cy, R * 0.5, cx, cy, R * 1.0);
-      halo.addColorStop(0, "rgba(110,130,255,0.12)"); halo.addColorStop(0.6, "rgba(120,110,240,0.05)"); halo.addColorStop(1, "rgba(120,110,240,0)");
-      ctx.beginPath(); ctx.arc(cx, cy, R, 0, Math.PI * 2); ctx.fillStyle = halo; ctx.fill();
+      // Pulsing glow band around the disc (radius R -> R+PAD).
+      var pulse = this._reduce ? 0.6 : 0.5 + 0.5 * Math.sin(this.f * 0.06);
+      var glow = ctx.createRadialGradient(cx, cy, R * 0.92, cx, cy, R + PAD);
+      glow.addColorStop(0, "rgba(120,110,240," + (0.16 + pulse * 0.22) + ")");
+      glow.addColorStop(1, "rgba(120,110,240,0)");
+      ctx.beginPath(); ctx.arc(cx, cy, R + PAD, 0, Math.PI * 2); ctx.fillStyle = glow; ctx.fill();
 
       // Light orb interior on our paper ground (not dark mode).
       ctx.beginPath(); ctx.arc(cx, cy, R - 1, 0, Math.PI * 2); ctx.fillStyle = "#FFFFFF"; ctx.fill();
@@ -2504,25 +2503,24 @@
         else { gr.addColorStop(0, "rgba(255,255,255,0)"); gr.addColorStop(1, "#FFFFFF"); }
         ctx.fillStyle = gr; ctx.fillRect(cx - R, gy, R * 2, mh);
       }
-      // Radar sweep: a soft violet wedge trailing a brighter leading line, spun
-      // by f, clipped inside the orb.
-      var ang = this._reduce ? 0 : (this.f * 0.028) % (Math.PI * 2);
-      ctx.save(); ctx.beginPath(); ctx.arc(cx, cy, R - 1, 0, Math.PI * 2); ctx.clip();
-      if (!this._reduce && ctx.createConicGradient) {
-        var cg = ctx.createConicGradient(ang, cx, cy);
-        cg.addColorStop(0, "rgba(120,110,240,0.30)");
-        cg.addColorStop(0.10, "rgba(120,110,240,0.05)");
-        cg.addColorStop(0.34, "rgba(120,110,240,0)");
-        cg.addColorStop(1, "rgba(120,110,240,0)");
-        ctx.fillStyle = cg; ctx.fillRect(cx - R, cy - R, R * 2, R * 2);
-      }
-      ctx.beginPath(); ctx.moveTo(cx, cy);
-      ctx.lineTo(cx + Math.cos(ang) * (R - 1), cy + Math.sin(ang) * (R - 1));
-      ctx.strokeStyle = "rgba(110,96,235,0.55)"; ctx.lineWidth = 1.4; ctx.stroke();
-      ctx.restore();
-
       ctx.beginPath(); ctx.arc(cx, cy, R - 1, 0, Math.PI * 2);
       ctx.strokeStyle = "rgba(120,110,240,0.6)"; ctx.lineWidth = 2; ctx.stroke();
+
+      // Gentle radar sweep OUTSIDE the disc, riding the glow band: a short radial
+      // tick from the rim out to R+PAD, softly tapered, rotating slowly.
+      if (!this._reduce) {
+        var ang = (this.f * 0.02) % (Math.PI * 2);
+        var ux = Math.cos(ang), uy = Math.sin(ang);
+        var x0 = cx + ux * (R + 1), y0 = cy + uy * (R + 1);
+        var x1 = cx + ux * (R + PAD), y1 = cy + uy * (R + PAD);
+        var lg = ctx.createLinearGradient(x0, y0, x1, y1);
+        lg.addColorStop(0, "rgba(110,96,235,0.5)");
+        lg.addColorStop(1, "rgba(110,96,235,0)");
+        ctx.save();
+        ctx.strokeStyle = lg; ctx.lineWidth = 2; ctx.lineCap = "round";
+        ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(x1, y1); ctx.stroke();
+        ctx.restore();
+      }
 
       this.f++;
     };
