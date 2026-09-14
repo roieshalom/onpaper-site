@@ -2306,7 +2306,7 @@
       this.rings = [];
       var ringCls = ["op-node-ring op-node-ring-a", "op-node-ring op-node-ring-b"];
       for (var j = 0; j < 2; j++) {
-        var ring = mk("circle", { cx: 0, cy: 0, r: (1.5 + 0.62 * j).toFixed(2), fill: "none", stroke: mix, "stroke-width": 1.3, "vector-effect": "non-scaling-stroke", "class": ringCls[j] });
+        var ring = mk("circle", { cx: 0, cy: 0, r: (1.16 + 0.16 * j).toFixed(2), fill: "none", stroke: mix, "stroke-width": 1.3, "vector-effect": "non-scaling-stroke", "class": ringCls[j] });
         this.gNode.appendChild(ring); this.rings.push(ring);
       }
       // The orb interior is an HTML canvas (dark, scrolling CV/JOB comparison),
@@ -2326,9 +2326,9 @@
       // per frame). Varied radius / speed / direction / phase / colour.
       this.orbits = [];
       var specs = [
-        { rf: 1.5, dur: 7, dir: 1, ph: 0.0, c: "#5568E8" }, { rf: 1.5, dur: 9, dir: -1, ph: 0.45, c: "#8B5CF6" },
-        { rf: 2.12, dur: 11, dir: 1, ph: 0.2, c: "#7E93F4" }, { rf: 2.12, dur: 8.5, dir: -1, ph: 0.7, c: "#8B5CF6" },
-        { rf: 1.5, dur: 10, dir: 1, ph: 0.75, c: "#6C46D6" }, { rf: 2.12, dur: 13, dir: -1, ph: 0.35, c: "#5568E8" }
+        { rf: 1.16, dur: 7, dir: 1, ph: 0.0, c: "#5568E8" }, { rf: 1.16, dur: 9, dir: -1, ph: 0.45, c: "#8B5CF6" },
+        { rf: 1.32, dur: 11, dir: 1, ph: 0.2, c: "#7E93F4" }, { rf: 1.32, dur: 8.5, dir: -1, ph: 0.7, c: "#8B5CF6" },
+        { rf: 1.16, dur: 10, dir: 1, ph: 0.75, c: "#6C46D6" }, { rf: 1.32, dur: 13, dir: -1, ph: 0.35, c: "#5568E8" }
       ];
       for (var o = 0; o < specs.length; o++) {
         var sp = specs[o];
@@ -2468,7 +2468,17 @@
         self.flashes.push({ wp: wps[Math.floor(Math.random() * wps.length)], born: self.f });
         if (owps.length) self.flashes.push({ wp: owps[Math.floor(Math.random() * owps.length)], born: self.f });
         if (self.flashes.length > 14) self.flashes.splice(0, 2);
-        self.nextFlash = 22 + Math.floor(Math.random() * 40);
+        // Very dynamic cadence: rapid bursts, steady spells, and occasional
+        // lulls. Bursts also fire an extra flash or two right away.
+        var roll = Math.random();
+        if (roll < 0.45) {                                   // burst
+          self.nextFlash = 2 + Math.floor(Math.random() * 6);
+          if (Math.random() < 0.5) { var xtra = wordsForLine(Math.random() < 0.5 ? ORB_CV : ORB_JOB, Math.floor(Math.random() * ORB_TOTAL), Math.random() < 0.5 ? "L" : "R"); if (xtra.length) self.flashes.push({ wp: xtra[Math.floor(Math.random() * xtra.length)], born: self.f }); }
+        } else if (roll < 0.85) {                            // steady
+          self.nextFlash = 16 + Math.floor(Math.random() * 34);
+        } else {                                             // lull
+          self.nextFlash = 70 + Math.floor(Math.random() * 90);
+        }
       }
       function glowForWord(word, lineIdx, side) {
         var best = 0;
@@ -2487,7 +2497,7 @@
         var subPx = scroll % LINE_H;
         var startRow = Math.floor(scroll / LINE_H) - 1;
         var count = Math.ceil((R * 2) / LINE_H) + 2;
-        var col = side === "L" ? [110, 145, 255] : [165, 110, 255];
+        var col = side === "L" ? [70, 92, 210] : [122, 84, 216];   // CV blue / JOB violet (on light)
         ctx.textBaseline = "alphabetic";
         for (var row = 0; row < count; row++) {
           var idx = ((startRow + row) % ORB_TOTAL + ORB_TOTAL) % ORB_TOTAL;
@@ -2499,12 +2509,12 @@
             if (glow > 0) {
               ctx.save();
               ctx.font = "bold " + FONT.toFixed(2) + "px monospace"; ctx.textAlign = "left";
-              ctx.fillStyle = "rgba(220,232,255," + (0.6 + glow * 0.4) + ")";
-              ctx.shadowColor = "rgba(170,195,255," + glow + ")"; ctx.shadowBlur = 6 + glow * 14;
+              ctx.fillStyle = "rgba(17,26,40," + (0.72 + glow * 0.28) + ")";   // navy ink, bold
+              ctx.shadowColor = "rgba(" + col[0] + "," + col[1] + "," + col[2] + "," + glow + ")"; ctx.shadowBlur = 5 + glow * 13;
               ctx.fillText(ws[w].word, ws[w].x, y); ctx.restore();
             } else {
               ctx.font = FONT.toFixed(2) + "px monospace"; ctx.textAlign = "left";
-              ctx.fillStyle = "rgba(" + col[0] + "," + col[1] + "," + col[2] + ",0.28)";
+              ctx.fillStyle = "rgba(" + col[0] + "," + col[1] + "," + col[2] + ",0.34)";
               ctx.fillText(ws[w].word, ws[w].x, y);
             }
           }
@@ -2515,10 +2525,11 @@
       if (--this.nextFlash <= 0 && !this._reduce) scheduleFlash();
 
       var halo = ctx.createRadialGradient(cx, cy, R * 0.5, cx, cy, R * 1.0);
-      halo.addColorStop(0, "rgba(110,130,255,0.18)"); halo.addColorStop(0.6, "rgba(90,110,230,0.06)"); halo.addColorStop(1, "rgba(90,110,230,0)");
+      halo.addColorStop(0, "rgba(110,130,255,0.12)"); halo.addColorStop(0.6, "rgba(120,110,240,0.05)"); halo.addColorStop(1, "rgba(120,110,240,0)");
       ctx.beginPath(); ctx.arc(cx, cy, R, 0, Math.PI * 2); ctx.fillStyle = halo; ctx.fill();
 
-      ctx.beginPath(); ctx.arc(cx, cy, R - 1, 0, Math.PI * 2); ctx.fillStyle = "#0b0c1a"; ctx.fill();
+      // Light orb interior on our paper ground (not dark mode).
+      ctx.beginPath(); ctx.arc(cx, cy, R - 1, 0, Math.PI * 2); ctx.fillStyle = "#FFFFFF"; ctx.fill();
 
       ctx.save(); ctx.beginPath(); ctx.arc(cx, cy, R - 1, 0, Math.PI * 2); ctx.clip();
       drawColumn(ORB_CV, "L"); drawColumn(ORB_JOB, "R");
@@ -2526,8 +2537,8 @@
       for (var e = 0; e < 2; e++) {
         var mh = R * 0.27, gy = edges[e] === "top" ? cy - R : cy + R - mh;
         var gr = ctx.createLinearGradient(0, gy, 0, gy + mh);
-        if (edges[e] === "top") { gr.addColorStop(0, "#0b0c1a"); gr.addColorStop(1, "rgba(11,12,26,0)"); }
-        else { gr.addColorStop(0, "rgba(11,12,26,0)"); gr.addColorStop(1, "#0b0c1a"); }
+        if (edges[e] === "top") { gr.addColorStop(0, "#FFFFFF"); gr.addColorStop(1, "rgba(255,255,255,0)"); }
+        else { gr.addColorStop(0, "rgba(255,255,255,0)"); gr.addColorStop(1, "#FFFFFF"); }
         ctx.fillStyle = gr; ctx.fillRect(cx - R, gy, R * 2, mh);
       }
       ctx.restore();
