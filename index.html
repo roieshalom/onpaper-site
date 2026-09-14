@@ -2377,7 +2377,7 @@
       this.gNode.setAttribute("transform", "translate(" + cx.toFixed(1) + "," + cy.toFixed(1) + ") scale(" + nodeR.toFixed(2) + ")");
 
       // Orb canvas: disc + a glow band around it (PAD), pinned at the node centre.
-      var PAD = Math.round(nodeR * 0.32);
+      var PAD = Math.round(nodeR * 0.42);
       var D = Math.round((nodeR + PAD) * 2);
       if (this._orbD !== D) {
         this._orbD = D;
@@ -2399,7 +2399,7 @@
     // over a dark disc, flashing where tokens match. Clipped to the circle.
     Loader.prototype._drawOrb = function (R) {
       var ctx = this.octx, self = this;
-      var PAD = Math.round(R * 0.32);
+      var PAD = Math.round(R * 0.42);
       var cx = R + PAD, cy = R + PAD;
       var LINE_H = R * 0.16, GAP = R * 0.16, FONT = Math.max(4, R * 0.106), BLK = R;
       var lX = cx - GAP / 2 - BLK, rX = cx + GAP / 2;
@@ -2452,8 +2452,8 @@
         return best;
       }
       function drawColumn(lines, side) {
-        var scroll = self._reduce ? 0 : self.f * 0.35;
-        var subPx = scroll % LINE_H;
+        var scroll = self._reduce ? 0 : -self.f * 0.35;   // opposite direction
+        var subPx = ((scroll % LINE_H) + LINE_H) % LINE_H;
         var startRow = Math.floor(scroll / LINE_H) - 1;
         var count = Math.ceil((R * 2) / LINE_H) + 2;
         var col = side === "L" ? [70, 92, 210] : [122, 84, 216];   // CV blue / JOB violet (on light)
@@ -2506,19 +2506,19 @@
       ctx.beginPath(); ctx.arc(cx, cy, R - 1, 0, Math.PI * 2);
       ctx.strokeStyle = "rgba(120,110,240,0.6)"; ctx.lineWidth = 2; ctx.stroke();
 
-      // Gentle radar sweep OUTSIDE the disc, riding the glow band: a short radial
-      // tick from the rim out to R+PAD, softly tapered, rotating slowly.
+      // Gentle radar sweep OUTSIDE the disc, riding the glow band: a short bright
+      // radial tick with a tip dot, rotating slowly.
       if (!this._reduce) {
         var ang = (this.f * 0.02) % (Math.PI * 2);
         var ux = Math.cos(ang), uy = Math.sin(ang);
-        var x0 = cx + ux * (R + 1), y0 = cy + uy * (R + 1);
-        var x1 = cx + ux * (R + PAD), y1 = cy + uy * (R + PAD);
-        var lg = ctx.createLinearGradient(x0, y0, x1, y1);
-        lg.addColorStop(0, "rgba(110,96,235,0.5)");
-        lg.addColorStop(1, "rgba(110,96,235,0)");
+        var r0 = R + 1, r1 = R + PAD * 0.8;
+        var x0 = cx + ux * r0, y0 = cy + uy * r0;
+        var x1 = cx + ux * r1, y1 = cy + uy * r1;
         ctx.save();
-        ctx.strokeStyle = lg; ctx.lineWidth = 2; ctx.lineCap = "round";
+        ctx.strokeStyle = "rgba(108,92,232,0.9)"; ctx.lineWidth = 2.2; ctx.lineCap = "round";
+        ctx.shadowColor = "rgba(120,110,240,0.9)"; ctx.shadowBlur = 5;
         ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(x1, y1); ctx.stroke();
+        ctx.beginPath(); ctx.arc(x1, y1, 2, 0, Math.PI * 2); ctx.fillStyle = "rgba(108,92,232,0.95)"; ctx.fill();
         ctx.restore();
       }
 
