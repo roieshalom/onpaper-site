@@ -276,11 +276,13 @@
   .op-node-spark { transform: scale(0.62); animation: op-node-pulse 2.1s ease-in-out infinite, op-node-spin 9s linear infinite; }
   @keyframes op-node-pulse { 0%, 100% { transform: scale(0.56); opacity: .8; } 50% { transform: scale(0.72); opacity: 1; } }
   @keyframes op-node-spin { to { rotate: 360deg; } }
-  /* Rings hold their radius; only the stroke width pulses, each on its own clock. */
-  .op-node-ring-a { animation: op-ring-wa 2.3s ease-in-out infinite; }
-  .op-node-ring-b { animation: op-ring-wb 3.4s ease-in-out infinite; }
-  @keyframes op-ring-wa { 0%, 100% { stroke-width: 1px;   opacity: .28; } 50% { stroke-width: 3px;   opacity: .5; } }
-  @keyframes op-ring-wb { 0%, 100% { stroke-width: .7px;  opacity: .18; } 50% { stroke-width: 2.2px; opacity: .34; } }
+  /* Orb glow pulses around the disc (replaces the concentric rings). */
+  .op-orb-canvas { animation: op-orb-glow 2.4s ease-in-out infinite; }
+  @keyframes op-orb-glow {
+    0%, 100% { box-shadow: 0 0 10px 2px rgba(110,120,240,0.22), 0 0 0 1px rgba(120,110,240,0.10); }
+    50%      { box-shadow: 0 0 26px 7px rgba(120,110,240,0.5),  0 0 0 1px rgba(120,110,240,0.20); }
+  }
+  @media (prefers-reduced-motion: reduce) { .op-orb-canvas { animation: none; box-shadow: 0 0 14px 3px rgba(120,110,240,0.3); } }
   @media (prefers-reduced-motion: reduce) { .op-node-spark, .op-node-ring-a, .op-node-ring-b { animation: none; } }
   /* Orbiting ring dots: pivot on the node centre (fill-box centre = the dot at
      local 0,0), swung out by --r (set per frame) and spun by CSS. */
@@ -2275,9 +2277,9 @@
       svg.appendChild(defs);
       this.cvStroke = "url(#" + this.cvGradId + ")";
       this.jdStroke = "url(#" + this.jdGradId + ")";
-      // Draw order: streams (behind) -> node -> orbiting dots (front-most on rings).
-      this.gStreams = mk("g", {}); this.gNode = mk("g", {}); this.gOrbit = mk("g", {});
-      svg.appendChild(this.gStreams); svg.appendChild(this.gNode); svg.appendChild(this.gOrbit);
+      // Draw order: streams (behind) -> node group (kept for future SVG bits).
+      this.gStreams = mk("g", {}); this.gNode = mk("g", {});
+      svg.appendChild(this.gStreams); svg.appendChild(this.gNode);
 
       // Stream bundles: cvStreams reach in from the left card, jdStreams from the
       // right. Each stream also gets a "dot" path (a copy of the same geometry)
@@ -2299,50 +2301,18 @@
         this.cvDots.push(ad); this.jdDots.push(bd);
       }
 
-      // Center analysis node, drawn in UNIT space (radius 1) inside gNode; the
-      // frame only sets gNode's transform (translate to centre, scale to nodeR).
-      // Strokes stay constant via non-scaling-stroke; CSS animates the children.
-      var mix = "url(#" + this.mixId + ")";
-      this.rings = [];
-      var ringCls = ["op-node-ring op-node-ring-a", "op-node-ring op-node-ring-b"];
-      for (var j = 0; j < 2; j++) {
-        var ring = mk("circle", { cx: 0, cy: 0, r: (1.16 + 0.16 * j).toFixed(2), fill: "none", stroke: mix, "stroke-width": 1.3, "vector-effect": "non-scaling-stroke", "class": ringCls[j] });
-        this.gNode.appendChild(ring); this.rings.push(ring);
-      }
-      // The orb interior is an HTML canvas (dark, scrolling CV/JOB comparison),
+      // The orb interior is an HTML canvas (light, scrolling CV/JOB comparison)
       // pinned at the node centre and sized to the disc; it sits just under the
-      // loader SVG so the rings + orbiting dots render around it. The rim is drawn
-      // by the canvas itself. (The rest of the page stays on its light ground.)
+      // loader SVG. A CSS-pulsing glow surrounds it and a radar line sweeps around
+      // inside (both replace the old concentric rings + orbiting dots).
       this.orb = document.createElement("canvas");
       this.orb.setAttribute("aria-hidden", "true");
+      this.orb.className = "op-orb-canvas";
       this.orb.style.cssText = "position:fixed;z-index:3;pointer-events:none;transform:translate(-50%,-50%);border-radius:50%;";
       document.body.appendChild(this.orb);
       this.octx = this.orb.getContext("2d");
       this.f = 0; this.flashes = []; this.nextFlash = 30; this._orbD = 0;
       this._reduce = !!(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
-
-      // Orbiting dots riding the rings — each in a group that CSS spins around the
-      // node centre; radius (unit) tracks the rings, size stays constant (px, set
-      // per frame). Varied radius / speed / direction / phase / colour.
-      this.orbits = [];
-      var specs = [
-        { rf: 1.16, dur: 7, dir: 1, ph: 0.0, c: "#5568E8" }, { rf: 1.16, dur: 9, dir: -1, ph: 0.45, c: "#8B5CF6" },
-        { rf: 1.32, dur: 11, dir: 1, ph: 0.2, c: "#7E93F4" }, { rf: 1.32, dur: 8.5, dir: -1, ph: 0.7, c: "#8B5CF6" },
-        { rf: 1.16, dur: 10, dir: 1, ph: 0.75, c: "#6C46D6" }, { rf: 1.32, dur: 13, dir: -1, ph: 0.35, c: "#5568E8" }
-      ];
-      for (var o = 0; o < specs.length; o++) {
-        var sp = specs[o];
-        var spin = mk("g", { "class": "op-orbit" });
-        spin.style.animationDuration = sp.dur + "s";
-        spin.style.animationDirection = sp.dir < 0 ? "reverse" : "normal";
-        spin.style.animationDelay = (-sp.ph * sp.dur).toFixed(2) + "s";
-        var od = mk("circle", { cx: 0, cy: 0, r: 2.6, fill: sp.c, "class": "op-orbit-ball" });
-        od.style.animationDuration = (sp.dur * 0.37).toFixed(2) + "s";   // size/colour cycles off-beat from the orbit
-        od.style.animationDelay = (o * -0.6).toFixed(2) + "s";
-        spin.appendChild(od);
-        this.gOrbit.appendChild(spin);
-        this.orbits.push({ g: spin, dot: od, rf: sp.rf });
-      }
     };
     // One smooth cubic from a card edge (sx,sy) converging toward the node (ex,ey).
     // `bow` bends the belly on the cross axis so lines that share endpoints (the
@@ -2424,13 +2394,6 @@
       this.orb.style.left = cx.toFixed(1) + "px";
       this.orb.style.top = cy.toFixed(1) + "px";
       this._drawOrb(nodeR);
-      // Orbiting dots: group tracks node centre (unscaled); each dot sits at a px
-      // radius derived from nodeR so it rides its ring, while its CSS-spun parent
-      // carries it around. Dot size stays constant.
-      this.gOrbit.setAttribute("transform", "translate(" + cx.toFixed(1) + "," + cy.toFixed(1) + ")");
-      for (var o = 0; o < this.orbits.length; o++) {
-        this.orbits[o].g.style.setProperty("--r", (nodeR * this.orbits[o].rf).toFixed(1) + "px");
-      }
 
       // Re-track geometry each frame (the cards tilt on start); the streams' dot
       // flow and the node's pulse/breathing are CSS-driven and loop on their own.
@@ -2541,6 +2504,21 @@
         else { gr.addColorStop(0, "rgba(255,255,255,0)"); gr.addColorStop(1, "#FFFFFF"); }
         ctx.fillStyle = gr; ctx.fillRect(cx - R, gy, R * 2, mh);
       }
+      // Radar sweep: a soft violet wedge trailing a brighter leading line, spun
+      // by f, clipped inside the orb.
+      var ang = this._reduce ? 0 : (this.f * 0.028) % (Math.PI * 2);
+      ctx.save(); ctx.beginPath(); ctx.arc(cx, cy, R - 1, 0, Math.PI * 2); ctx.clip();
+      if (!this._reduce && ctx.createConicGradient) {
+        var cg = ctx.createConicGradient(ang, cx, cy);
+        cg.addColorStop(0, "rgba(120,110,240,0.30)");
+        cg.addColorStop(0.10, "rgba(120,110,240,0.05)");
+        cg.addColorStop(0.34, "rgba(120,110,240,0)");
+        cg.addColorStop(1, "rgba(120,110,240,0)");
+        ctx.fillStyle = cg; ctx.fillRect(cx - R, cy - R, R * 2, R * 2);
+      }
+      ctx.beginPath(); ctx.moveTo(cx, cy);
+      ctx.lineTo(cx + Math.cos(ang) * (R - 1), cy + Math.sin(ang) * (R - 1));
+      ctx.strokeStyle = "rgba(110,96,235,0.55)"; ctx.lineWidth = 1.4; ctx.stroke();
       ctx.restore();
 
       ctx.beginPath(); ctx.arc(cx, cy, R - 1, 0, Math.PI * 2);
