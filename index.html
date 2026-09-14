@@ -276,15 +276,23 @@
   .op-node-spark { transform: scale(0.62); animation: op-node-pulse 2.1s ease-in-out infinite, op-node-spin 9s linear infinite; }
   @keyframes op-node-pulse { 0%, 100% { transform: scale(0.56); opacity: .8; } 50% { transform: scale(0.72); opacity: 1; } }
   @keyframes op-node-spin { to { rotate: 360deg; } }
-  .op-node-ring-a { animation: op-node-breathe-a 3.8s ease-in-out infinite; }
-  .op-node-ring-b { animation: op-node-breathe-b 3.8s ease-in-out .7s infinite; }
-  @keyframes op-node-breathe-a { 0%, 100% { transform: scale(1);    opacity: .16; } 50% { transform: scale(1.12); opacity: .05; } }
-  @keyframes op-node-breathe-b { 0%, 100% { transform: scale(1.02); opacity: .10; } 50% { transform: scale(1.16); opacity: .03; } }
+  /* Rings hold their radius; only the stroke width pulses, each on its own clock. */
+  .op-node-ring-a { animation: op-ring-wa 2.3s ease-in-out infinite; }
+  .op-node-ring-b { animation: op-ring-wb 3.4s ease-in-out infinite; }
+  @keyframes op-ring-wa { 0%, 100% { stroke-width: 1px;   opacity: .28; } 50% { stroke-width: 3px;   opacity: .5; } }
+  @keyframes op-ring-wb { 0%, 100% { stroke-width: .7px;  opacity: .18; } 50% { stroke-width: 2.2px; opacity: .34; } }
   @media (prefers-reduced-motion: reduce) { .op-node-spark, .op-node-ring-a, .op-node-ring-b { animation: none; } }
   /* Orbiting ring dots: pivot on the node centre (fill-box centre = the dot at
      local 0,0), swung out by --r (set per frame) and spun by CSS. */
   .op-orbit { transform-box: fill-box; transform-origin: center; animation-name: op-orbit-spin; animation-timing-function: linear; animation-iteration-count: infinite; }
   @keyframes op-orbit-spin { from { transform: rotate(0deg) translateX(var(--r, 40px)); } to { transform: rotate(360deg) translateX(var(--r, 40px)); } }
+  /* Balls swell + shift colour as they travel (off-beat from their orbit). */
+  .op-orbit-ball { animation: op-ball-cycle 3s ease-in-out infinite; }
+  @keyframes op-ball-cycle {
+    0%, 100% { r: 1.8px; fill: #5568E8; }
+    33% { r: 4.4px; fill: #35C08A; }
+    66% { r: 2.6px; fill: #8B5CF6; }
+  }
   @media (prefers-reduced-motion: reduce) { .op-orbit { animation: none; } .op-orbit circle { opacity: 0; } }
   /* Comparison words: small mono signals surfacing near the node, one at a time. */
   .op-word { font-family: var(--mono); font-size: 11px; letter-spacing: .08em; text-transform: uppercase; fill: var(--ink-4); opacity: 0; animation: op-word-cycle 9s ease-in-out infinite; }
@@ -2304,7 +2312,9 @@
         spin.style.animationDuration = sp.dur + "s";
         spin.style.animationDirection = sp.dir < 0 ? "reverse" : "normal";
         spin.style.animationDelay = (-sp.ph * sp.dur).toFixed(2) + "s";
-        var od = mk("circle", { cx: 0, cy: 0, r: 2.6, fill: sp.c });
+        var od = mk("circle", { cx: 0, cy: 0, r: 2.6, fill: sp.c, "class": "op-orbit-ball" });
+        od.style.animationDuration = (sp.dur * 0.37).toFixed(2) + "s";   // size/colour cycles off-beat from the orbit
+        od.style.animationDelay = (o * -0.6).toFixed(2) + "s";
         spin.appendChild(od);
         this.gOrbit.appendChild(spin);
         this.orbits.push({ g: spin, dot: od, rf: sp.rf });
@@ -2336,7 +2346,7 @@
       }
       var nodeR = clamp(crossDim * 0.11, 15, 38);   // paper-disc radius
       var strokeW = Math.max(1, Math.min(L.width, L.height) * 0.006);
-      var spacing = crossDim * 0.12;
+      var spacing = crossDim * 0.16;
       var n = this.streamCount, half = (n - 1) / 2;
 
       for (var i = 0; i < n; i++) {
