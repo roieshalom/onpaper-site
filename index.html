@@ -262,6 +262,20 @@
     #viewInput.is-locked .op-col:first-child .op-field { transform: perspective(1000px) rotateY(22deg) scale(0.9); }
     #viewInput.is-locked .op-col:last-child .op-field  { transform: perspective(1000px) rotateY(-22deg) scale(0.9); }
   }
+  /* Scanning line: a vertical line brushes horizontally across each card toward
+     its inner edge (CV blue → right, JD violet → left). Injected into .op-field
+     while a run is in flight, so it shares the card's 3D tilt; clipped inside. */
+  #viewInput.is-locked .op-field { overflow: hidden; }
+  .op-scanline{ position:absolute; top:0; bottom:0; width:3px; z-index:3; pointer-events:none;
+    border-radius:2px; opacity:0; }
+  .op-scanline::before{ content:""; position:absolute; top:0; bottom:0; width:26px; opacity:.16; }
+  .op-scan-cv{ background:#5568E8; box-shadow:0 0 8px #5568E8; animation:op-scan-r 1.7s linear infinite; }
+  .op-scan-jd{ background:#8B5CF6; box-shadow:0 0 8px #8B5CF6; animation:op-scan-l 1.7s linear infinite; }
+  .op-scan-cv::before{ right:2px; background:linear-gradient(to left,#5568E8,transparent); }
+  .op-scan-jd::before{ left:2px;  background:linear-gradient(to right,#8B5CF6,transparent); }
+  @keyframes op-scan-r{ 0%{ left:1px; opacity:1 } 100%{ left:calc(100% - 4px); opacity:1 } }
+  @keyframes op-scan-l{ 0%{ left:calc(100% - 4px); opacity:1 } 100%{ left:1px; opacity:1 } }
+  @media (prefers-reduced-motion: reduce){ .op-scanline{ animation:none; opacity:0 } }
   /* During a run the cards are scrolled to the vertical centre of the viewport
      (setLoading -> centre-in-view), not lifted, so the analysis node lands mid-
      screen and the page stays scrollable. */
@@ -2570,10 +2584,35 @@
     if (!left || !right) return;
     opLoader = new OnPaperLoader({ leftCard: left, rightCard: right, color: red, ink: ink });
     opLoader.start();
+    addScanLines();
   }
   function stopLoaderOverlay(complete) {
+    removeScanLines();
     if (!opLoader) return;
     opLoader.stop(complete); opLoader = null;
+  }
+  // Scanning line inside each card (shares the card's 3D tilt; CV blue → right,
+  // JD violet → left). Injected into the two .op-field wrappers during a run.
+  var opScanEls = [];
+  function addScanLines() {
+    removeScanLines();
+    var cols = els.viewInput.querySelectorAll(".op-io .op-col");
+    var sides = ["op-scan-cv", "op-scan-jd"];
+    for (var i = 0; i < Math.min(2, cols.length); i++) {
+      var field = cols[i].querySelector(".op-field");
+      if (!field) continue;
+      var ln = document.createElement("div");
+      ln.className = "op-scanline " + sides[i];
+      ln.setAttribute("aria-hidden", "true");
+      field.appendChild(ln);
+      opScanEls.push(ln);
+    }
+  }
+  function removeScanLines() {
+    for (var i = 0; i < opScanEls.length; i++) {
+      if (opScanEls[i].parentNode) opScanEls[i].parentNode.removeChild(opScanEls[i]);
+    }
+    opScanEls = [];
   }
   // Make the input fields non-editable while a run is in flight. The CSS scrim
   // (#viewInput.is-locked) blocks pointer access; we also flip the real form
