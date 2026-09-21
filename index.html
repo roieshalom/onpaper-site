@@ -235,6 +235,33 @@
     filter: blur(1.5px) saturate(0.9);
     transition: opacity .3s ease, filter .3s ease;
   }
+  /* ---- Processing "drum": a 3D fan of radial blades, tilted + revolving ---- */
+  .op-drum-stage {
+    position: fixed; inset: 0; z-index: 4; pointer-events: none;
+    display: flex; align-items: center; justify-content: center;
+    perspective: 900px; opacity: 1; transition: opacity .35s ease;
+  }
+  .op-drum-stage.is-leaving { opacity: 0; }
+  .op-drum {
+    position: relative; width: 0; height: 0; transform-style: preserve-3d;
+    transform: rotateX(var(--tilt, 60deg)) rotateY(0deg);
+    animation: op-drum-spin linear infinite;
+  }
+  @keyframes op-drum-spin {
+    from { transform: rotateX(var(--tilt, 60deg)) rotateY(0deg); }
+    to   { transform: rotateX(var(--tilt, 60deg)) rotateY(360deg); }
+  }
+  /* blades render as thin outlines (line-art), not filled panels */
+  .op-blade {
+    position: absolute; left: 0; top: 0; box-sizing: border-box;
+    transform-origin: 0 50%;
+    background: transparent;
+    border-top: 1px solid rgba(17, 26, 40, 0.30);
+    border-right: 1px solid rgba(17, 26, 40, 0.30);
+    border-bottom: 1px solid rgba(17, 26, 40, 0.14);
+  }
+  .op-blade--accent { border-top-color: var(--red); border-right-color: var(--red); }
+  @media (prefers-reduced-motion: reduce) { .op-drum { animation: none; } }
   /* While a run is in flight, lift the whole input view upward so the loading
      animation (the loader tracks the cards' live geometry every frame, so the
      rays follow) rises above the modal, which sits just below centre. */
@@ -1774,7 +1801,7 @@
   }
   var analysisRuns = 0;
   var runStartMs = 0;  // when the current run began (for the min "thinking" floor)
-  var MIN_THINK_MS = 2500; // on success, keep the animation up at least this long
+  var MIN_THINK_MS = 1600; // min total run so the processing animation never flashes by
   var lastText = "";   // last raw report text (for Copy / Download)
   var reportCvName = "", reportJdUrl = "";   // the CV file + job link behind the shown report
   // Identical-resubmission guard: remember the CV + JD of the immediately previous
@@ -2264,20 +2291,47 @@
     for (var i = 0; i < cands.length; i++) if (cands[i] && cands[i].offsetParent !== null) return cands[i];
     return els.cvDrop;
   }
+  // ==========================================================================
+  // Processing animation — "The drum". On Check, the input area becomes a 3D
+  // fan/drum of radial blades, tilted and slowly revolving. Config up top.
+  // ==========================================================================
+  var DRUM = {
+    blades: 26,          // radial blades around the axis
+    radius: 190,         // blade length (centre -> rim), px
+    height: 120,         // drum wall height, px
+    tiltDeg: 60,         // rotateX — the diagonal view
+    spinSec: 9,          // one full revolution
+    reduceSpinSec: 0     // 0 = static under reduced motion
+  };
+  var opDrum = null;
   function startLoaderOverlay() {
-    if (opLoader) return;
-    var cs = getComputedStyle(document.documentElement);
-    var red = (cs.getPropertyValue("--red") || "").trim() || "#ed2c0a";
-    var ink = (cs.getPropertyValue("--ink") || "").trim() || "#111A28";
-    var right = document.querySelector(".op-jd-card");
-    var left = visibleLeftCard();
-    if (!left || !right) return;
-    opLoader = new OnPaperLoader({ leftCard: left, rightCard: right, color: red, ink: ink });
-    opLoader.start();
+    if (opDrum) return;
+    var reduce = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    var stage = document.createElement("div");
+    stage.className = "op-drum-stage"; stage.setAttribute("aria-hidden", "true");
+    var drum = document.createElement("div");
+    drum.className = "op-drum";
+    if (!reduce) drum.style.animationDuration = DRUM.spinSec + "s";
+    else drum.style.animation = "none";
+    for (var i = 0; i < DRUM.blades; i++) {
+      var b = document.createElement("div");
+      b.className = "op-blade" + (i % 13 === 0 ? " op-blade--accent" : "");
+      b.style.width = DRUM.radius + "px";
+      b.style.height = DRUM.height + "px";
+      b.style.marginTop = (-DRUM.height / 2) + "px";
+      b.style.transform = "rotateY(" + (i * 360 / DRUM.blades) + "deg)";
+      drum.appendChild(b);
+    }
+    drum.style.setProperty("--tilt", DRUM.tiltDeg + "deg");
+    stage.appendChild(drum);
+    document.body.appendChild(stage);
+    opDrum = stage;
   }
   function stopLoaderOverlay() {
-    if (!opLoader) return;
-    opLoader.stop(); opLoader = null;
+    if (!opDrum) return;
+    var s = opDrum; opDrum = null;
+    s.classList.add("is-leaving");
+    setTimeout(function () { if (s.parentNode) s.parentNode.removeChild(s); }, 360);
   }
   // Make the input fields non-editable while a run is in flight. The CSS scrim
   // (#viewInput.is-locked) blocks pointer access; we also flip the real form
@@ -3373,6 +3427,66 @@
 
   // Mock preview: on load, jump straight to the SAMPLE result so the widget is visible.
   if (MOCK) { window.addEventListener("load", function () { showResults(SAMPLE, true); }); }
+
+  // ==========================================================================
+  // DEV PREVIEW — ?preview=processing. Replays the processing state with a
+  // mocked response (no API call, nothing spent). Honored everywhere EXCEPT
+  // production onpaper.fit.
+  // ==========================================================================
+  (function procPreview() {
+    var host = location.hostname;
+    if (host === "onpaper.fit" || host === "www.onpaper.fit") return;
+    if (!/(?:[?&])preview=processing\b/.test(location.search)) return;
+    var cfg = { latency: 1500, gaps: 2, error: false };
+    window.__opTS = { wait: function () { return Promise.resolve(""); } };   // skip the Turnstile wait
+
+    function mockReport(n) {
+      var head = ["ROLE: Senior Product Designer", "COMPANY: Flink", "MATCH: Good", "DEALBREAKERS: None flagged.", ""];
+      for (var i = 0; i < n; i++) { head.push("GAP " + (i + 1) + ": Gap title number " + (i + 1) + " [Closable]"); head.push("  Evidence: The role leans on this and your CV doesn't yet show it."); head.push("  Fix: Add one concrete line that names it with a number."); }
+      return head.join("\n");
+    }
+    callClaude = function () {                                // eslint-disable-line no-func-assign
+      return new Promise(function (resolve, reject) {
+        setTimeout(function () { cfg.error ? reject(new Error("Preview error")) : resolve({ text: mockReport(cfg.gaps), remaining: 5 }); }, cfg.latency);
+      });
+    };
+    function replay() {
+      try {
+        if (opDrum) { stopLoaderOverlay(); }
+        els.viewResults.hidden = true; els.viewInput.hidden = false;
+        els.viewInput.classList.remove("is-locked");
+        els.barResults.hidden = true; els.barRun.hidden = false;
+        cvText = "Senior product designer, eight years across design systems, React/TypeScript, REST and GraphQL, AWS/GCP CI, research and prototyping in Figma, cross-functional leadership shipping consumer marketplace and SaaS products at scale with measurable impact.";
+        els.jdUrl.value = "We are looking for a Senior Product Designer to own navigation and drive revenue in a quick-commerce team. Requirements: five plus years, systems thinking, measurable business impact, high-volume consumer marketplaces, mentoring designers.";
+        haveLastRun = false; rerunConfirmed = false;
+      } catch (e) {}
+      doRun();
+    }
+    window.addEventListener("load", function () {
+      var bar = document.createElement("div");
+      bar.style.cssText = "position:fixed;left:12px;bottom:12px;z-index:100000;display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-family:var(--mono),monospace;font-size:11px;background:var(--paper);border:1px solid var(--line-in);border-radius:8px;padding:8px 10px;box-shadow:0 6px 20px rgba(0,0,0,.22);max-width:calc(100vw - 24px)";
+      function group(label, opts, key, fmt) {
+        var wrap = document.createElement("span"); wrap.style.cssText = "display:inline-flex;gap:4px;align-items:center;margin-right:6px";
+        var lb = document.createElement("b"); lb.textContent = label; lb.style.cssText = "font-weight:600;color:var(--faint);letter-spacing:.04em"; wrap.appendChild(lb);
+        opts.forEach(function (v) {
+          var b = document.createElement("button"); b.type = "button"; b.textContent = fmt ? fmt(v) : v;
+          b.style.cssText = "font:inherit;cursor:pointer;border:1px solid var(--line-in);background:transparent;color:var(--ink);border-radius:5px;padding:3px 7px";
+          function paint() { var on = cfg[key] === v; b.style.background = on ? "var(--red)" : "transparent"; b.style.color = on ? "#fff" : "var(--ink)"; b.style.borderColor = on ? "var(--red)" : "var(--line-in)"; }
+          b.addEventListener("click", function () { cfg[key] = v; Array.prototype.forEach.call(wrap.querySelectorAll("button"), function (x) { x.__p && x.__p(); }); });
+          b.__p = paint; paint(); wrap.appendChild(b);
+        });
+        bar.appendChild(wrap);
+      }
+      group("latency", [300, 1500, 5000], "latency", function (v) { return v >= 1000 ? (v / 1000) + "s" : v + "ms"; });
+      group("gaps", [0, 2, 3], "gaps");
+      group("error", [false, true], "error", function (v) { return v ? "on" : "off"; });
+      var run = document.createElement("button"); run.type = "button"; run.textContent = "▶ Replay";
+      run.style.cssText = "font:inherit;font-weight:600;cursor:pointer;border:1px solid var(--red);background:var(--red);color:#fff;border-radius:6px;padding:4px 12px";
+      run.addEventListener("click", replay); bar.appendChild(run);
+      document.body.appendChild(bar);
+      try { console.log("[proc preview] active — mocked response, no API call, nothing spent."); } catch (e) {}
+    });
+  })();
 
   // ---- toast ----
   var toastTimer = null;
