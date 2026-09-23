@@ -287,21 +287,8 @@
     .op-ball-travel, .op-ball-jump, .op-ball-squash, .op-ball-shadow, .op-ball-ripple { animation: none; }
     .op-ball-shadow { opacity: .35; }
   }
-  /* While a run is in flight, lift the whole input view upward so the loading
-     animation (the loader tracks the cards' live geometry every frame, so the
-     rays follow) rises above the modal, which sits just below centre. */
-  #viewInput { transition: transform .5s cubic-bezier(.22,1,.36,1); }
-  /* Lift only when the window is tall enough for the animation to clear the
-     modal; shorter windows keep the modal centred over the cards. A fixed px
-     lift (not vh) lands the cards just below the header at any height, while the
-     below-centre modal — which only drops lower as height grows — stays clear. */
-  @media (min-height: 680px) {
-    #viewInput.is-locked { transform: translateY(-230px); }
-  }
-  @media (prefers-reduced-motion: reduce) {
-    #viewInput { transition: none; }
-    #viewInput.is-locked { transform: none; }
-  }
+  /* No lift while a run is in flight — the ball overlay tracks the cards' live
+     positions, so the animation plays in place at any scroll depth. */
   @keyframes op-spin { to { transform: rotate(360deg); } }
   @keyframes op-rise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
   @keyframes rainbow-heart {
@@ -2381,10 +2368,8 @@
     });
   }
   function setLoading(on) {
-    // Frame the input cards at the top of the scroll area when a run begins, so
-    // the lift (#viewInput.is-locked) reveals the animation above the modal
-    // instead of pushing already-scrolled cards off-screen.
-    if (on) { try { document.querySelector(".op-scroll").scrollTop = 0; } catch (e) {} }
+    // The ball overlay tracks the live card geometry every frame, so the animation
+    // plays wherever the cards are — no scroll-to-top, no lift.
     loading = on;
     els.run.classList.toggle("is-loading", on);
     els.run.disabled = on;
