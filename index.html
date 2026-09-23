@@ -2391,14 +2391,32 @@
     opBall = { stage: stage, raf: raf, toLoop: toLoop };
   }
   function stopLoaderOverlay() {
-    if (!opBall) return;
-    var b = opBall; opBall = null;
+    if (!opBall || opBall.leaving) return;
+    var b = opBall; b.leaving = true;
+    var stage = b.stage;
+    // Let the ball finish its current arc before launching: wait until the jump
+    // reaches its next landing (translateY 0), so it never gets cut off mid-air.
+    var wait = 0;
+    if (stage.classList.contains("is-looping")) {
+      var jump = stage.querySelector(".op-ball-jump");
+      var anims = jump.getAnimations ? jump.getAnimations() : [];
+      if (anims.length) {
+        var half = BALL.durSec * 1000 / 2;                 // one hop = half a cycle
+        var into = (((Number(anims[0].currentTime) || 0) % half) + half) % half;
+        wait = into < 24 ? 0 : half - into;                // already landing? go now
+      }
+    }
+    b.launchTimer = setTimeout(function () { launchOff(b); }, wait);
+  }
+  function launchOff(b) {
+    if (opBall !== b) return;
+    opBall = null;
     clearTimeout(b.toLoop);
     var stage = b.stage;
     var scene = stage.querySelector(".op-ball-scene");
     // Freeze the ball where it is (read the live loop transforms), fold that offset
     // onto the fly wrapper, then let the loop rig snap to base — net position is
-    // unchanged, so the launch-out starts seamlessly from wherever the ball was.
+    // unchanged, so the launch-out starts seamlessly from the landing.
     var travel = stage.querySelector(".op-ball-travel");
     var jump = stage.querySelector(".op-ball-jump");
     var tx = 0, ty = 0;
