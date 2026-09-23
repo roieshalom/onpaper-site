@@ -3446,66 +3446,6 @@
   // Mock preview: on load, jump straight to the SAMPLE result so the widget is visible.
   if (MOCK) { window.addEventListener("load", function () { showResults(SAMPLE, true); }); }
 
-  // ==========================================================================
-  // DEV PREVIEW — ?preview=processing. Replays the processing state with a
-  // mocked response (no API call, nothing spent). Honored everywhere EXCEPT
-  // production onpaper.fit.
-  // ==========================================================================
-  (function procPreview() {
-    var host = location.hostname;
-    if (host === "onpaper.fit" || host === "www.onpaper.fit") return;
-    if (!/(?:[?&])preview=processing\b/.test(location.search)) return;
-    var cfg = { latency: 1500, gaps: 2, error: false };
-    window.__opTS = { wait: function () { return Promise.resolve(""); } };   // skip the Turnstile wait
-
-    function mockReport(n) {
-      var head = ["ROLE: Senior Product Designer", "COMPANY: Flink", "MATCH: Good", "DEALBREAKERS: None flagged.", ""];
-      for (var i = 0; i < n; i++) { head.push("GAP " + (i + 1) + ": Gap title number " + (i + 1) + " [Closable]"); head.push("  Evidence: The role leans on this and your CV doesn't yet show it."); head.push("  Fix: Add one concrete line that names it with a number."); }
-      return head.join("\n");
-    }
-    callClaude = function () {                                // eslint-disable-line no-func-assign
-      return new Promise(function (resolve, reject) {
-        setTimeout(function () { cfg.error ? reject(new Error("Preview error")) : resolve({ text: mockReport(cfg.gaps), remaining: 5 }); }, cfg.latency);
-      });
-    };
-    function replay() {
-      try {
-        if (opBall) { stopLoaderOverlay(); }
-        els.viewResults.hidden = true; els.viewInput.hidden = false;
-        els.viewInput.classList.remove("is-locked");
-        els.barResults.hidden = true; els.barRun.hidden = false;
-        cvText = "Senior product designer, eight years across design systems, React/TypeScript, REST and GraphQL, AWS/GCP CI, research and prototyping in Figma, cross-functional leadership shipping consumer marketplace and SaaS products at scale with measurable impact.";
-        els.jdUrl.value = "We are looking for a Senior Product Designer to own navigation and drive revenue in a quick-commerce team. Requirements: five plus years, systems thinking, measurable business impact, high-volume consumer marketplaces, mentoring designers.";
-        haveLastRun = false; rerunConfirmed = false;
-      } catch (e) {}
-      doRun();
-    }
-    window.addEventListener("load", function () {
-      var bar = document.createElement("div");
-      bar.style.cssText = "position:fixed;left:12px;bottom:12px;z-index:100000;display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-family:var(--mono),monospace;font-size:11px;background:var(--paper);border:1px solid var(--line-in);border-radius:8px;padding:8px 10px;box-shadow:0 6px 20px rgba(0,0,0,.22);max-width:calc(100vw - 24px)";
-      function group(label, opts, key, fmt) {
-        var wrap = document.createElement("span"); wrap.style.cssText = "display:inline-flex;gap:4px;align-items:center;margin-right:6px";
-        var lb = document.createElement("b"); lb.textContent = label; lb.style.cssText = "font-weight:600;color:var(--faint);letter-spacing:.04em"; wrap.appendChild(lb);
-        opts.forEach(function (v) {
-          var b = document.createElement("button"); b.type = "button"; b.textContent = fmt ? fmt(v) : v;
-          b.style.cssText = "font:inherit;cursor:pointer;border:1px solid var(--line-in);background:transparent;color:var(--ink);border-radius:5px;padding:3px 7px";
-          function paint() { var on = cfg[key] === v; b.style.background = on ? "var(--red)" : "transparent"; b.style.color = on ? "#fff" : "var(--ink)"; b.style.borderColor = on ? "var(--red)" : "var(--line-in)"; }
-          b.addEventListener("click", function () { cfg[key] = v; Array.prototype.forEach.call(wrap.querySelectorAll("button"), function (x) { x.__p && x.__p(); }); });
-          b.__p = paint; paint(); wrap.appendChild(b);
-        });
-        bar.appendChild(wrap);
-      }
-      group("latency", [300, 1500, 5000], "latency", function (v) { return v >= 1000 ? (v / 1000) + "s" : v + "ms"; });
-      group("gaps", [0, 2, 3], "gaps");
-      group("error", [false, true], "error", function (v) { return v ? "on" : "off"; });
-      var run = document.createElement("button"); run.type = "button"; run.textContent = "▶ Replay";
-      run.style.cssText = "font:inherit;font-weight:600;cursor:pointer;border:1px solid var(--red);background:var(--red);color:#fff;border-radius:6px;padding:4px 12px";
-      run.addEventListener("click", replay); bar.appendChild(run);
-      document.body.appendChild(bar);
-      try { console.log("[proc preview] active — mocked response, no API call, nothing spent."); } catch (e) {}
-    });
-  })();
-
   // ---- toast ----
   var toastTimer = null;
   function toast(msg) {
