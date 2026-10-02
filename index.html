@@ -508,6 +508,12 @@
 
   .op-report-raw { white-space: pre-wrap; font-family: var(--serif-b); font-size: 15px; line-height: 1.65; color: var(--ink-2); background: var(--paper); border: 1px solid var(--card-line); border-left: 3px solid var(--red); border-radius: 3px; padding: 22px 24px; }
 
+  /* Encouragement box — shown when fewer than 3 gaps. Green accent to read as
+     the positive counterpart to the red gap cards. */
+  .op-encourage { position: relative; background: var(--paper); border: 1px solid var(--card-line); border-left: 3px solid var(--ok); border-radius: 3px; padding: 22px 26px 24px; margin-bottom: 24px; box-shadow: 3px 4px 0 rgba(0,0,0,0.22); }
+  .op-encourage-kicker { font-family: var(--mono); font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--ok); margin-bottom: 7px; }
+  .op-encourage-text { font-size: 16px; line-height: 1.62; color: var(--ink-2); margin: 0; text-wrap: pretty; }
+
   /* ===== BETA: per-report thumbs feedback (prefix op-rate- to stay clear of the op-fb- form) ===== */
   .op-rate { margin-top: 34px; padding-top: 22px; border-top: 1px solid var(--line); }
   .op-rate-q { font-family: var(--serif-b); font-size: 16px; color: var(--ink-2); margin-bottom: 14px; }
@@ -2945,7 +2951,7 @@
   // Severity tags the prompt can attach to a gap, worst→easiest.
   var KIND_LABEL = { hard: "Hard", stretch: "Stretch", closable: "Closable" };
   function parseReport(text) {
-    var role = "", company = "", match = "", deal = "", rest = [];
+    var role = "", company = "", match = "", deal = "", encouragement = "", rest = [];
     var lines = (text || "").split(/\r?\n/);
     var headerDone = false;
     lines.forEach(function (l) {
@@ -2954,11 +2960,12 @@
       else if (!headerDone && (m = l.match(/^\s*COMPANY:\s*(.*)$/i)))       { company = m[1].trim(); }
       else if (!headerDone && (m = l.match(/^\s*MATCH:\s*(.*)$/i)))         { match = m[1].trim(); }
       else if (!headerDone && (m = l.match(/^\s*DEALBREAKERS?:\s*(.*)$/i))) { deal = m[1].trim(); }
+      else if (!headerDone && (m = l.match(/^\s*ENCOURAGEMENT:\s*(.*)$/i))) { encouragement = m[1].trim(); }
       else { if (l.trim() !== "" || rest.length) headerDone = true; rest.push(l); }
     });
     while (rest.length && rest[0].trim() === "") rest.shift();
     var body = rest.join("\n").trim();
-    return { role: role, company: company, match: match, deal: deal, body: body };
+    return { role: role, company: company, match: match, deal: deal, encouragement: encouragement, body: body };
   }
   // Split the body into gap cards. Returns [] if it doesn't look like GAP N: blocks.
   function parseGaps(body) {
@@ -3090,6 +3097,17 @@
 
     // gap cards (or raw fallback)
     els.gapList.innerHTML = "";
+
+    // Encouragement box: shown when the model returned fewer than 3 gaps and a
+    // grounded fit note. It frames the report, so it goes above the gap cards.
+    var showEncourage = !!r.encouragement && gaps.length < 3;
+    if (showEncourage) {
+      var enc = el("div", "op-encourage");
+      enc.appendChild(el("div", "op-encourage-kicker", "Why you fit"));
+      enc.appendChild(el("p", "op-encourage-text", r.encouragement));
+      els.gapList.appendChild(enc);
+    }
+
     if (gaps.length) {
       gaps.forEach(function (g) {
         var card = el("div", "op-gap");
@@ -3114,7 +3132,7 @@
       // a report shape but gaps we couldn't split into cards — preserve as text
       els.gapList.appendChild(el("div", "op-report-raw", r.body));
     } else if (isReport) {
-      els.gapList.appendChild(el("div", "op-report-raw", "(No gaps returned.)"));
+      if (!showEncourage) els.gapList.appendChild(el("div", "op-report-raw", "(No gaps returned.)"));
     } else {
       // not a report at all — don't pass a refusal off as a gap
       els.gapList.appendChild(el("div", "op-report-raw",
@@ -3145,7 +3163,8 @@
     return "OnPaper — Fit report\n" +
       (subject ? subject + "\n" : "") +
       "Generated " + stamp + "\n\n" +
-      (r.body || "(No gaps returned.)");
+      (r.encouragement ? "Why you fit: " + r.encouragement + "\n\n" : "") +
+      (r.body || (r.encouragement ? "" : "(No gaps returned.)"));
   }
 
   function backToInput() {
@@ -3846,6 +3865,11 @@
       line();
       text("What the role asks for that your CV doesn’t yet show — with one concrete fix each.", 10, "italic", GREY, 14);
 
+      if (r.encouragement && gaps.length < 3) {
+        labeled("Why you fit", r.encouragement, 14);
+        line();
+      }
+
       if (gaps.length) {
         gaps.forEach(function (g) {
           text("GAP " + g.num + (g.kind ? "   [" + (KIND_LABEL[g.kind] || "Closable") + "]" : ""), 11, "bold", RED, 2);
@@ -3854,7 +3878,7 @@
           if (g.fix) labeled("Fix", g.fix, 14);
           line();
         });
-      } else {
+      } else if (r.body || !r.encouragement) {
         text(r.body || "(No gaps returned.)", 11, "normal", INK, 0);
       }
 
